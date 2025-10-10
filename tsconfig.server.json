@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist/server",
+    "module": "ESNext",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "emitDeclarationOnly": false,
+    "sourceMap": true
+  },
+  "include": ["server/**/*", "shared/**/*"]
+}

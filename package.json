@@ -1,0 +1,54 @@
+{
+  "name": "pocketide",
+  "version": "0.1.0",
+  "description": "PocketIDE prototype with typed Express server and Vite React client.",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development tsx server/index.ts",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build",
+    "build:server": "tsc --project tsconfig.server.json",
+    "start": "NODE_ENV=production node dist/server/index.js",
+    "check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "npm run check && prettier --write . && npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gornostal/PocketIDE.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gornostal/PocketIDE/issues"
+  },
+  "homepage": "https://github.com/gornostal/PocketIDE#readme",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.16.11",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.14",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.7.0",
+    "tsx": "^4.19.1",
+    "typescript": "5.6.3",
+    "vite": "^5.4.19"
+  }
+}
