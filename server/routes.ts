@@ -1,6 +1,15 @@
 import { Router, type Express } from "express";
-import type { FilesResponse, HelloResponse } from "@shared/messages";
+import type {
+  FileContentResponse,
+  FilesResponse,
+  HelloResponse,
+} from "@shared/messages";
 import { listDirectoryContents, searchFiles } from "./utils/fileSearch";
+import {
+  inferHighlightLanguage,
+  normalizeRelativeFilePath,
+  readProjectFile,
+} from "./utils/fileContent";
 
 const normalizeQueryParam = (value: unknown): string => {
   if (typeof value === "string") {
@@ -97,6 +106,51 @@ export function registerRoutes(app: Express) {
         }
 
         if (code === "ENOENT" || code === "ENOTDIR") {
+          res.status(404).json({ error: (error as Error).message });
+          return;
+        }
+
+        next(error);
+      });
+  });
+
+  router.get("/file", (req, res, next) => {
+    const pathParam = normalizeQueryParam(req.query.path);
+
+    let normalizedPath: string;
+    try {
+      normalizedPath = normalizeRelativeFilePath(pathParam);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+      return;
+    }
+
+    readProjectFile(normalizedPath)
+      .then((result) => {
+        const response: FileContentResponse = {
+          path: result.path,
+          size: result.size,
+          isBinary: result.isBinary,
+          content: result.content,
+          truncated: result.truncated,
+          language: inferHighlightLanguage(result.path),
+        };
+        res.json(response);
+      })
+      .catch((error) => {
+        const { code } = error as NodeJS.ErrnoException;
+
+        if (code === "EINVALIDFILEPATH") {
+          res.status(400).json({ error: (error as Error).message });
+          return;
+        }
+
+        if (code === "EISDIR") {
+          res.status(400).json({ error: (error as Error).message });
+          return;
+        }
+
+        if (code === "ENOENT") {
           res.status(404).json({ error: (error as Error).message });
           return;
         }

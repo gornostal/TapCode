@@ -15,3 +15,12 @@ export interface FilesResponse {
   parentDirectory: string | null;
   items: FileListItem[];
 }
+
+export interface FileContentResponse {
+  path: string;
+  size: number;
+  isBinary: boolean;
+  content: string | null;
+  truncated: boolean;
+  language: string | null;
+}
