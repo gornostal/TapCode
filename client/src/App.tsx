@@ -89,7 +89,8 @@ function App() {
             Project files
           </h1>
           <p className="mt-2 text-base text-slate-400">
-            Listing items inside <span className="font-mono">{currentDirectoryLabel}</span>.
+            Listing items inside{" "}
+            <span className="font-mono">{currentDirectoryLabel}</span>.
           </p>
         </header>
 
@@ -98,7 +99,9 @@ function App() {
             <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3 text-xs uppercase tracking-wider text-slate-500">
               <span>Current directory</span>
               <div className="flex items-center gap-3 text-right">
-                <span className="font-mono text-slate-400">{currentDirectoryLabel}</span>
+                <span className="font-mono text-slate-400">
+                  {currentDirectoryLabel}
+                </span>
                 <button
                   type="button"
                   onClick={handleNavigateUp}

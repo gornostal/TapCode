@@ -67,4 +67,47 @@ describe("searchFiles", () => {
 
     expect(match?.path).toBe("nested/deep/file.txt");
   });
+
+  it("respects .gitignore files within directories", async () => {
+    await writeFile(".gitignore", "ignored-root.txt\n");
+    await writeFile("ignored-root.txt");
+    await writeFile("src/.gitignore", "*.snap\n");
+    await writeFile("src/test.snap");
+    await writeFile("src/nested/test.snap");
+    await writeFile("src/nested/keep.ts");
+
+    const rootIgnored = await searchFiles("ignored-root.txt");
+    const snapIgnored = await searchFiles("test.snap");
+    const keepResults = await searchFiles("keep.ts");
+
+    expect(rootIgnored).toEqual([]);
+    expect(snapIgnored).toEqual([]);
+    expect(keepResults).toEqual([{ path: "src/nested/keep.ts", kind: "file" }]);
+  });
+
+  it("allows negated patterns to re-include files within ignored directories", async () => {
+    await writeFile(".gitignore", "logs/*\n!logs/.keep\n");
+    await writeFile("logs/output.log");
+    await writeFile("logs/.keep");
+
+    const keepResults = await searchFiles("keep");
+    const outputResults = await searchFiles("output");
+
+    expect(keepResults).toEqual([{ path: "logs/.keep", kind: "file" }]);
+    expect(outputResults).toEqual([]);
+  });
+
+  it("treats root-anchored patterns as relative to the .gitignore location", async () => {
+    await writeFile(".gitignore", "/build/\n");
+    await writeFile("build/output.js");
+    await writeFile("src/build/keep.ts");
+
+    const rootResults = await searchFiles("output");
+    const nestedResults = await searchFiles("keep");
+
+    expect(rootResults).toEqual([]);
+    expect(nestedResults).toEqual([
+      { path: "src/build/keep.ts", kind: "file" },
+    ]);
+  });
 });
