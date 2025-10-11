@@ -3,9 +3,10 @@
     "client/src/**/*",
     "server/**/*",
     "shared/**/*",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vitest.config.ts"
   ],
-  "exclude": ["node_modules", "dist", "build", "**/*.test.ts"],
+  "exclude": ["node_modules", "dist", "build"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",

@@ -10,8 +10,9 @@
     "build:server": "tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc --noEmit",
+    "test:unit": "vitest run --pool=vmThreads",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "npm run check && prettier --write . && npm run lint"
+    "test": "npm run check && npm run test:unit && prettier --write . && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -49,6 +50,7 @@
     "tslib": "^2.7.0",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "vitest": "^3.2.4"
   }
 }
