@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import path from "node:path";
 
-import type { FileKind, FileListItem } from "@shared/messages";
+import type { FileListItem } from "@shared/messages";
 import { resolveFromRoot } from "./paths";
 
 const IGNORED_DIRECTORIES = new Set([".git", "node_modules", "dist"]);
@@ -10,18 +11,96 @@ const toPosixPath = (value: string) => value.split(path.sep).join("/");
 
 const isIgnoredDirectory = (name: string) => IGNORED_DIRECTORIES.has(name);
 
+const normalizeDirectoryPath = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const replaced = trimmed.replace(/\\/g, "/");
+  const segments = replaced.split("/").filter(Boolean);
+
+  for (const segment of segments) {
+    if (segment === "..") {
+      const error = Object.assign(new Error("Invalid directory path"), {
+        code: "EINVALIDDIR",
+      });
+      throw error;
+    }
+  }
+
+  return segments.join("/");
+};
+
 export async function listImmediateChildrenFromRoot(): Promise<FileListItem[]> {
+  return listDirectoryContents("");
+}
+
+export async function listDirectoryContents(
+  directory: string,
+): Promise<FileListItem[]> {
+  const normalizedDirectory = normalizeDirectoryPath(directory);
   const root = resolveFromRoot();
-  const dirEntries = await fs.readdir(root, { withFileTypes: true });
+
+  const absoluteDirectory = normalizedDirectory
+    ? resolveFromRoot(...normalizedDirectory.split("/"))
+    : root;
+  const resolvedDirectory = path.resolve(absoluteDirectory);
+
+  const isWithinRoot =
+    resolvedDirectory === root ||
+    resolvedDirectory.startsWith(`${root}${path.sep}`);
+
+  if (!isWithinRoot) {
+    const error = Object.assign(new Error("Invalid directory path"), {
+      code: "EINVALIDDIR",
+    });
+    throw error;
+  }
+
+  let dirEntries: Dirent[];
+  try {
+    dirEntries = await fs.readdir(resolvedDirectory, { withFileTypes: true });
+  } catch (error) {
+    const { code } = error as NodeJS.ErrnoException;
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      const notFoundError = Object.assign(
+        new Error("Directory not found"),
+        {
+          code,
+        },
+      );
+      throw notFoundError;
+    }
+
+    throw error;
+  }
 
   const items: FileListItem[] = [];
+
   for (const entry of dirEntries) {
-    if (isIgnoredDirectory(entry.name)) {
+    if (entry.isDirectory()) {
+      if (isIgnoredDirectory(entry.name)) {
+        continue;
+      }
+
+      const relativePath = normalizedDirectory
+        ? `${normalizedDirectory}/${entry.name}`
+        : entry.name;
+
+      items.push({ path: toPosixPath(relativePath), kind: "directory" });
       continue;
     }
 
-    const kind: FileKind = entry.isDirectory() ? "directory" : "file";
-    items.push({ path: entry.name, kind });
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    const relativePath = normalizedDirectory
+      ? `${normalizedDirectory}/${entry.name}`
+      : entry.name;
+
+    items.push({ path: toPosixPath(relativePath), kind: "file" });
   }
 
   items.sort((left, right) => {

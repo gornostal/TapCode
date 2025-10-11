@@ -14,7 +14,6 @@ export async function setupVite(app: Express): Promise<ViteDevServer> {
     server: {
       middlewareMode: true,
     },
-    appType: "custom",
   });
 
   app.use(vite.middlewares);

@@ -1,6 +1,6 @@
 import { Router, type Express } from "express";
 import type { FilesResponse, HelloResponse } from "@shared/messages";
-import { listImmediateChildrenFromRoot, searchFiles } from "./utils/fileSearch";
+import { listDirectoryContents, searchFiles } from "./utils/fileSearch";
 
 const normalizeQueryParam = (value: unknown): string => {
   if (typeof value === "string") {
@@ -30,19 +30,79 @@ export function registerRoutes(app: Express) {
     res.json(payload);
   });
 
+  const normalizeDirectoryQueryParam = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    const replaced = trimmed.replace(/\\/g, "/");
+    const segments = replaced.split("/").filter(Boolean);
+
+    for (const segment of segments) {
+      if (segment === "..") {
+        const error = Object.assign(new Error("Invalid directory parameter"), {
+          code: "EINVALIDDIR",
+        });
+        throw error;
+      }
+    }
+
+    return segments.join("/");
+  };
+
+  const parentDirectoryOf = (directory: string): string | null => {
+    if (!directory) {
+      return null;
+    }
+
+    const segments = directory.split("/");
+    segments.pop();
+
+    return segments.join("/");
+  };
+
   router.get("/files", (req, res, next) => {
     const query = normalizeQueryParam(req.query.q).trim();
+    const directoryParam = normalizeQueryParam(req.query.dir);
+
+    let directory = "";
+    try {
+      directory = normalizeDirectoryQueryParam(directoryParam);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+      return;
+    }
 
     const itemsPromise = query
       ? searchFiles(query, 10)
-      : listImmediateChildrenFromRoot();
+      : listDirectoryContents(directory);
 
     itemsPromise
       .then((items) => {
-        const response: FilesResponse = { query, items };
+        const response: FilesResponse = {
+          query,
+          directory,
+          parentDirectory: parentDirectoryOf(directory),
+          items,
+        };
         res.json(response);
       })
-      .catch((error) => next(error));
+      .catch((error) => {
+        const { code } = error as NodeJS.ErrnoException;
+
+        if (code === "EINVALIDDIR") {
+          res.status(400).json({ error: (error as Error).message });
+          return;
+        }
+
+        if (code === "ENOENT" || code === "ENOTDIR") {
+          res.status(404).json({ error: (error as Error).message });
+          return;
+        }
+
+        next(error);
+      });
   });
 
   app.use(router);

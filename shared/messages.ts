@@ -11,5 +11,7 @@ export interface FileListItem {
 
 export interface FilesResponse {
   query: string;
+  directory: string;
+  parentDirectory: string | null;
   items: FileListItem[];
 }
