@@ -8,6 +8,7 @@ import type {
 
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
+import GitDiff from "@/components/GitDiff";
 import GitStatus from "@/components/GitStatus";
 import GoToFileSearch from "@/components/GoToFileSearch";
 import Header from "@/components/Header";
@@ -27,6 +28,9 @@ type RouteState =
     }
   | {
       page: "git-status";
+    }
+  | {
+      page: "git-diff";
     };
 
 const parseRoute = (): RouteState => {
@@ -38,6 +42,10 @@ const parseRoute = (): RouteState => {
 
   if (pathname.startsWith("/git/status")) {
     return { page: "git-status" };
+  }
+
+  if (pathname.startsWith("/git/diff")) {
+    return { page: "git-diff" };
   }
 
   if (pathname.startsWith("/file")) {
@@ -254,6 +262,11 @@ function App() {
     setRoute({ page: "git-status" });
   }, [setRoute]);
 
+  const openGitDiffPage = useCallback(() => {
+    window.history.pushState({ page: "git-diff" }, "", "/git/diff");
+    setRoute({ page: "git-diff" });
+  }, [setRoute]);
+
   const handleBackToBrowser = useCallback(() => {
     const state = window.history.state as RouteState | null;
 
@@ -261,7 +274,8 @@ function App() {
       state &&
       (state.page === "file" ||
         state.page === "tasks" ||
-        state.page === "git-status")
+        state.page === "git-status" ||
+        state.page === "git-diff")
     ) {
       window.history.back();
       return;
@@ -303,6 +317,7 @@ function App() {
   const isFileRoute = route.page === "file";
   const isTaskRoute = route.page === "tasks";
   const isGitStatusRoute = route.page === "git-status";
+  const isGitDiffRoute = route.page === "git-diff";
   const displayedFilePath =
     activeFilePath ?? (route.page === "file" ? route.path : null);
 
@@ -329,6 +344,8 @@ function App() {
           <TaskList onBackToBrowser={handleBackToBrowser} />
         ) : isGitStatusRoute ? (
           <GitStatus onBackToBrowser={handleBackToBrowser} />
+        ) : isGitDiffRoute ? (
+          <GitDiff onBackToBrowser={handleBackToBrowser} />
         ) : (
           <FileBrowser
             currentDirectoryLabel={currentDirectoryLabel}
@@ -356,6 +373,8 @@ function App() {
         isTaskListActive={isTaskRoute}
         onOpenGitStatus={openGitStatusPage}
         isGitStatusActive={isGitStatusRoute}
+        onOpenGitDiff={openGitDiffPage}
+        isGitDiffActive={isGitDiffRoute}
       />
     </main>
   );

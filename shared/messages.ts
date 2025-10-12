@@ -34,3 +34,7 @@ export interface GitStatusResponse {
   unstaged: string[];
   untracked: string[];
 }
+
+export interface GitDiffResponse {
+  diff: string;
+}

@@ -1,4 +1,4 @@
-import type { GitStatusResponse } from "@shared/messages";
+import type { GitStatusResponse, GitDiffResponse } from "@shared/messages";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { resolveFromRoot } from "../utils/paths";
@@ -74,5 +74,25 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
     };
   } catch (error) {
     throw new Error(`Failed to get git status: ${(error as Error).message}`);
+  }
+};
+
+/**
+ * Gets the git diff showing all changes (staged and unstaged)
+ */
+export const getGitDiff = async (): Promise<GitDiffResponse> => {
+  const projectRoot = resolveFromRoot("");
+
+  try {
+    // Get diff for both staged and unstaged changes
+    const { stdout: diff } = await execAsync("git diff HEAD", {
+      cwd: projectRoot,
+    });
+
+    return {
+      diff: diff || "No changes",
+    };
+  } catch (error) {
+    throw new Error(`Failed to get git diff: ${(error as Error).message}`);
   }
 };

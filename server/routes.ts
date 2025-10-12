@@ -11,7 +11,7 @@ import {
   reorderTask,
   removeTask,
 } from "./services/tasksService";
-import { getGitStatus } from "./services/gitService";
+import { getGitStatus, getGitDiff } from "./services/gitService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
@@ -138,6 +138,16 @@ export function registerRoutes(app: Express) {
 
   router.get("/git/status", (_req, res) => {
     getGitStatus()
+      .then((response) => {
+        res.json(response);
+      })
+      .catch((error) => {
+        handleGitError(error, res);
+      });
+  });
+
+  router.get("/git/diff", (_req, res) => {
+    getGitDiff()
       .then((response) => {
         res.json(response);
       })

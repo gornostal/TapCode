@@ -12,6 +12,8 @@ type ToolbarProps = {
   isTaskListActive: boolean;
   onOpenGitStatus: () => void;
   isGitStatusActive: boolean;
+  onOpenGitDiff: () => void;
+  isGitDiffActive: boolean;
 };
 
 const TOOLBAR_BUTTONS: ToolbarButton[] = [
@@ -26,7 +28,7 @@ const GIT_SUBMENU_BUTTONS: ToolbarButton[] = [
   { label: "status" },
   { label: "changes" },
   { label: "stage all" },
-  { label: "history" },
+  { label: "commit" },
 ];
 
 const Toolbar = ({
@@ -36,6 +38,8 @@ const Toolbar = ({
   isTaskListActive,
   onOpenGitStatus,
   isGitStatusActive,
+  onOpenGitDiff,
+  isGitDiffActive,
 }: ToolbarProps) => {
   const [isGitMenuOpen, setIsGitMenuOpen] = useState(false);
 
@@ -53,6 +57,9 @@ const Toolbar = ({
             } else if (isGitMenuOpen && button.label === "status") {
               onOpenGitStatus();
               setIsGitMenuOpen(false);
+            } else if (isGitMenuOpen && button.label === "changes") {
+              onOpenGitDiff();
+              setIsGitMenuOpen(false);
             } else if (!isGitMenuOpen && button.label === "Git") {
               setIsGitMenuOpen(true);
             } else if (button.label === "Go to file") {
@@ -63,7 +70,9 @@ const Toolbar = ({
           };
 
           const isDisabled = isGitMenuOpen
-            ? button.label !== "back" && button.label !== "status"
+            ? button.label !== "back" &&
+              button.label !== "status" &&
+              button.label !== "changes"
             : button.label !== "Go to file" &&
               button.label !== "Tasks" &&
               button.label !== "Git";
@@ -91,7 +100,8 @@ const Toolbar = ({
                 (button.label === "Go to file" && isGoToFileOpen) ||
                 (button.label === "Tasks" && isTaskListActive) ||
                 (button.label === "Git" && isGitMenuOpen) ||
-                (button.label === "status" && isGitStatusActive)
+                (button.label === "status" && isGitStatusActive) ||
+                (button.label === "changes" && isGitDiffActive)
                   ? "bg-slate-900 text-sky-200"
                   : "bg-transparent text-slate-100"
               } ${

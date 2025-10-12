@@ -78,15 +78,6 @@ const GitStatus = ({ onBackToBrowser }: GitStatusProps) => {
 
   return (
     <>
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-          Git Status
-        </p>
-        <p className="mt-2 text-base text-slate-400">
-          View the current state of your git repository
-        </p>
-      </header>
-
       <div className="flex flex-col gap-4">
         {isLoading ? (
           <p className="py-4 font-mono text-sm text-slate-400">
