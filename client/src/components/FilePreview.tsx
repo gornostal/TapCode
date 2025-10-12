@@ -152,7 +152,17 @@ const FilePreview = ({
           </p>
         ) : selectedFile.content ? (
           <div className="flex flex-col gap-3">
-            <div className="overflow-x-auto">
+            <div
+              className="overflow-x-auto"
+              style={{
+                width: "100vw",
+                position: "relative",
+                left: "50%",
+                right: "50%",
+                marginLeft: "-50vw",
+                marginRight: "-50vw",
+              }}
+            >
               <pre className="min-w-full rounded-lg bg-slate-950/60 text-sm leading-relaxed">
                 <code
                   className={`hljs ${
