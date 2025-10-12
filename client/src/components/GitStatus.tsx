@@ -4,9 +4,10 @@ import NavigationBar from "@/components/NavigationBar";
 
 type GitStatusProps = {
   onBackToBrowser: () => void;
+  onOpenGitDiff: () => void;
 };
 
-const GitStatus = ({ onBackToBrowser }: GitStatusProps) => {
+const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
   const [status, setStatus] = useState<GitStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,18 +176,6 @@ const GitStatus = ({ onBackToBrowser }: GitStatusProps) => {
               </div>
             </div>
 
-            {(status.unstaged.length > 0 || status.untracked.length > 0) && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => void handleStageAll()}
-                  disabled={isStaging}
-                  className="rounded border border-emerald-700 bg-emerald-900/40 px-4 py-2 font-mono text-sm text-emerald-300 transition-colors hover:bg-emerald-900/60 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isStaging ? "Staging..." : "Stage All Changes"}
-                </button>
-              </div>
-            )}
-
             {renderFileList(status.staged, "Staged", "text-emerald-400")}
 
             {status.staged.length > 0 && (
@@ -217,7 +206,39 @@ const GitStatus = ({ onBackToBrowser }: GitStatusProps) => {
                 </div>
               </div>
             )}
-            {renderFileList(status.unstaged, "Unstaged", "text-amber-400")}
+            {status.unstaged.length > 0 && (
+              <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-amber-400">
+                  Unstaged ({status.unstaged.length})
+                </h3>
+                <ul className="space-y-1">
+                  {status.unstaged.map((file, index) => (
+                    <li
+                      key={`${file}-${index}`}
+                      className="font-mono text-sm text-slate-300"
+                    >
+                      {file}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    onClick={() => void handleStageAll()}
+                    disabled={isStaging}
+                    className="rounded border border-emerald-700 bg-emerald-900/40 px-4 py-2 font-mono text-sm text-emerald-300 transition-colors hover:bg-emerald-900/60 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isStaging ? "Staging..." : "Stage All Changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenGitDiff}
+                    className="rounded border border-sky-700 bg-sky-900/40 px-4 py-2 font-mono text-sm text-sky-300 transition-colors hover:bg-sky-900/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+                  >
+                    View Git Diff
+                  </button>
+                </div>
+              </div>
+            )}
             {renderFileList(status.untracked, "Untracked", "text-slate-400")}
 
             {status.staged.length === 0 &&

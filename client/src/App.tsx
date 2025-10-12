@@ -318,6 +318,7 @@ function App() {
   const isTaskRoute = route.page === "tasks";
   const isGitStatusRoute = route.page === "git-status";
   const isGitDiffRoute = route.page === "git-diff";
+  const isGitRouteActive = isGitStatusRoute || isGitDiffRoute;
   const displayedFilePath =
     activeFilePath ?? (route.page === "file" ? route.path : null);
 
@@ -343,7 +344,10 @@ function App() {
         ) : isTaskRoute ? (
           <TaskList onBackToBrowser={handleBackToBrowser} />
         ) : isGitStatusRoute ? (
-          <GitStatus onBackToBrowser={handleBackToBrowser} />
+          <GitStatus
+            onBackToBrowser={handleBackToBrowser}
+            onOpenGitDiff={openGitDiffPage}
+          />
         ) : isGitDiffRoute ? (
           <GitDiff onBackToBrowser={handleBackToBrowser} />
         ) : (
@@ -372,9 +376,7 @@ function App() {
         onOpenTaskList={openTasksPage}
         isTaskListActive={isTaskRoute}
         onOpenGitStatus={openGitStatusPage}
-        isGitStatusActive={isGitStatusRoute}
-        onOpenGitDiff={openGitDiffPage}
-        isGitDiffActive={isGitDiffRoute}
+        isGitActive={isGitRouteActive}
       />
     </main>
   );
