@@ -18,7 +18,7 @@ TapCode is split between a Vite React client and a typed Express server.
 - Mobile-friendly file browser with directory navigation
 - Fuzzy file search for quick navigation
 - Syntax-highlighted code preview
-- Task list management from Tasks.md
+- Task list management from tasks.md
 - Client-side routing between file list, file viewer, and task pages
 
 ## Build, Test, and Development Commands

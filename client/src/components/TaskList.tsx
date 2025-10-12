@@ -189,7 +189,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         </p>
         <p className="mt-2 text-base text-slate-400">
           Review the remaining tasks pulled from{" "}
-          <span className="font-mono">Tasks.md</span>
+          <span className="font-mono">tasks.md</span>
         </p>
         <p className="mt-2 text-sm text-slate-500">
           Add new tasks below and prompt your agent to follow instructions in

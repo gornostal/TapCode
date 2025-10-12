@@ -8,6 +8,7 @@ import type {
 
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
+import GitStatus from "@/components/GitStatus";
 import GoToFileSearch from "@/components/GoToFileSearch";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
@@ -23,6 +24,9 @@ type RouteState =
     }
   | {
       page: "tasks";
+    }
+  | {
+      page: "git-status";
     };
 
 const parseRoute = (): RouteState => {
@@ -30,6 +34,10 @@ const parseRoute = (): RouteState => {
 
   if (pathname.startsWith("/tasks")) {
     return { page: "tasks" };
+  }
+
+  if (pathname.startsWith("/git/status")) {
+    return { page: "git-status" };
   }
 
   if (pathname.startsWith("/file")) {
@@ -241,10 +249,20 @@ function App() {
     setRoute({ page: "tasks" });
   }, [setRoute]);
 
+  const openGitStatusPage = useCallback(() => {
+    window.history.pushState({ page: "git-status" }, "", "/git/status");
+    setRoute({ page: "git-status" });
+  }, [setRoute]);
+
   const handleBackToBrowser = useCallback(() => {
     const state = window.history.state as RouteState | null;
 
-    if (state && (state.page === "file" || state.page === "tasks")) {
+    if (
+      state &&
+      (state.page === "file" ||
+        state.page === "tasks" ||
+        state.page === "git-status")
+    ) {
       window.history.back();
       return;
     }
@@ -284,6 +302,7 @@ function App() {
 
   const isFileRoute = route.page === "file";
   const isTaskRoute = route.page === "tasks";
+  const isGitStatusRoute = route.page === "git-status";
   const displayedFilePath =
     activeFilePath ?? (route.page === "file" ? route.path : null);
 
@@ -308,6 +327,8 @@ function App() {
           />
         ) : isTaskRoute ? (
           <TaskList onBackToBrowser={handleBackToBrowser} />
+        ) : isGitStatusRoute ? (
+          <GitStatus onBackToBrowser={handleBackToBrowser} />
         ) : (
           <FileBrowser
             currentDirectoryLabel={currentDirectoryLabel}
@@ -333,6 +354,8 @@ function App() {
         isGoToFileOpen={isGoToFileOpen}
         onOpenTaskList={openTasksPage}
         isTaskListActive={isTaskRoute}
+        onOpenGitStatus={openGitStatusPage}
+        isGitStatusActive={isGitStatusRoute}
       />
     </main>
   );

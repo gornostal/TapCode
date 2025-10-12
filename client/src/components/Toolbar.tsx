@@ -10,6 +10,8 @@ type ToolbarProps = {
   isGoToFileOpen: boolean;
   onOpenTaskList: () => void;
   isTaskListActive: boolean;
+  onOpenGitStatus: () => void;
+  isGitStatusActive: boolean;
 };
 
 const TOOLBAR_BUTTONS: ToolbarButton[] = [
@@ -20,7 +22,7 @@ const TOOLBAR_BUTTONS: ToolbarButton[] = [
 ];
 
 const GIT_SUBMENU_BUTTONS: ToolbarButton[] = [
-  { label: "←", ariaLabel: "Back" },
+  { label: "back", ariaLabel: "Back" },
   { label: "status" },
   { label: "changes" },
   { label: "stage all" },
@@ -32,6 +34,8 @@ const Toolbar = ({
   isGoToFileOpen,
   onOpenTaskList,
   isTaskListActive,
+  onOpenGitStatus,
+  isGitStatusActive,
 }: ToolbarProps) => {
   const [isGitMenuOpen, setIsGitMenuOpen] = useState(false);
 
@@ -44,7 +48,10 @@ const Toolbar = ({
         <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-emerald-500/20 opacity-80" />
         {buttons.map((button, index) => {
           const handleClick = () => {
-            if (isGitMenuOpen && button.label === "←") {
+            if (isGitMenuOpen && button.label === "back") {
+              setIsGitMenuOpen(false);
+            } else if (isGitMenuOpen && button.label === "status") {
+              onOpenGitStatus();
               setIsGitMenuOpen(false);
             } else if (!isGitMenuOpen && button.label === "Git") {
               setIsGitMenuOpen(true);
@@ -55,11 +62,11 @@ const Toolbar = ({
             }
           };
 
-          const isDisabled =
-            !isGitMenuOpen &&
-            button.label !== "Go to file" &&
-            button.label !== "Tasks" &&
-            button.label !== "Git";
+          const isDisabled = isGitMenuOpen
+            ? button.label !== "back" && button.label !== "status"
+            : button.label !== "Go to file" &&
+              button.label !== "Tasks" &&
+              button.label !== "Git";
 
           const isPressed =
             button.label === "Go to file"
@@ -83,7 +90,8 @@ const Toolbar = ({
               } ${
                 (button.label === "Go to file" && isGoToFileOpen) ||
                 (button.label === "Tasks" && isTaskListActive) ||
-                (button.label === "Git" && isGitMenuOpen)
+                (button.label === "Git" && isGitMenuOpen) ||
+                (button.label === "status" && isGitStatusActive)
                   ? "bg-slate-900 text-sky-200"
                   : "bg-transparent text-slate-100"
               } ${
@@ -92,9 +100,23 @@ const Toolbar = ({
                   : "hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-100"
               }`}
             >
-              <span className="break-words text-center leading-tight">
-                {button.label}
-              </span>
+              {button.label === "back" ? (
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <span className="break-words text-center leading-tight">
+                  {button.label}
+                </span>
+              )}
             </button>
           );
         })}
