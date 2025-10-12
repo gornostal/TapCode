@@ -3,6 +3,11 @@ type ToolbarButton = {
   ariaLabel?: string;
 };
 
+type ToolbarProps = {
+  onGoToFileToggle: () => void;
+  isGoToFileOpen: boolean;
+};
+
 const TOOLBAR_BUTTONS: ToolbarButton[] = [
   { label: "…", ariaLabel: "Open more options" },
   { label: "Go to file" },
@@ -12,7 +17,7 @@ const TOOLBAR_BUTTONS: ToolbarButton[] = [
   { label: "Todo list" },
 ];
 
-const Toolbar = () => (
+const Toolbar = ({ onGoToFileToggle, isGoToFileOpen }: ToolbarProps) => (
   <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/95 backdrop-blur">
     <div className="relative flex w-full flex-wrap items-stretch justify-center overflow-hidden isolate">
       <div className="pointer-events-none absolute inset-0 z-0 bg-slate-900/60 backdrop-blur" />
@@ -22,11 +27,23 @@ const Toolbar = () => (
           type="button"
           key={button.label}
           aria-label={button.ariaLabel ?? button.label}
-          disabled
-          className={`relative z-20 flex h-[3.25rem] flex-1 items-center justify-center bg-transparent px-1.5 py-1.5 text-[0.6rem] font-semibold uppercase tracking-wide text-slate-100 transition disabled:cursor-not-allowed disabled:opacity-100 ${
+          aria-pressed={
+            button.label === "Go to file" ? isGoToFileOpen : undefined
+          }
+          onClick={button.label === "Go to file" ? onGoToFileToggle : undefined}
+          disabled={button.label !== "Go to file"}
+          className={`relative z-20 flex h-[3.25rem] flex-1 items-center justify-center px-1.5 py-1.5 text-[0.6rem] font-semibold uppercase tracking-wide transition ${
             index < TOOLBAR_BUTTONS.length - 1
               ? "border-r border-slate-800"
               : ""
+          } ${
+            button.label === "Go to file" && isGoToFileOpen
+              ? "bg-slate-900 text-sky-200"
+              : "bg-transparent text-slate-100"
+          } ${
+            button.label !== "Go to file"
+              ? "cursor-not-allowed opacity-100"
+              : "hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-100"
           }`}
         >
           <span className="break-all text-center leading-tight">

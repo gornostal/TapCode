@@ -8,6 +8,7 @@ import type {
 
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
+import GoToFileSearch from "@/components/GoToFileSearch";
 import Toolbar from "@/components/Toolbar";
 
 type RouteState =
@@ -50,6 +51,7 @@ function App() {
   const [isFileLoading, setIsFileLoading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileRequestRef = useRef<AbortController | null>(null);
+  const [isGoToFileOpen, setIsGoToFileOpen] = useState(false);
 
   const resetFileViewer = useCallback(() => {
     if (fileRequestRef.current) {
@@ -193,6 +195,12 @@ function App() {
     resetFileViewer();
   }, [route, loadFile, resetFileViewer]);
 
+  useEffect(() => {
+    if (route.page === "file") {
+      setIsGoToFileOpen(false);
+    }
+  }, [route]);
+
   const openFilePage = useCallback(
     (path: string) => {
       const params = new URLSearchParams();
@@ -207,6 +215,22 @@ function App() {
       setRoute({ page: "file", path });
     },
     [setRoute],
+  );
+
+  const handleGoToFileToggle = useCallback(() => {
+    setIsGoToFileOpen((previous) => !previous);
+  }, []);
+
+  const handleCloseGoToFile = useCallback(() => {
+    setIsGoToFileOpen(false);
+  }, []);
+
+  const handleOpenFileFromSearch = useCallback(
+    (path: string) => {
+      openFilePage(path);
+      setIsGoToFileOpen(false);
+    },
+    [openFilePage],
   );
 
   const handleBackToBrowser = useCallback(() => {
@@ -282,7 +306,15 @@ function App() {
           />
         )}
       </section>
-      <Toolbar />
+      <GoToFileSearch
+        isOpen={isGoToFileOpen}
+        onClose={handleCloseGoToFile}
+        onOpenFile={handleOpenFileFromSearch}
+      />
+      <Toolbar
+        onGoToFileToggle={handleGoToFileToggle}
+        isGoToFileOpen={isGoToFileOpen}
+      />
     </main>
   );
 }
