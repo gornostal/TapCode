@@ -148,7 +148,7 @@ const FilePreview = ({
         ) : selectedFile.content ? (
           <div className="flex flex-col gap-3">
             <div className="overflow-x-auto">
-              <pre className="min-w-full rounded-lg bg-slate-950/60 p-4 text-sm leading-relaxed">
+              <pre className="min-w-full rounded-lg bg-slate-950/60 text-sm leading-relaxed">
                 <code
                   className={`hljs ${
                     highlighted?.language
