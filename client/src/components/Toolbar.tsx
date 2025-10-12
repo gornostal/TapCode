@@ -24,10 +24,14 @@ const Toolbar = () => (
           aria-label={button.ariaLabel ?? button.label}
           disabled
           className={`relative z-20 flex h-[3.25rem] flex-1 items-center justify-center bg-transparent px-1.5 py-1.5 text-[0.6rem] font-semibold uppercase tracking-wide text-slate-100 transition disabled:cursor-not-allowed disabled:opacity-100 ${
-            index < TOOLBAR_BUTTONS.length - 1 ? "border-r border-slate-800" : ""
+            index < TOOLBAR_BUTTONS.length - 1
+              ? "border-r border-slate-800"
+              : ""
           }`}
         >
-          <span className="break-all text-center leading-tight">{button.label}</span>
+          <span className="break-all text-center leading-tight">
+            {button.label}
+          </span>
         </button>
       ))}
     </div>

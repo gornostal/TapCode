@@ -1,9 +1,5 @@
 import { Router, type Express } from "express";
-import type {
-  FileContentResponse,
-  FilesResponse,
-  HelloResponse,
-} from "@shared/messages";
+import type { FileContentResponse, FilesResponse } from "@shared/messages";
 import { listDirectoryContents, searchFiles } from "./utils/fileSearch";
 import {
   inferHighlightLanguage,
@@ -31,14 +27,6 @@ const normalizeQueryParam = (value: unknown): string => {
 
 export function registerRoutes(app: Express) {
   const router = Router();
-
-  router.get("/hello", (_req, res) => {
-    const payload: HelloResponse = {
-      message: "Hello from the PocketIDE server!",
-    };
-
-    res.json(payload);
-  });
 
   const normalizeDirectoryQueryParam = (value: string) => {
     const trimmed = value.trim();

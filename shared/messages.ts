@@ -1,7 +1,3 @@
-export interface HelloResponse {
-  message: string;
-}
-
 export type FileKind = "file" | "directory";
 
 export interface FileListItem {
