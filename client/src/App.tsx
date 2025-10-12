@@ -9,6 +9,7 @@ import type {
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
 import GoToFileSearch from "@/components/GoToFileSearch";
+import TodoList from "@/components/TodoList";
 import Toolbar from "@/components/Toolbar";
 
 type RouteState =
@@ -18,10 +19,17 @@ type RouteState =
   | {
       page: "file";
       path: string;
+    }
+  | {
+      page: "todo";
     };
 
 const parseRoute = (): RouteState => {
   const { pathname, search } = window.location;
+
+  if (pathname.startsWith("/todos")) {
+    return { page: "todo" };
+  }
 
   if (pathname.startsWith("/file")) {
     const params = new URLSearchParams(search);
@@ -195,12 +203,6 @@ function App() {
     resetFileViewer();
   }, [route, loadFile, resetFileViewer]);
 
-  useEffect(() => {
-    if (route.page === "file") {
-      setIsGoToFileOpen(false);
-    }
-  }, [route]);
-
   const openFilePage = useCallback(
     (path: string) => {
       const params = new URLSearchParams();
@@ -233,10 +235,15 @@ function App() {
     [openFilePage],
   );
 
+  const openTodoPage = useCallback(() => {
+    window.history.pushState({ page: "todo" }, "", "/todos");
+    setRoute({ page: "todo" });
+  }, [setRoute]);
+
   const handleBackToBrowser = useCallback(() => {
     const state = window.history.state as RouteState | null;
 
-    if (state && state.page === "file") {
+    if (state && (state.page === "file" || state.page === "todo")) {
       window.history.back();
       return;
     }
@@ -275,8 +282,15 @@ function App() {
   };
 
   const isFileRoute = route.page === "file";
+  const isTodoRoute = route.page === "todo";
   const displayedFilePath =
     activeFilePath ?? (route.page === "file" ? route.path : null);
+
+  useEffect(() => {
+    if (route.page !== "list") {
+      setIsGoToFileOpen(false);
+    }
+  }, [route]);
 
   return (
     <main className="min-h-screen bg-slate-950 pb-28 text-slate-100">
@@ -288,6 +302,11 @@ function App() {
             selectedFile={selectedFile}
             isFileLoading={isFileLoading}
             fileError={fileError}
+            onBackToBrowser={handleBackToBrowser}
+          />
+        ) : isTodoRoute ? (
+          <TodoList
+            projectName={projectName}
             onBackToBrowser={handleBackToBrowser}
           />
         ) : (
@@ -314,6 +333,8 @@ function App() {
       <Toolbar
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
+        onOpenTodoList={openTodoPage}
+        isTodoListActive={isTodoRoute}
       />
     </main>
   );
