@@ -8,6 +8,7 @@ Implement the first todo item, run tests, and remove the item from this file.
 # TODO
 
 - add GET todos API endpoint
+
 - file view should show line numbers
 
 # Footer
@@ -37,9 +38,13 @@ Do the chores
 
   it("stops collecting items when encountering the next header", () => {
     const contents = `# TODO
+
 - first
+
 - second
+
 # Done
+
 - third
 `;
 
@@ -53,6 +58,22 @@ Do the chores
 
     expect(act).toThrowError(/TODO section not found/);
   });
+
+  it("handles multiline todo items", () => {
+    const contents = `# TODO
+
+- The Add Item function in todos should support multiline input
+
+- file view should show line numbers
+`;
+
+    const items = parseTodoItems(contents);
+
+    expect(items).toEqual([
+      "The Add Item function in todos should support multiline input",
+      "file view should show line numbers",
+    ]);
+  });
 });
 
 describe("appendTodoItem", () => {
@@ -60,7 +81,7 @@ describe("appendTodoItem", () => {
     const updated = appendTodoItem(withTodoSection, "- new shiny feature");
 
     expect(updated).toContain(
-      "# TODO\n- new shiny feature\n\n- add GET todos API endpoint",
+      "# TODO\n\n- new shiny feature\n\n- add GET todos API endpoint",
     );
   });
 
@@ -71,10 +92,10 @@ describe("appendTodoItem", () => {
   });
 
   it("adds newline padding when the header is not followed by one", () => {
-    const contents = "# TODO\n- current\n";
+    const contents = "# TODO\n\n- current\n";
     const updated = appendTodoItem(contents, "- future");
 
-    expect(updated).toBe("# TODO\n- future\n- current\n");
+    expect(updated).toBe("# TODO\n\n- future\n\n- current\n");
   });
 
   it("throws when the TODO header is missing", () => {
@@ -87,5 +108,19 @@ describe("appendTodoItem", () => {
     const act = () => appendTodoItem("# TODO\n", "  ");
 
     expect(act).toThrowError(/todo text is required/);
+  });
+
+  it("adds dash prefix if item doesn't start with one", () => {
+    const contents = "# TODO\n\n- existing\n";
+    const updated = appendTodoItem(contents, "without dash");
+
+    expect(updated).toContain("# TODO\n\n- without dash\n\n- existing\n");
+  });
+
+  it("handles multiline items with the correct format", () => {
+    const contents = "# TODO\n\n- existing\n";
+    const updated = appendTodoItem(contents, "line one\nline two");
+
+    expect(updated).toContain("# TODO\n\n- line one\nline two\n\n- existing\n");
   });
 });

@@ -20,27 +20,32 @@ const locateTodoHeader = (contents: string): ParseResult => {
 export const parseTodoItems = (contents: string): string[] => {
   const { headerEndIndex } = locateTodoHeader(contents);
   const section = contents.slice(headerEndIndex);
-  const lines = section.split(/\r?\n/);
+
+  // Split by double newlines to get blocks
+  const blocks = section.split(/\n\n+/);
   const items: string[] = [];
 
-  for (const rawLine of lines) {
-    const trimmedLine = rawLine.trim();
+  for (const block of blocks) {
+    const trimmedBlock = block.trim();
 
-    if (!trimmedLine) {
+    if (!trimmedBlock) {
       continue;
     }
 
-    if (trimmedLine.startsWith("#")) {
+    // Check if block starts with a header (stop processing)
+    if (trimmedBlock.startsWith("#")) {
       break;
     }
 
-    if (trimmedLine.startsWith("-")) {
-      const text = trimmedLine.slice(1).trimStart();
+    // If block starts with "- ", remove the dash and add the rest
+    if (trimmedBlock.startsWith("- ")) {
+      const text = trimmedBlock.slice(2);
       items.push(text);
       continue;
     }
 
-    items.push(trimmedLine);
+    // Otherwise, add the entire block as-is (for backwards compatibility)
+    items.push(trimmedBlock);
   }
 
   return items;
@@ -59,10 +64,22 @@ export const appendTodoItem = (contents: string, item: string): string => {
   const { headerEndIndex } = locateTodoHeader(contents);
   const before = contents.slice(0, headerEndIndex);
   const after = contents.slice(headerEndIndex);
-  const needsLeadingNewline = !before.endsWith("\n");
-  const needsTrailingNewline = after.length > 0 && !after.startsWith("\n");
-  const prefix = needsLeadingNewline ? "\n" : "";
-  const suffix = needsTrailingNewline ? "\n" : "";
 
-  return `${before}${prefix}${sanitized}${suffix}${after}`;
+  // Ensure the item starts with "- " if it doesn't already
+  const itemWithDash = sanitized.startsWith("- ")
+    ? sanitized
+    : `- ${sanitized}`;
+
+  // Add double newline before the item
+  const needsLeadingNewline = !before.endsWith("\n");
+  const prefix = needsLeadingNewline ? "\n\n" : "\n";
+
+  // Add single newline after the item, but only if there's existing content
+  // If the existing content already starts with a newline, we add just one more to make it double
+  let suffix = "";
+  if (after.length > 0) {
+    suffix = after.startsWith("\n") ? "" : "\n";
+  }
+
+  return `${before}${prefix}${itemWithDash}${suffix}${after}`;
 };

@@ -7,4 +7,6 @@ and commit everything.
 
 # TODO
 
+- The Add Item function in todos should support multiline input
+
 - file view should show line numbers
