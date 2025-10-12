@@ -21,3 +21,7 @@ export interface FileContentResponse {
   truncated: boolean;
   language: string | null;
 }
+
+export interface TodosResponse {
+  items: string[];
+}
