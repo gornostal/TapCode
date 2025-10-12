@@ -3,11 +3,10 @@ import type { TasksResponse } from "@shared/messages";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
 
 type TaskListProps = {
-  projectName: string;
   onBackToBrowser: () => void;
 };
 
-const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
+const TaskList = ({ onBackToBrowser }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +163,23 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
     await addTask(text);
   };
 
+  const deleteTask = async (index: number) => {
+    try {
+      const response = await fetch(`/api/tasks/${index}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as TasksResponse;
+      setTasks(data.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete task");
+    }
+  };
+
   return (
     <>
       <header>
@@ -269,7 +285,17 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
                   <circle cx="4" cy="13" r="1.5" />
                   <circle cx="12" cy="13" r="1.5" />
                 </svg>
-                <span className="whitespace-pre-wrap">{item}</span>
+                <span className="flex-1 whitespace-pre-wrap">{item}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void deleteTask(index);
+                  }}
+                  className="ml-2 flex-shrink-0 rounded px-2 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+                  aria-label="Delete task"
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>

@@ -190,3 +190,112 @@ export const reorderTaskItem = (
 
   return `${before}\n\n${formattedItems}\n${after}`;
 };
+
+export const removeTaskItem = (contents: string, index: number): string => {
+  const items = parseTaskItems(contents);
+
+  // Validate index
+  if (index < 0 || index >= items.length) {
+    const error = Object.assign(
+      new Error(
+        `Invalid index: ${index}. Must be between 0 and ${items.length - 1}`,
+      ),
+      { code: "EINVALIDINDEX" },
+    );
+    throw error;
+  }
+
+  // Remove the item at the specified index
+  const updatedItems = items.filter((_, i) => i !== index);
+
+  // If all items are removed, return content with empty tasks section
+  if (updatedItems.length === 0) {
+    const { headerEndIndex } = locateTaskHeader(contents);
+    const before = contents.slice(0, headerEndIndex);
+
+    // Find content after tasks section
+    const afterHeader = contents.slice(headerEndIndex);
+    const lines = afterHeader.split("\n");
+    let tasksSectionEnd = 0;
+    let foundFirstItem = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Skip initial empty lines
+      if (!foundFirstItem && !line.trim()) {
+        continue;
+      }
+
+      // Check if we hit a new header (stop processing)
+      if (line.trim().startsWith("#")) {
+        break;
+      }
+
+      // If we found a task item or are in a task
+      if (line.startsWith("- ") || (foundFirstItem && line.startsWith("  "))) {
+        foundFirstItem = true;
+        tasksSectionEnd = i + 1;
+      } else if (foundFirstItem && !line.trim()) {
+        // Empty line within tasks section
+        tasksSectionEnd = i + 1;
+      } else if (foundFirstItem && line.trim() && !line.startsWith("  ")) {
+        // Non-task content found, end of tasks section
+        break;
+      }
+    }
+
+    const after = lines.slice(tasksSectionEnd).join("\n");
+    return `${before}\n${after}`;
+  }
+
+  // Rebuild the file contents with remaining items
+  const { headerEndIndex } = locateTaskHeader(contents);
+  const before = contents.slice(0, headerEndIndex);
+
+  // Find the end of the tasks section
+  const afterHeader = contents.slice(headerEndIndex);
+  const lines = afterHeader.split("\n");
+  let tasksSectionEnd = 0;
+  let foundFirstItem = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Skip initial empty lines
+    if (!foundFirstItem && !line.trim()) {
+      continue;
+    }
+
+    // Check if we hit a new header (stop processing)
+    if (line.trim().startsWith("#")) {
+      break;
+    }
+
+    // If we found a task item or are in a task
+    if (line.startsWith("- ") || (foundFirstItem && line.startsWith("  "))) {
+      foundFirstItem = true;
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && !line.trim()) {
+      // Empty line within tasks section
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && line.trim() && !line.startsWith("  ")) {
+      // Non-task content found, end of tasks section
+      break;
+    }
+  }
+
+  const after = lines.slice(tasksSectionEnd).join("\n");
+
+  // Format the remaining items
+  const formattedItems = updatedItems
+    .map((item) => {
+      const itemLines = item.split("\n");
+      return itemLines
+        .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`))
+        .join("\n");
+    })
+    .join("\n\n");
+
+  return `${before}\n\n${formattedItems}\n${after}`;
+};

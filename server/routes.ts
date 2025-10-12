@@ -5,7 +5,12 @@ import {
   normalizeDirectoryQueryParam,
 } from "./utils/queryParams";
 import { getFiles, getFileContent } from "./services/filesService";
-import { getTasks, addTask, reorderTask } from "./services/tasksService";
+import {
+  getTasks,
+  addTask,
+  reorderTask,
+  removeTask,
+} from "./services/tasksService";
 import { getGitStatus } from "./services/gitService";
 import { extractTextFromBody } from "./utils/validation";
 import {
@@ -105,6 +110,24 @@ export function registerRoutes(app: Express) {
     }
 
     reorderTask(taskPath, fromIndex, toIndex)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        handleTaskError(error, res, next);
+      });
+  });
+
+  router.delete("/tasks/:index", (req, res, next) => {
+    const indexParam = req.params.index;
+    const index = Number.parseInt(indexParam, 10);
+
+    if (Number.isNaN(index)) {
+      res.status(400).json({ error: "index must be a valid number" });
+      return;
+    }
+
+    removeTask(taskPath, index)
       .then((result) => {
         res.json(result);
       })

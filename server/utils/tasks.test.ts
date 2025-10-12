@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { addTaskItem, parseTaskItems, reorderTaskItem } from "./tasks";
+import {
+  addTaskItem,
+  parseTaskItems,
+  reorderTaskItem,
+  removeTaskItem,
+} from "./tasks";
 
 const withTaskSection = `# Instructions
 
@@ -266,5 +271,98 @@ describe("reorderTaskItem", () => {
     const items = parseTaskItems(updated);
 
     expect(items).toEqual(["second", "third", "first"]);
+  });
+});
+
+describe("removeTaskItem", () => {
+  it("removes a task at the specified index", () => {
+    const updated = removeTaskItem(withTaskSection, 0);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual(["file view should show line numbers"]);
+  });
+
+  it("removes the last task", () => {
+    const updated = removeTaskItem(withTaskSection, 1);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual(["add GET tasks API endpoint"]);
+  });
+
+  it("preserves the footer section", () => {
+    const updated = removeTaskItem(withTaskSection, 0);
+
+    expect(updated).toContain("# Footer\n\nThanks!\n");
+  });
+
+  it("preserves the instructions section", () => {
+    const updated = removeTaskItem(withTaskSection, 0);
+
+    expect(updated).toContain(
+      "# Instructions\n\nImplement the first task, run tests, and remove the item from this file.",
+    );
+  });
+
+  it("handles removing all tasks leaving an empty tasks section", () => {
+    const contents = `# Tasks
+
+- only task
+
+# Footer
+
+Thanks!
+`;
+    const updated = removeTaskItem(contents, 0);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([]);
+    expect(updated).toContain("# Tasks\n");
+    expect(updated).toContain("# Footer\n\nThanks!\n");
+  });
+
+  it("handles multiline task removal", () => {
+    const updated = removeTaskItem(withMultilineTask, 0);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([
+      "This, however, is a new item.",
+      "And this. Althought it doesn't have a paragraph break.",
+    ]);
+  });
+
+  it("preserves multiline formatting of remaining tasks", () => {
+    const updated = removeTaskItem(withMultilineTask, 1);
+
+    expect(updated).toContain(
+      "- Item can span across multiple\n  lines by keeping 2-space indentation.",
+    );
+    expect(updated).toContain(
+      "- And this. Althought it doesn't have a paragraph break.",
+    );
+  });
+
+  it("throws when index is out of bounds (negative)", () => {
+    const act = () => removeTaskItem(withTaskSection, -1);
+
+    expect(act).toThrowError(/Invalid index/);
+  });
+
+  it("throws when index is out of bounds (too large)", () => {
+    const act = () => removeTaskItem(withTaskSection, 10);
+
+    expect(act).toThrowError(/Invalid index/);
+  });
+
+  it("removes a task from the middle of a list with 3 items", () => {
+    const contents = `# Tasks
+
+- first
+- second
+- third
+`;
+    const updated = removeTaskItem(contents, 1);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual(["first", "third"]);
   });
 });

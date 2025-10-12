@@ -1,7 +1,6 @@
 import type { FileListItem } from "@shared/messages";
 
 type FileBrowserProps = {
-  projectName: string;
   currentDirectoryLabel: string;
   canNavigateUp: boolean;
   onNavigateUp: () => void;
@@ -15,7 +14,6 @@ type FileBrowserProps = {
 };
 
 const FileBrowser = ({
-  projectName,
   currentDirectoryLabel,
   canNavigateUp,
   onNavigateUp,
@@ -28,16 +26,6 @@ const FileBrowser = ({
   onFileClick,
 }: FileBrowserProps) => (
   <>
-    <header>
-      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-        Project files
-      </p>
-      <p className="mt-2 text-base text-slate-400">
-        Listing items inside{" "}
-        <span className="font-mono">{currentDirectoryLabel}</span>
-      </p>
-    </header>
-
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wider text-slate-500">
         <span>Current directory</span>

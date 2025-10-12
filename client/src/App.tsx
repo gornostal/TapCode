@@ -307,13 +307,9 @@ function App() {
             onBackToBrowser={handleBackToBrowser}
           />
         ) : isTaskRoute ? (
-          <TaskList
-            projectName={projectName}
-            onBackToBrowser={handleBackToBrowser}
-          />
+          <TaskList onBackToBrowser={handleBackToBrowser} />
         ) : (
           <FileBrowser
-            projectName={projectName}
             currentDirectoryLabel={currentDirectoryLabel}
             canNavigateUp={canNavigateUp}
             onNavigateUp={handleNavigateUp}
