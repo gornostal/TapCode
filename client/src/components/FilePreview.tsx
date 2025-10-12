@@ -92,12 +92,6 @@ const FilePreview = ({
 
   return (
     <>
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {projectName || "Loading project"}
-        </h1>
-      </header>
-
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

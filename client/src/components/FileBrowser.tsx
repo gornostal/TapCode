@@ -29,10 +29,7 @@ const FileBrowser = ({
 }: FileBrowserProps) => (
   <>
     <header>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-        {projectName || "Loading project"}
-      </h1>
-      <p className="mt-2 text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
         Project files
       </p>
       <p className="mt-2 text-base text-slate-400">

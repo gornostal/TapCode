@@ -167,10 +167,7 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
   return (
     <>
       <header>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          {projectName ? `${projectName} tasks` : "Project tasks"}
-        </h1>
-        <p className="mt-2 text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
           Outstanding items
         </p>
         <p className="mt-2 text-base text-slate-400">
