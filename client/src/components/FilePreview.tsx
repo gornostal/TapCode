@@ -157,8 +157,7 @@ const FilePreview = ({
                   }`}
                   dangerouslySetInnerHTML={{
                     __html:
-                      highlighted?.html ??
-                      escapeHtml(selectedFile.content),
+                      highlighted?.html ?? escapeHtml(selectedFile.content),
                   }}
                 />
               </pre>
