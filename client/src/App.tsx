@@ -327,8 +327,8 @@ function App() {
               </h1>
             </header>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-5 py-3">
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-slate-500">
                     {projectName || "Project"}
@@ -339,9 +339,9 @@ function App() {
                       : "Loading file"}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-3 text-xs uppercase tracking-wider text-slate-500 sm:flex-row sm:items-center">
+                <div className="flex w-full flex-col items-start gap-3 text-xs uppercase tracking-wider text-slate-500 sm:w-auto sm:flex-row sm:items-center sm:text-right">
                   {selectedFile && (
-                    <div className="text-right">
+                    <div className="sm:text-right">
                       <p>{formatBytes(selectedFile.size)}</p>
                       {highlightedLanguageLabel && (
                         <p className="mt-1">{highlightedLanguageLabel}</p>
@@ -356,54 +356,52 @@ function App() {
                   <button
                     type="button"
                     onClick={handleBackToBrowser}
-                    className="rounded border border-slate-700 px-3 py-1 font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+                    className="rounded border border-slate-700 px-3 py-1 font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 sm:self-center"
                   >
                     Back to files
                   </button>
                 </div>
               </div>
-              <div className="px-5 py-4">
-                {isFileLoading ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    Loading file…
-                  </p>
-                ) : fileError ? (
-                  <p className="font-mono text-sm text-rose-400">
-                    Unable to load file: {fileError}
-                  </p>
-                ) : !selectedFile ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    No data available for this file.
-                  </p>
-                ) : selectedFile.isBinary ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    This file appears to be binary and cannot be previewed.
-                  </p>
-                ) : selectedFile.content ? (
-                  <div className="flex flex-col gap-3">
-                    <div className="overflow-x-auto">
-                      <pre className="min-w-full rounded-lg bg-slate-950/60 p-4 text-sm leading-relaxed">
-                        <code
-                          className={`hljs ${
-                            highlighted?.language
-                              ? `language-${highlighted.language}`
-                              : ""
-                          }`}
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              highlighted?.html ??
-                              escapeHtml(selectedFile.content),
-                          }}
-                        />
-                      </pre>
-                    </div>
+              {isFileLoading ? (
+                <p className="font-mono text-sm text-slate-400">
+                  Loading file…
+                </p>
+              ) : fileError ? (
+                <p className="font-mono text-sm text-rose-400">
+                  Unable to load file: {fileError}
+                </p>
+              ) : !selectedFile ? (
+                <p className="font-mono text-sm text-slate-400">
+                  No data available for this file.
+                </p>
+              ) : selectedFile.isBinary ? (
+                <p className="font-mono text-sm text-slate-400">
+                  This file appears to be binary and cannot be previewed.
+                </p>
+              ) : selectedFile.content ? (
+                <div className="flex flex-col gap-3">
+                  <div className="overflow-x-auto">
+                    <pre className="min-w-full rounded-lg bg-slate-950/60 p-4 text-sm leading-relaxed">
+                      <code
+                        className={`hljs ${
+                          highlighted?.language
+                            ? `language-${highlighted.language}`
+                            : ""
+                        }`}
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            highlighted?.html ??
+                            escapeHtml(selectedFile.content),
+                        }}
+                      />
+                    </pre>
                   </div>
-                ) : (
-                  <p className="font-mono text-sm text-slate-400">
-                    No preview available for this file.
-                  </p>
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className="font-mono text-sm text-slate-400">
+                  No preview available for this file.
+                </p>
+              )}
             </div>
 
             <footer className="text-xs text-slate-500">
@@ -429,10 +427,10 @@ function App() {
               </p>
             </header>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
-              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3 text-xs uppercase tracking-wider text-slate-500">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wider text-slate-500">
                 <span>Current directory</span>
-                <div className="flex items-center gap-3 text-right">
+                <div className="flex flex-wrap items-center gap-3 text-right sm:flex-nowrap">
                   <span className="font-mono text-slate-400">
                     {currentDirectoryLabel}
                   </span>
@@ -447,83 +445,86 @@ function App() {
                 </div>
               </div>
               {isLoading ? (
-                <p className="px-5 py-6 font-mono text-sm text-slate-400">
+                <p className="py-4 font-mono text-sm text-slate-400">
                   Loading files…
                 </p>
               ) : error ? (
-                <p className="px-5 py-6 font-mono text-sm text-rose-400">
+                <p className="py-4 font-mono text-sm text-rose-400">
                   Unable to load files: {error}
                 </p>
               ) : files.length === 0 ? (
-                <p className="px-5 py-6 font-mono text-sm text-slate-400">
+                <p className="py-4 font-mono text-sm text-slate-400">
                   No items found in this directory.
                 </p>
               ) : (
-                <ul className="min-w-full divide-y divide-slate-800 font-mono text-sm text-slate-100">
-                  {files.map((item) => {
-                    const segments = item.path.split("/");
-                    const name = segments[segments.length - 1] ?? item.path;
-                    const label = item.kind === "directory" ? `${name}/` : name;
-                    const isActiveFile =
-                      item.kind === "file" && item.path === activeFilePath;
-                    const isPendingFile =
-                      item.kind === "file" &&
-                      item.path === activeFilePath &&
-                      isFileLoading;
-                    const statusLabel =
-                      item.kind === "file"
-                        ? isPendingFile
-                          ? "loading"
-                          : isActiveFile
-                            ? "open"
-                            : "file"
-                        : "directory";
+                <div className="overflow-x-auto">
+                  <ul className="min-w-full divide-y divide-slate-800 font-mono text-sm text-slate-100">
+                    {files.map((item) => {
+                      const segments = item.path.split("/");
+                      const name = segments[segments.length - 1] ?? item.path;
+                      const label =
+                        item.kind === "directory" ? `${name}/` : name;
+                      const isActiveFile =
+                        item.kind === "file" && item.path === activeFilePath;
+                      const isPendingFile =
+                        item.kind === "file" &&
+                        item.path === activeFilePath &&
+                        isFileLoading;
+                      const statusLabel =
+                        item.kind === "file"
+                          ? isPendingFile
+                            ? "loading"
+                            : isActiveFile
+                              ? "open"
+                              : "file"
+                          : "directory";
 
-                    return (
-                      <li
-                        key={item.path}
-                        className="flex min-w-max items-center justify-between px-5 py-3"
-                      >
-                        {item.kind === "directory" ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDirectoryClick(item)}
-                            className="flex items-center gap-3 whitespace-nowrap text-left text-slate-100 transition hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
-                          >
-                            <span
-                              aria-hidden
-                              className="text-lg text-slate-500 sm:text-xl"
+                      return (
+                        <li
+                          key={item.path}
+                          className="flex min-w-max items-center justify-between px-3 py-3 sm:px-4"
+                        >
+                          {item.kind === "directory" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDirectoryClick(item)}
+                              className="flex items-center gap-3 whitespace-nowrap text-left text-slate-100 transition hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
                             >
-                              📁
-                            </span>
-                            <span>{label}</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleFileClick(item)}
-                            className={`flex items-center gap-3 whitespace-nowrap text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 ${
-                              isActiveFile
-                                ? "text-sky-300"
-                                : "text-slate-100 hover:text-slate-50"
-                            }`}
-                          >
-                            <span
-                              aria-hidden
-                              className="text-lg text-slate-500 sm:text-xl"
+                              <span
+                                aria-hidden
+                                className="text-lg text-slate-500 sm:text-xl"
+                              >
+                                📁
+                              </span>
+                              <span>{label}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleFileClick(item)}
+                              className={`flex items-center gap-3 whitespace-nowrap text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 ${
+                                isActiveFile
+                                  ? "text-sky-300"
+                                  : "text-slate-100 hover:text-slate-50"
+                              }`}
                             >
-                              📄
-                            </span>
-                            <span>{label}</span>
-                          </button>
-                        )}
-                        <span className="whitespace-nowrap text-xs uppercase tracking-wider text-slate-500">
-                          {statusLabel}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                              <span
+                                aria-hidden
+                                className="text-lg text-slate-500 sm:text-xl"
+                              >
+                                📄
+                              </span>
+                              <span>{label}</span>
+                            </button>
+                          )}
+                          <span className="whitespace-nowrap text-xs uppercase tracking-wider text-slate-500">
+                            {statusLabel}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
             </div>
 
