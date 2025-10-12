@@ -66,6 +66,11 @@ export const handleTaskError = (
     return;
   }
 
+  if (code === "EINVALIDINDEX" || code === "EINVALIDTASK") {
+    res.status(400).json({ error: (error as Error).message });
+    return;
+  }
+
   next(error);
 };
 

@@ -6,7 +6,7 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- move title (h1) from the page section to a static header bar that shows just the project name in the middle
+- Change task delete text button to icon button and put it on the left side under the dragging indicator
 
 - instead of having "back to files" button and current di/file name in the body, create a fixed bar above the toolbar that will display current path, and the "back" button on the far right
 
