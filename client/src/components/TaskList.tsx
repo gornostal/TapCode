@@ -273,29 +273,40 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
                       : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80"
                 }`}
               >
-                <svg
-                  className="h-4 w-4 flex-shrink-0 text-slate-600 transition-colors group-hover:text-slate-400"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                >
-                  <circle cx="4" cy="3" r="1.5" />
-                  <circle cx="12" cy="3" r="1.5" />
-                  <circle cx="4" cy="8" r="1.5" />
-                  <circle cx="12" cy="8" r="1.5" />
-                  <circle cx="4" cy="13" r="1.5" />
-                  <circle cx="12" cy="13" r="1.5" />
-                </svg>
+                <div className="flex flex-col items-center gap-1">
+                  <svg
+                    className="h-4 w-4 flex-shrink-0 text-slate-600 transition-colors group-hover:text-slate-400"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                  >
+                    <circle cx="4" cy="3" r="1.5" />
+                    <circle cx="12" cy="3" r="1.5" />
+                    <circle cx="4" cy="8" r="1.5" />
+                    <circle cx="12" cy="8" r="1.5" />
+                    <circle cx="4" cy="13" r="1.5" />
+                    <circle cx="12" cy="13" r="1.5" />
+                  </svg>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void deleteTask(index);
+                    }}
+                    className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+                    aria-label="Delete task"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <path d="M3 3 L13 13 M13 3 L3 13" />
+                    </svg>
+                  </button>
+                </div>
                 <span className="flex-1 whitespace-pre-wrap">{item}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void deleteTask(index);
-                  }}
-                  className="ml-2 flex-shrink-0 rounded px-2 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400 transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
-                  aria-label="Delete task"
-                >
-                  Delete
-                </button>
               </li>
             ))}
           </ul>
