@@ -110,4 +110,19 @@ describe("searchFiles", () => {
       { path: "src/build/keep.ts", kind: "file" },
     ]);
   });
+
+  it("respects wildcard patterns like *.log in .gitignore", async () => {
+    await writeFile(".gitignore", "*.log\n");
+    await writeFile("test.log");
+    await writeFile("src/debug.log");
+    await writeFile("src/code.ts");
+
+    const logResults = await searchFiles("test.log");
+    const debugResults = await searchFiles("debug.log");
+    const tsResults = await searchFiles("code.ts");
+
+    expect(logResults).toEqual([]);
+    expect(debugResults).toEqual([]);
+    expect(tsResults).toEqual([{ path: "src/code.ts", kind: "file" }]);
+  });
 });

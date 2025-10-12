@@ -1,4 +1,5 @@
 import type { FileListItem } from "@shared/messages";
+import NavigationBar from "@/components/NavigationBar";
 
 type FileBrowserProps = {
   currentDirectoryLabel: string;
@@ -27,22 +28,6 @@ const FileBrowser = ({
 }: FileBrowserProps) => (
   <>
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wider text-slate-500">
-        <span>Current directory</span>
-        <div className="flex flex-wrap items-center gap-3 text-right sm:flex-nowrap">
-          <span className="font-mono text-slate-400">
-            {currentDirectoryLabel}
-          </span>
-          <button
-            type="button"
-            onClick={onNavigateUp}
-            disabled={!canNavigateUp}
-            className="rounded border border-slate-700 px-3 py-1 font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-600"
-          >
-            Up
-          </button>
-        </div>
-      </div>
       {isLoading ? (
         <p className="py-4 font-mono text-sm text-slate-400">Loading files…</p>
       ) : error ? (
@@ -129,6 +114,11 @@ const FileBrowser = ({
     <footer className="text-xs text-slate-500">
       File list updates on page refresh to reflect the current file system.
     </footer>
+    <NavigationBar
+      currentPath={currentDirectoryLabel}
+      onBack={onNavigateUp}
+      disabled={!canNavigateUp}
+    />
   </>
 );
 

@@ -3,6 +3,7 @@ import hljs from "highlight.js/lib/common";
 import "highlight.js/styles/github-dark.css";
 
 import type { FileContentResponse } from "@shared/messages";
+import NavigationBar from "@/components/NavigationBar";
 
 const PREVIEW_BYTE_LIMIT = 200_000;
 
@@ -32,6 +33,18 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const addLineNumbers = (html: string): string => {
+  const lines = html.split("\n");
+  const lineNumberWidth = lines.length.toString().length;
+
+  return lines
+    .map((line, index) => {
+      const lineNumber = (index + 1).toString().padStart(lineNumberWidth, " ");
+      return `<span class="line-number">${lineNumber}</span>${line}`;
+    })
+    .join("\n");
+};
+
 type HighlightResult = {
   html: string;
   language: string | null;
@@ -60,6 +73,9 @@ const FilePreview = ({
     }
 
     try {
+      let htmlContent: string;
+      let detectedLanguage: string | null;
+
       if (
         selectedFile.language &&
         hljs.getLanguage(selectedFile.language) !== undefined
@@ -68,20 +84,21 @@ const FilePreview = ({
           language: selectedFile.language,
           ignoreIllegals: true,
         });
-        return {
-          html: result.value,
-          language: result.language ?? selectedFile.language ?? null,
-        };
+        htmlContent = result.value;
+        detectedLanguage = result.language ?? selectedFile.language ?? null;
+      } else {
+        const result = hljs.highlightAuto(selectedFile.content);
+        htmlContent = result.value;
+        detectedLanguage = result.language ?? null;
       }
 
-      const result = hljs.highlightAuto(selectedFile.content);
       return {
-        html: result.value,
-        language: result.language ?? null,
+        html: addLineNumbers(htmlContent),
+        language: detectedLanguage,
       };
     } catch {
       return {
-        html: escapeHtml(selectedFile.content),
+        html: addLineNumbers(escapeHtml(selectedFile.content)),
         language: selectedFile.language ?? null,
       };
     }
@@ -90,6 +107,10 @@ const FilePreview = ({
   const highlightedLanguageLabel =
     highlighted?.language ?? selectedFile?.language ?? null;
 
+  const currentPath = displayedFilePath
+    ? `/${displayedFilePath}`
+    : "Loading file";
+
   return (
     <>
       <div className="flex flex-col gap-5">
@@ -97,9 +118,6 @@ const FilePreview = ({
           <div>
             <p className="text-xs uppercase tracking-wider text-slate-500">
               {projectName || "Project"}
-            </p>
-            <p className="mt-1 font-mono text-sm text-slate-300">
-              {displayedFilePath ? `/${displayedFilePath}` : "Loading file"}
             </p>
           </div>
           <div className="flex w-full flex-col items-start gap-3 text-xs uppercase tracking-wider text-slate-500 sm:w-auto sm:flex-row sm:items-center sm:text-right">
@@ -116,13 +134,6 @@ const FilePreview = ({
                 )}
               </div>
             )}
-            <button
-              type="button"
-              onClick={onBackToBrowser}
-              className="rounded border border-slate-700 px-3 py-1 font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 sm:self-center"
-            >
-              Back to files
-            </button>
           </div>
         </div>
         {isFileLoading ? (
@@ -168,6 +179,7 @@ const FilePreview = ({
         Use Back to files or your browser history to return to the project
         listing.
       </footer>
+      <NavigationBar currentPath={currentPath} onBack={onBackToBrowser} />
     </>
   );
 };

@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+.line-number {
+  display: inline-block;
+  min-width: 3ch;
+  margin-right: 1em;
+  padding-right: 1em;
+  text-align: right;
+  color: #64748b;
+  user-select: none;
+  border-right: 1px solid #334155;
+}

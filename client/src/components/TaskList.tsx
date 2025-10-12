@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { TasksResponse } from "@shared/messages";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
+import NavigationBar from "@/components/NavigationBar";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
@@ -196,15 +197,6 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
       </header>
 
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onBackToBrowser}
-            className="rounded border border-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
-          >
-            Back to files
-          </button>
-        </div>
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-900/70 p-4 sm:flex-row sm:items-center sm:gap-3"
@@ -317,6 +309,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
+      <NavigationBar currentPath="/tasks" onBack={onBackToBrowser} />
     </>
   );
 };
