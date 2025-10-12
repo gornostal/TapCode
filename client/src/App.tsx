@@ -90,7 +90,7 @@ function App() {
 
       try {
         const response = await fetch(
-          params.size ? `/files?${params.toString()}` : "/files",
+          params.size ? `/api/files?${params.toString()}` : "/api/files",
           { signal: controller.signal },
         );
 
@@ -155,7 +155,7 @@ function App() {
     params.set("path", path);
 
     try {
-      const response = await fetch(`/file?${params.toString()}`, {
+      const response = await fetch(`/api/file?${params.toString()}`, {
         signal: controller.signal,
       });
 

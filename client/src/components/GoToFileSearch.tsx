@@ -89,7 +89,7 @@ const GoToFileSearch = ({
         const params = new URLSearchParams();
         params.set("q", trimmedQuery);
 
-        const response = await fetch(`/files?${params.toString()}`, {
+        const response = await fetch(`/api/files?${params.toString()}`, {
           signal: controller.signal,
         });
 

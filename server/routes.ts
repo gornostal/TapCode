@@ -149,5 +149,5 @@ export function registerRoutes(app: Express) {
       });
   });
 
-  app.use(router);
+  app.use("/api", router);
 }
