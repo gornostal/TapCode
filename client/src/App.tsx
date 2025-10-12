@@ -36,7 +36,32 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+type RouteState =
+  | {
+      page: "list";
+    }
+  | {
+      page: "file";
+      path: string;
+    };
+
+const parseRoute = (): RouteState => {
+  const { pathname, search } = window.location;
+
+  if (pathname.startsWith("/file")) {
+    const params = new URLSearchParams(search);
+    const pathParam = params.get("path");
+
+    if (pathParam && pathParam.trim()) {
+      return { page: "file", path: pathParam };
+    }
+  }
+
+  return { page: "list" };
+};
+
 function App() {
+  const [route, setRoute] = useState<RouteState>(() => parseRoute());
   const [files, setFiles] = useState<FileListItem[]>([]);
   const [currentDirectory, setCurrentDirectory] = useState("");
   const [parentDirectory, setParentDirectory] = useState<string | null>(null);
@@ -61,6 +86,18 @@ function App() {
     setActiveFilePath(null);
     setFileError(null);
     setIsFileLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setRoute(parseRoute());
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   useEffect(() => {
@@ -171,6 +208,43 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (route.page === "file") {
+      void loadFile(route.path);
+      return;
+    }
+
+    resetFileViewer();
+  }, [route, loadFile, resetFileViewer]);
+
+  const openFilePage = useCallback(
+    (path: string) => {
+      const params = new URLSearchParams();
+      params.set("path", path);
+
+      window.history.pushState(
+        { page: "file", path },
+        "",
+        `/file?${params.toString()}`,
+      );
+
+      setRoute({ page: "file", path });
+    },
+    [setRoute],
+  );
+
+  const handleBackToBrowser = useCallback(() => {
+    const state = window.history.state as RouteState | null;
+
+    if (state && state.page === "file") {
+      window.history.back();
+      return;
+    }
+
+    window.history.replaceState({ page: "list" }, "", "/");
+    setRoute({ page: "list" });
+  }, [setRoute]);
+
   const currentDirectoryLabel = currentDirectory ? `/${currentDirectory}` : "/";
   const canNavigateUp = parentDirectory !== null;
 
@@ -197,7 +271,7 @@ function App() {
       return;
     }
 
-    void loadFile(item.path);
+    openFilePage(item.path);
   };
 
   const highlighted = useMemo(() => {
@@ -236,24 +310,133 @@ function App() {
   const highlightedLanguageLabel =
     highlighted?.language ?? selectedFile?.language ?? null;
 
+  const isFileRoute = route.page === "file";
+  const displayedFilePath =
+    activeFilePath ?? (route.page === "file" ? route.path : null);
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-12 sm:px-6 lg:px-8">
-        <header>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-            PocketIDE
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Project files
-          </h1>
-          <p className="mt-2 text-base text-slate-400">
-            Listing items inside{" "}
-            <span className="font-mono">{currentDirectoryLabel}</span>.
-          </p>
-        </header>
+        {isFileRoute ? (
+          <>
+            <header>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+                PocketIDE
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+                File view
+              </h1>
+              <p className="mt-2 text-base text-slate-400">
+                Showing{" "}
+                <span className="font-mono">
+                  {displayedFilePath ? `/${displayedFilePath}` : "Loading file"}
+                </span>
+                .
+              </p>
+            </header>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex-1">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-5 py-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-slate-500">
+                    File view
+                  </p>
+                  <p className="mt-1 font-mono text-sm text-slate-300">
+                    {displayedFilePath
+                      ? `/${displayedFilePath}`
+                      : "Loading file"}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-3 text-xs uppercase tracking-wider text-slate-500 sm:flex-row sm:items-center">
+                  {selectedFile && (
+                    <div className="text-right">
+                      <p>{formatBytes(selectedFile.size)}</p>
+                      {highlightedLanguageLabel && (
+                        <p className="mt-1">{highlightedLanguageLabel}</p>
+                      )}
+                      {selectedFile.truncated && (
+                        <p className="mt-1 text-amber-400">
+                          Preview limited to {formatBytes(PREVIEW_BYTE_LIMIT)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleBackToBrowser}
+                    className="rounded border border-slate-700 px-3 py-1 font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+                  >
+                    Back to files
+                  </button>
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                {isFileLoading ? (
+                  <p className="font-mono text-sm text-slate-400">
+                    Loading file…
+                  </p>
+                ) : fileError ? (
+                  <p className="font-mono text-sm text-rose-400">
+                    Unable to load file: {fileError}
+                  </p>
+                ) : !selectedFile ? (
+                  <p className="font-mono text-sm text-slate-400">
+                    No data available for this file.
+                  </p>
+                ) : selectedFile.isBinary ? (
+                  <p className="font-mono text-sm text-slate-400">
+                    This file appears to be binary and cannot be previewed.
+                  </p>
+                ) : selectedFile.content ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="overflow-x-auto">
+                      <pre className="min-w-full rounded-lg bg-slate-950/60 p-4 text-sm leading-relaxed">
+                        <code
+                          className={`hljs ${
+                            highlighted?.language
+                              ? `language-${highlighted.language}`
+                              : ""
+                          }`}
+                          dangerouslySetInnerHTML={{
+                            __html:
+                              highlighted?.html ??
+                              escapeHtml(selectedFile.content),
+                          }}
+                        />
+                      </pre>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="font-mono text-sm text-slate-400">
+                    No preview available for this file.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <footer className="text-xs text-slate-500">
+              Use Back to files or your browser history to return to the project
+              listing.
+            </footer>
+          </>
+        ) : (
+          <>
+            <header>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+                PocketIDE
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Project files
+              </h1>
+              <p className="mt-2 text-base text-slate-400">
+                Listing items inside{" "}
+                <span className="font-mono">{currentDirectoryLabel}</span>.
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Select a file to open it in a dedicated preview page.
+              </p>
+            </header>
+
             <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
               <div className="flex items-center justify-between border-b border-slate-800 px-5 py-3 text-xs uppercase tracking-wider text-slate-500">
                 <span>Current directory</span>
@@ -351,83 +534,13 @@ function App() {
                 </ul>
               )}
             </div>
-          </div>
 
-          <div className="flex-1">
-            <div className="h-full rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-5 py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-500">
-                    File preview
-                  </p>
-                  <p className="mt-1 font-mono text-sm text-slate-300">
-                    {activeFilePath ? `/${activeFilePath}` : "Select a file"}
-                  </p>
-                </div>
-                {selectedFile && (
-                  <div className="text-right text-xs uppercase tracking-wider text-slate-500">
-                    <p>{formatBytes(selectedFile.size)}</p>
-                    {highlightedLanguageLabel && (
-                      <p className="mt-1">{highlightedLanguageLabel}</p>
-                    )}
-                    {selectedFile.truncated && (
-                      <p className="mt-1 text-amber-400">
-                        Preview limited to {formatBytes(PREVIEW_BYTE_LIMIT)}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="px-5 py-4">
-                {isFileLoading ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    Loading file…
-                  </p>
-                ) : fileError ? (
-                  <p className="font-mono text-sm text-rose-400">
-                    Unable to load file: {fileError}
-                  </p>
-                ) : !activeFilePath ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    Choose a text file from the left to see a highlighted
-                    preview.
-                  </p>
-                ) : selectedFile?.isBinary ? (
-                  <p className="font-mono text-sm text-slate-400">
-                    This file appears to be binary and cannot be previewed.
-                  </p>
-                ) : selectedFile?.content ? (
-                  <div className="flex flex-col gap-3">
-                    <div className="overflow-x-auto">
-                      <pre className="min-w-full rounded-lg bg-slate-950/60 p-4 text-sm leading-relaxed">
-                        <code
-                          className={`hljs ${
-                            highlighted?.language
-                              ? `language-${highlighted.language}`
-                              : ""
-                          }`}
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              highlighted?.html ??
-                              escapeHtml(selectedFile.content),
-                          }}
-                        />
-                      </pre>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="font-mono text-sm text-slate-400">
-                    No preview available for this file.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <footer className="text-xs text-slate-500">
-          File list updates on page refresh to reflect the current file system.
-        </footer>
+            <footer className="text-xs text-slate-500">
+              File list updates on page refresh to reflect the current file
+              system.
+            </footer>
+          </>
+        )}
       </section>
     </main>
   );
