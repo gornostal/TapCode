@@ -9,7 +9,7 @@ import type {
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
 import GoToFileSearch from "@/components/GoToFileSearch";
-import TodoList from "@/components/TodoList";
+import TaskList from "@/components/TaskList";
 import Toolbar from "@/components/Toolbar";
 
 type RouteState =
@@ -21,14 +21,14 @@ type RouteState =
       path: string;
     }
   | {
-      page: "todo";
+      page: "tasks";
     };
 
 const parseRoute = (): RouteState => {
   const { pathname, search } = window.location;
 
-  if (pathname.startsWith("/todos")) {
-    return { page: "todo" };
+  if (pathname.startsWith("/tasks")) {
+    return { page: "tasks" };
   }
 
   if (pathname.startsWith("/file")) {
@@ -235,15 +235,15 @@ function App() {
     [openFilePage],
   );
 
-  const openTodoPage = useCallback(() => {
-    window.history.pushState({ page: "todo" }, "", "/todos");
-    setRoute({ page: "todo" });
+  const openTasksPage = useCallback(() => {
+    window.history.pushState({ page: "tasks" }, "", "/tasks");
+    setRoute({ page: "tasks" });
   }, [setRoute]);
 
   const handleBackToBrowser = useCallback(() => {
     const state = window.history.state as RouteState | null;
 
-    if (state && (state.page === "file" || state.page === "todo")) {
+    if (state && (state.page === "file" || state.page === "tasks")) {
       window.history.back();
       return;
     }
@@ -282,7 +282,7 @@ function App() {
   };
 
   const isFileRoute = route.page === "file";
-  const isTodoRoute = route.page === "todo";
+  const isTaskRoute = route.page === "tasks";
   const displayedFilePath =
     activeFilePath ?? (route.page === "file" ? route.path : null);
 
@@ -304,8 +304,8 @@ function App() {
             fileError={fileError}
             onBackToBrowser={handleBackToBrowser}
           />
-        ) : isTodoRoute ? (
-          <TodoList
+        ) : isTaskRoute ? (
+          <TaskList
             projectName={projectName}
             onBackToBrowser={handleBackToBrowser}
           />
@@ -333,8 +333,8 @@ function App() {
       <Toolbar
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
-        onOpenTodoList={openTodoPage}
-        isTodoListActive={isTodoRoute}
+        onOpenTaskList={openTasksPage}
+        isTaskListActive={isTaskRoute}
       />
     </main>
   );

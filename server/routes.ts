@@ -5,17 +5,17 @@ import {
   normalizeDirectoryQueryParam,
 } from "./utils/queryParams";
 import { getFiles, getFileContent } from "./services/filesService";
-import { getTodos, addTodo } from "./services/todosService";
+import { getTasks, addTask } from "./services/tasksService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
   handleFileContentError,
-  handleTodoError,
+  handleTaskError,
 } from "./utils/errorHandling";
 
 export function registerRoutes(app: Express) {
   const router = Router();
-  const todoPath = resolveFromRoot("TODO.md");
+  const taskPath = resolveFromRoot("Tasks.md");
 
   router.get("/files", (req, res, next) => {
     const query = normalizeQueryParam(req.query.q).trim();
@@ -50,17 +50,17 @@ export function registerRoutes(app: Express) {
       });
   });
 
-  router.get("/todos", (_req, res, next) => {
-    getTodos(todoPath)
+  router.get("/tasks", (_req, res, next) => {
+    getTasks(taskPath)
       .then((response) => {
         res.json(response);
       })
       .catch((error) => {
-        handleTodoError(error, res, next);
+        handleTaskError(error, res, next);
       });
   });
 
-  router.post("/todos", (req, res, next) => {
+  router.post("/tasks", (req, res, next) => {
     const body = req.body as unknown;
     const validationResult = extractTextFromBody(body);
 
@@ -69,12 +69,12 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    addTodo(todoPath, validationResult.text)
+    addTask(taskPath, validationResult.text)
       .then((result) => {
         res.status(201).json(result);
       })
       .catch((error) => {
-        handleTodoError(error, res, next);
+        handleTaskError(error, res, next);
       });
   });
 

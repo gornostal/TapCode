@@ -1,28 +1,28 @@
 import { FormEvent, useEffect, useState } from "react";
-import type { TodosResponse } from "@shared/messages";
+import type { TasksResponse } from "@shared/messages";
 
-type TodoListProps = {
+type TaskListProps = {
   projectName: string;
   onBackToBrowser: () => void;
 };
 
-const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
-  const [todos, setTodos] = useState<string[]>([]);
+const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
+  const [tasks, setTasks] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newTodoText, setNewTodoText] = useState("");
+  const [newTaskText, setNewTaskText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const loadTodos = async () => {
+    const loadTasks = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch("/api/todos", {
+        const response = await fetch("/api/tasks", {
           signal: controller.signal,
         });
 
@@ -30,10 +30,10 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
           throw new Error(`Request failed with status ${response.status}`);
         }
 
-        const data = (await response.json()) as TodosResponse;
+        const data = (await response.json()) as TasksResponse;
 
         if (!controller.signal.aborted) {
-          setTodos(data.items);
+          setTasks(data.items);
         }
       } catch (err) {
         if (controller.signal.aborted) {
@@ -48,18 +48,18 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
       }
     };
 
-    void loadTodos();
+    void loadTasks();
 
     return () => {
       controller.abort();
     };
   }, []);
 
-  const addTodo = async (trimmed: string) => {
+  const addTask = async (trimmed: string) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/todos", {
+      const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,8 +88,8 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
         throw new Error("Unexpected server response.");
       }
 
-      setTodos((current) => [data.text as string, ...current]);
-      setNewTodoText("");
+      setTasks((current) => [data.text as string, ...current]);
+      setNewTaskText("");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -99,32 +99,32 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmed = newTodoText.trim();
+    const trimmed = newTaskText.trim();
 
     if (!trimmed) {
-      setSubmitError("Enter a todo item before adding it.");
+      setSubmitError("Enter a task before adding it.");
       return;
     }
 
     setSubmitError(null);
-    void addTodo(trimmed);
+    void addTask(trimmed);
   };
 
   return (
     <>
       <header>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          {projectName ? `${projectName} todos` : "Project todos"}
+          {projectName ? `${projectName} tasks` : "Project tasks"}
         </h1>
         <p className="mt-2 text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
           Outstanding items
         </p>
         <p className="mt-2 text-base text-slate-400">
           Review the remaining tasks pulled from{" "}
-          <span className="font-mono">TODO.md</span>.
+          <span className="font-mono">Tasks.md</span>.
         </p>
         <p className="mt-2 text-sm text-slate-500">
-          Add new todos below or use the file browser to mark them complete.
+          Add new tasks below or use the file browser to mark them complete.
         </p>
       </header>
 
@@ -142,16 +142,16 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
           onSubmit={handleSubmit}
           className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-900/70 p-4 sm:flex-row sm:items-center sm:gap-3"
         >
-          <label htmlFor="new-todo-text" className="sr-only">
-            New todo item
+          <label htmlFor="new-task-text" className="sr-only">
+            New task
           </label>
           <input
-            id="new-todo-text"
+            id="new-task-text"
             name="text"
-            placeholder="Add a new todo item"
+            placeholder="Add a new task"
             className="w-full rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
-            value={newTodoText}
-            onChange={(event) => setNewTodoText(event.target.value)}
+            value={newTaskText}
+            onChange={(event) => setNewTaskText(event.target.value)}
             disabled={isSubmitting}
           />
           <button
@@ -170,19 +170,19 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
 
         {isLoading ? (
           <p className="py-4 font-mono text-sm text-slate-400">
-            Loading todos…
+            Loading tasks…
           </p>
         ) : error ? (
           <p className="py-4 font-mono text-sm text-rose-400">
-            Unable to load todos: {error}
+            Unable to load tasks: {error}
           </p>
-        ) : todos.length === 0 ? (
+        ) : tasks.length === 0 ? (
           <p className="py-4 font-mono text-sm text-slate-400">
             Nothing left on the list. Nice work!
           </p>
         ) : (
           <ul className="space-y-3">
-            {todos.map((item, index) => (
+            {tasks.map((item, index) => (
               <li
                 key={`${item}-${index}`}
                 className="rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-100"
@@ -197,4 +197,4 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
   );
 };
 
-export default TodoList;
+export default TaskList;

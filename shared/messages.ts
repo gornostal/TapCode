@@ -22,6 +22,6 @@ export interface FileContentResponse {
   language: string | null;
 }
 
-export interface TodosResponse {
+export interface TasksResponse {
   items: string[];
 }

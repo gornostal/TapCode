@@ -1,15 +1,15 @@
-const todoHeaderPattern = /^# TODO.*$/m;
+const taskHeaderPattern = /^# Tasks.*$/m;
 
 interface ParseResult {
   headerEndIndex: number;
 }
 
-const locateTodoHeader = (contents: string): ParseResult => {
-  const match = todoHeaderPattern.exec(contents);
+const locateTaskHeader = (contents: string): ParseResult => {
+  const match = taskHeaderPattern.exec(contents);
 
   if (!match) {
-    const error = Object.assign(new Error("TODO section not found"), {
-      code: "ETODOSECTION",
+    const error = Object.assign(new Error("Tasks section not found"), {
+      code: "ETASKSECTION",
     });
     throw error;
   }
@@ -17,8 +17,8 @@ const locateTodoHeader = (contents: string): ParseResult => {
   return { headerEndIndex: match.index + match[0].length };
 };
 
-export const parseTodoItems = (contents: string): string[] => {
-  const { headerEndIndex } = locateTodoHeader(contents);
+export const parseTaskItems = (contents: string): string[] => {
+  const { headerEndIndex } = locateTaskHeader(contents);
   const section = contents.slice(headerEndIndex);
 
   const lines = section.split("\n");
@@ -80,23 +80,23 @@ export const parseTodoItems = (contents: string): string[] => {
   return items;
 };
 
-export const addTodoItem = (contents: string, item: string): string => {
+export const addTaskItem = (contents: string, item: string): string => {
   const sanitized = item.trim();
 
   if (!sanitized) {
-    const error = Object.assign(new Error("todo text is required"), {
-      code: "EINVALIDTODO",
+    const error = Object.assign(new Error("task text is required"), {
+      code: "EINVALIDTASK",
     });
     throw error;
   }
 
-  const { headerEndIndex } = locateTodoHeader(contents);
+  const { headerEndIndex } = locateTaskHeader(contents);
   const before = contents.slice(0, headerEndIndex);
   const after = contents.slice(headerEndIndex);
 
-  const paddedLines = sanitized.split("\n").map((line, index) =>
-    index === 0 ? `- ${line}` : `  ${line}`
-  );
+  const paddedLines = sanitized
+    .split("\n")
+    .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`));
   const formattedItem = paddedLines.join("\n");
 
   return `${before}\n\n${formattedItem}${after}`;

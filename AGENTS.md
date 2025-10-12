@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-PocketIDE is a mobile-friendly web application designed to help developers code effectively from smartphones by providing a streamlined interface for file browsing, code viewing with syntax highlighting, and todo list management. The application pairs developers with coding agents and provides a web UI where they can review generated code and steer the agents with additional instructions.
+TapCode is a mobile-friendly web application designed to help developers code effectively from smartphones by providing a streamlined interface for file browsing, code viewing with syntax highlighting, and task list management. The application pairs developers with coding agents and provides a web UI where they can review generated code and steer the agents with additional instructions.
 
 ## Project Structure & Module Organization
 
-PocketIDE is split between a Vite React client and a typed Express server.
+TapCode is split between a Vite React client and a typed Express server.
 
 - `client/src/` holds UI entry points (`main.tsx`, `App.tsx`) and components; imports use the `@` alias
 - `server/` contains Express routes, services layer for business logic, and utilities in `server/utils/`
@@ -18,8 +18,8 @@ PocketIDE is split between a Vite React client and a typed Express server.
 - Mobile-friendly file browser with directory navigation
 - Fuzzy file search for quick navigation
 - Syntax-highlighted code preview
-- Todo list management from TODO.md
-- Client-side routing between file list, file viewer, and todo pages
+- Task list management from Tasks.md
+- Client-side routing between file list, file viewer, and task pages
 
 ## Build, Test, and Development Commands
 

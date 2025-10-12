@@ -35,7 +35,7 @@ async function bootstrap() {
 
   server.listen(port, host, () => {
     log(
-      `PocketIDE server listening on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`,
+      `TapCode server listening on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`,
     );
   });
 

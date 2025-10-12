@@ -1,7 +1,7 @@
 {
-  "name": "pocketide",
+  "name": "tapcode",
   "version": "0.1.0",
-  "description": "PocketIDE prototype with typed Express server and Vite React client.",
+  "description": "TapCode prototype with typed Express server and Vite React client.",
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
@@ -16,13 +16,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gornostal/PocketIDE.git"
+    "url": "git+https://github.com/gornostal/TapCode.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gornostal/PocketIDE/issues"
+    "url": "https://github.com/gornostal/TapCode/issues"
   },
-  "homepage": "https://github.com/gornostal/PocketIDE#readme",
+  "homepage": "https://github.com/gornostal/TapCode#readme",
   "engines": {
     "node": ">=18.17.0"
   },

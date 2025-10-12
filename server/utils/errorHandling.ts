@@ -52,16 +52,16 @@ export const handleFileContentError = (
 };
 
 /**
- * Handles todo-related errors and sends appropriate HTTP responses
+ * Handles task-related errors and sends appropriate HTTP responses
  */
-export const handleTodoError = (
+export const handleTaskError = (
   error: unknown,
   res: Response,
   next: NextFunction,
 ): void => {
   const { code } = error as NodeJS.ErrnoException;
 
-  if (code === "ETODOSECTION") {
+  if (code === "ETASKSECTION") {
     res.status(500).json({ error: (error as Error).message });
     return;
   }
