@@ -15,7 +15,7 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
     // Get branch name and tracking info
     const { stdout: branchOutput } = await execAsync(
       "git rev-parse --abbrev-ref HEAD",
-      { cwd: projectRoot }
+      { cwd: projectRoot },
     );
     const branch = branchOutput.trim();
 
@@ -25,7 +25,7 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
     try {
       const { stdout: trackingOutput } = await execAsync(
         "git rev-list --left-right --count @{u}...HEAD",
-        { cwd: projectRoot }
+        { cwd: projectRoot },
       );
       const [behindStr, aheadStr] = trackingOutput.trim().split(/\s+/);
       ahead = parseInt(aheadStr, 10) || 0;
@@ -35,10 +35,9 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
     }
 
     // Get file statuses
-    const { stdout: statusOutput } = await execAsync(
-      "git status --porcelain",
-      { cwd: projectRoot }
-    );
+    const { stdout: statusOutput } = await execAsync("git status --porcelain", {
+      cwd: projectRoot,
+    });
 
     const staged: string[] = [];
     const unstaged: string[] = [];
@@ -74,8 +73,6 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
       untracked,
     };
   } catch (error) {
-    throw new Error(
-      `Failed to get git status: ${(error as Error).message}`
-    );
+    throw new Error(`Failed to get git status: ${(error as Error).message}`);
   }
 };

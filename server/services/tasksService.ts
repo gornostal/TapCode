@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import type { TasksResponse } from "@shared/messages";
-import { parseTaskItems, addTaskItem } from "../utils/tasks";
+import { parseTaskItems, addTaskItem, reorderTaskItem } from "../utils/tasks";
 
 /**
  * Gets all task items from the Tasks.md file
@@ -24,4 +24,20 @@ export const addTask = async (
   await fs.writeFile(taskPath, updated, "utf8");
 
   return { text };
+};
+
+/**
+ * Reorders a task item from one index to another
+ */
+export const reorderTask = async (
+  taskPath: string,
+  fromIndex: number,
+  toIndex: number,
+): Promise<TasksResponse> => {
+  const taskContents = await fs.readFile(taskPath, "utf8");
+  const updated = reorderTaskItem(taskContents, fromIndex, toIndex);
+  await fs.writeFile(taskPath, updated, "utf8");
+
+  const items = parseTaskItems(updated);
+  return { items };
 };

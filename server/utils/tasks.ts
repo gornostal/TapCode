@@ -101,3 +101,92 @@ export const addTaskItem = (contents: string, item: string): string => {
 
   return `${before}\n\n${formattedItem}${after}`;
 };
+
+export const reorderTaskItem = (
+  contents: string,
+  fromIndex: number,
+  toIndex: number,
+): string => {
+  const items = parseTaskItems(contents);
+
+  // Validate indices
+  if (fromIndex < 0 || fromIndex >= items.length) {
+    const error = Object.assign(
+      new Error(
+        `Invalid fromIndex: ${fromIndex}. Must be between 0 and ${items.length - 1}`,
+      ),
+      { code: "EINVALIDINDEX" },
+    );
+    throw error;
+  }
+
+  if (toIndex < 0 || toIndex >= items.length) {
+    const error = Object.assign(
+      new Error(
+        `Invalid toIndex: ${toIndex}. Must be between 0 and ${items.length - 1}`,
+      ),
+      { code: "EINVALIDINDEX" },
+    );
+    throw error;
+  }
+
+  // If indices are the same, no reordering needed
+  if (fromIndex === toIndex) {
+    return contents;
+  }
+
+  // Reorder the items array
+  const reorderedItems = [...items];
+  const [movedItem] = reorderedItems.splice(fromIndex, 1);
+  reorderedItems.splice(toIndex, 0, movedItem);
+
+  // Rebuild the file contents
+  const { headerEndIndex } = locateTaskHeader(contents);
+  const before = contents.slice(0, headerEndIndex);
+
+  // Find the end of the tasks section
+  const afterHeader = contents.slice(headerEndIndex);
+  const lines = afterHeader.split("\n");
+  let tasksSectionEnd = 0;
+  let foundFirstItem = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Skip initial empty lines
+    if (!foundFirstItem && !line.trim()) {
+      continue;
+    }
+
+    // Check if we hit a new header (stop processing)
+    if (line.trim().startsWith("#")) {
+      break;
+    }
+
+    // If we found a task item or are in a task
+    if (line.startsWith("- ") || (foundFirstItem && line.startsWith("  "))) {
+      foundFirstItem = true;
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && !line.trim()) {
+      // Empty line within tasks section
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && line.trim() && !line.startsWith("  ")) {
+      // Non-task content found, end of tasks section
+      break;
+    }
+  }
+
+  const after = lines.slice(tasksSectionEnd).join("\n");
+
+  // Format the reordered items
+  const formattedItems = reorderedItems
+    .map((item) => {
+      const itemLines = item.split("\n");
+      return itemLines
+        .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`))
+        .join("\n");
+    })
+    .join("\n\n");
+
+  return `${before}\n\n${formattedItems}\n${after}`;
+};

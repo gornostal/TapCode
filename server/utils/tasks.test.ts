@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addTaskItem, parseTaskItems } from "./tasks";
+import { addTaskItem, parseTaskItems, reorderTaskItem } from "./tasks";
 
 const withTaskSection = `# Instructions
 
@@ -165,5 +165,106 @@ describe("addTaskItem", () => {
     expect(updated).toContain(
       "# Tasks\n\n- New multiline item\n  with proper indentation\n  \n  and paragraph breaks\n\n- Item can span across multiple",
     );
+  });
+});
+
+describe("reorderTaskItem", () => {
+  it("moves an item from one position to another", () => {
+    const updated = reorderTaskItem(withTaskSection, 0, 1);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([
+      "file view should show line numbers",
+      "add GET tasks API endpoint",
+    ]);
+  });
+
+  it("moves an item from end to beginning", () => {
+    const updated = reorderTaskItem(withTaskSection, 1, 0);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([
+      "file view should show line numbers",
+      "add GET tasks API endpoint",
+    ]);
+  });
+
+  it("returns unchanged content when fromIndex equals toIndex", () => {
+    const updated = reorderTaskItem(withTaskSection, 0, 0);
+
+    expect(updated).toBe(withTaskSection);
+  });
+
+  it("preserves the footer section", () => {
+    const updated = reorderTaskItem(withTaskSection, 0, 1);
+
+    expect(updated).toContain("# Footer\n\nThanks!\n");
+  });
+
+  it("preserves the instructions section", () => {
+    const updated = reorderTaskItem(withTaskSection, 0, 1);
+
+    expect(updated).toContain(
+      "# Instructions\n\nImplement the first task, run tests, and remove the item from this file.",
+    );
+  });
+
+  it("handles multiline items correctly", () => {
+    const updated = reorderTaskItem(withMultilineTask, 0, 2);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([
+      "This, however, is a new item.",
+      "And this. Althought it doesn't have a paragraph break.",
+      "Item can span across multiple\nlines by keeping 2-space indentation.\nThere can be multiple paragraphs separated with \\n\\n.\n\nThis is still the same item.",
+    ]);
+  });
+
+  it("preserves multiline formatting when reordering", () => {
+    const updated = reorderTaskItem(withMultilineTask, 2, 0);
+
+    expect(updated).toContain(
+      "- And this. Althought it doesn't have a paragraph break.",
+    );
+    expect(updated).toContain(
+      "- Item can span across multiple\n  lines by keeping 2-space indentation.",
+    );
+  });
+
+  it("throws when fromIndex is out of bounds (negative)", () => {
+    const act = () => reorderTaskItem(withTaskSection, -1, 0);
+
+    expect(act).toThrowError(/Invalid fromIndex/);
+  });
+
+  it("throws when fromIndex is out of bounds (too large)", () => {
+    const act = () => reorderTaskItem(withTaskSection, 10, 0);
+
+    expect(act).toThrowError(/Invalid fromIndex/);
+  });
+
+  it("throws when toIndex is out of bounds (negative)", () => {
+    const act = () => reorderTaskItem(withTaskSection, 0, -1);
+
+    expect(act).toThrowError(/Invalid toIndex/);
+  });
+
+  it("throws when toIndex is out of bounds (too large)", () => {
+    const act = () => reorderTaskItem(withTaskSection, 0, 10);
+
+    expect(act).toThrowError(/Invalid toIndex/);
+  });
+
+  it("handles reordering in a list with 3 items", () => {
+    const contents = `# Tasks
+
+- first
+- second
+- third
+`;
+    const updated = reorderTaskItem(contents, 0, 2);
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual(["second", "third", "first"]);
   });
 });
