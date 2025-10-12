@@ -16,11 +16,11 @@ const TOOLBAR_BUTTONS: ToolbarButton[] = [
   { label: "…", ariaLabel: "Open more options" },
   { label: "Go to file" },
   { label: "Git" },
-  { label: "Task list" },
+  { label: "Tasks" },
 ];
 
 const GIT_SUBMENU_BUTTONS: ToolbarButton[] = [
-  { label: "<", ariaLabel: "Back" },
+  { label: "←", ariaLabel: "Back" },
   { label: "status" },
   { label: "changes" },
   { label: "stage all" },
@@ -44,13 +44,13 @@ const Toolbar = ({
         <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-emerald-500/20 opacity-80" />
         {buttons.map((button, index) => {
           const handleClick = () => {
-            if (isGitMenuOpen && button.label === "<") {
+            if (isGitMenuOpen && button.label === "←") {
               setIsGitMenuOpen(false);
             } else if (!isGitMenuOpen && button.label === "Git") {
               setIsGitMenuOpen(true);
             } else if (button.label === "Go to file") {
               onGoToFileToggle();
-            } else if (button.label === "Task list") {
+            } else if (button.label === "Tasks") {
               onOpenTaskList();
             }
           };
@@ -58,13 +58,13 @@ const Toolbar = ({
           const isDisabled =
             !isGitMenuOpen &&
             button.label !== "Go to file" &&
-            button.label !== "Task list" &&
+            button.label !== "Tasks" &&
             button.label !== "Git";
 
           const isPressed =
             button.label === "Go to file"
               ? isGoToFileOpen
-              : button.label === "Task list"
+              : button.label === "Tasks"
                 ? isTaskListActive
                 : button.label === "Git"
                   ? isGitMenuOpen
@@ -82,7 +82,7 @@ const Toolbar = ({
                 index < buttons.length - 1 ? "border-r border-slate-800" : ""
               } ${
                 (button.label === "Go to file" && isGoToFileOpen) ||
-                (button.label === "Task list" && isTaskListActive) ||
+                (button.label === "Tasks" && isTaskListActive) ||
                 (button.label === "Git" && isGitMenuOpen)
                   ? "bg-slate-900 text-sky-200"
                   : "bg-transparent text-slate-100"

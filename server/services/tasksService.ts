@@ -8,7 +8,7 @@ import {
 } from "../utils/tasks";
 
 /**
- * Gets all task items from the Tasks.md file
+ * Gets all task items from the tasks.md file
  */
 export const getTasks = async (taskPath: string): Promise<TasksResponse> => {
   const taskContents = await fs.readFile(taskPath, "utf8");
@@ -18,7 +18,7 @@ export const getTasks = async (taskPath: string): Promise<TasksResponse> => {
 };
 
 /**
- * Appends a new task item to the Tasks.md file
+ * Appends a new task item to the tasks.md file
  */
 export const addTask = async (
   taskPath: string,

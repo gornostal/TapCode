@@ -189,10 +189,11 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         </p>
         <p className="mt-2 text-base text-slate-400">
           Review the remaining tasks pulled from{" "}
-          <span className="font-mono">Tasks.md</span>.
+          <span className="font-mono">Tasks.md</span>
         </p>
         <p className="mt-2 text-sm text-slate-500">
-          Add new tasks below or use the file browser to mark them complete.
+          Add new tasks below and prompt your agent to follow instructions in
+          ./tasks.md
         </p>
       </header>
 
@@ -207,7 +208,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
           <input
             id="new-task-text"
             name="text"
-            placeholder="Add a new task"
+            placeholder="Write a new task"
             className="w-full rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
             value={newTaskText}
             onChange={(event) => setNewTaskText(event.target.value)}
@@ -309,7 +310,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
-      <NavigationBar currentPath="/tasks" onBack={onBackToBrowser} />
+      <NavigationBar currentPath="Tasks" onBack={onBackToBrowser} />
     </>
   );
 };
