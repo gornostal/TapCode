@@ -88,7 +88,7 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
         throw new Error("Unexpected server response.");
       }
 
-      setTodos((current) => [...current, data.text as string]);
+      setTodos((current) => [data.text as string, ...current]);
       setNewTodoText("");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Unknown error");
