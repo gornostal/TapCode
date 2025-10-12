@@ -13,6 +13,8 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
   const [newTaskText, setNewTaskText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -110,6 +112,52 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
     void addTask(trimmed);
   };
 
+  const reorderTask = async (fromIndex: number, toIndex: number) => {
+    try {
+      const response = await fetch("/api/tasks/reorder", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fromIndex, toIndex }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as TasksResponse;
+      setTasks(data.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reorder tasks");
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragOver = (event: React.DragEvent, index: number) => {
+    event.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (event: React.DragEvent, toIndex: number) => {
+    event.preventDefault();
+
+    if (draggedIndex !== null && draggedIndex !== toIndex) {
+      void reorderTask(draggedIndex, toIndex);
+    }
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
     <>
       <header>
@@ -185,8 +233,31 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
             {tasks.map((item, index) => (
               <li
                 key={`${item}-${index}`}
-                className="rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-100"
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`group flex cursor-move items-center gap-3 rounded border px-4 py-3 text-sm text-slate-100 transition-all ${
+                  draggedIndex === index
+                    ? "border-slate-600 bg-slate-800/90 opacity-50"
+                    : dragOverIndex === index && draggedIndex !== null
+                      ? "border-slate-500 bg-slate-800/80"
+                      : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80"
+                }`}
               >
+                <svg
+                  className="h-4 w-4 flex-shrink-0 text-slate-600 transition-colors group-hover:text-slate-400"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <circle cx="4" cy="3" r="1.5" />
+                  <circle cx="12" cy="3" r="1.5" />
+                  <circle cx="4" cy="8" r="1.5" />
+                  <circle cx="12" cy="8" r="1.5" />
+                  <circle cx="4" cy="13" r="1.5" />
+                  <circle cx="12" cy="13" r="1.5" />
+                </svg>
                 <span className="whitespace-pre-wrap">{item}</span>
               </li>
             ))}

@@ -20,11 +20,8 @@ beforeEach(async () => {
   tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "tapcode-files-"));
   process.env.POCKETIDE_ROOT = tempRoot;
   vi.resetModules();
-  ({
-    readProjectFile,
-    inferHighlightLanguage,
-    normalizeRelativeFilePath,
-  } = await import("./fileContent"));
+  ({ readProjectFile, inferHighlightLanguage, normalizeRelativeFilePath } =
+    await import("./fileContent"));
 });
 
 afterEach(async () => {
@@ -40,7 +37,9 @@ describe("normalizeRelativeFilePath", () => {
   });
 
   it("throws error when path is empty", () => {
-    expect(() => normalizeRelativeFilePath("")).toThrow("File path is required");
+    expect(() => normalizeRelativeFilePath("")).toThrow(
+      "File path is required",
+    );
   });
 
   it("throws error when path is only whitespace", () => {
@@ -214,7 +213,10 @@ describe("readProjectFile", () => {
   });
 
   it("normalizes the returned path to POSIX format", async () => {
-    await writeFile("src/components/Button.tsx", "export const Button = () => {}");
+    await writeFile(
+      "src/components/Button.tsx",
+      "export const Button = () => {}",
+    );
 
     const result = await readProjectFile("src/components/Button.tsx");
 
