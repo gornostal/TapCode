@@ -37,10 +37,7 @@ const FileBrowser = ({
       </p>
       <p className="mt-2 text-base text-slate-400">
         Listing items inside{" "}
-        <span className="font-mono">{currentDirectoryLabel}</span>.
-      </p>
-      <p className="mt-2 text-sm text-slate-500">
-        Select a file to open it in a dedicated preview page.
+        <span className="font-mono">{currentDirectoryLabel}</span>
       </p>
     </header>
 
