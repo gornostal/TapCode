@@ -25,3 +25,12 @@ export interface FileContentResponse {
 export interface TasksResponse {
   items: string[];
 }
+
+export interface GitStatusResponse {
+  branch: string;
+  ahead: number;
+  behind: number;
+  staged: string[];
+  unstaged: string[];
+  untracked: string[];
+}

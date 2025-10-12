@@ -6,16 +6,18 @@ import {
 } from "./utils/queryParams";
 import { getFiles, getFileContent } from "./services/filesService";
 import { getTasks, addTask } from "./services/tasksService";
+import { getGitStatus } from "./services/gitService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
   handleFileContentError,
   handleTaskError,
+  handleGitError,
 } from "./utils/errorHandling";
 
 export function registerRoutes(app: Express) {
   const router = Router();
-  const taskPath = resolveFromRoot("Tasks.md");
+  const taskPath = resolveFromRoot("tasks.md");
 
   router.get("/files", (req, res, next) => {
     const query = normalizeQueryParam(req.query.q).trim();
@@ -75,6 +77,16 @@ export function registerRoutes(app: Express) {
       })
       .catch((error) => {
         handleTaskError(error, res, next);
+      });
+  });
+
+  router.get("/git/status", (_req, res, next) => {
+    getGitStatus()
+      .then((response) => {
+        res.json(response);
+      })
+      .catch((error) => {
+        handleGitError(error, res, next);
       });
   });
 

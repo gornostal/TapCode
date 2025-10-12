@@ -68,3 +68,15 @@ export const handleTaskError = (
 
   next(error);
 };
+
+/**
+ * Handles git-related errors and sends appropriate HTTP responses
+ */
+export const handleGitError = (
+  error: unknown,
+  res: Response,
+  next: NextFunction,
+): void => {
+  // Git errors are typically operational failures
+  res.status(500).json({ error: (error as Error).message });
+};
