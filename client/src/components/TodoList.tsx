@@ -185,11 +185,8 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
             {todos.map((item, index) => (
               <li
                 key={`${item}-${index}`}
-                className="flex items-start gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-100"
+                className="rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-100"
               >
-                <span aria-hidden className="mt-0.5 text-lg">
-                  ✅
-                </span>
                 <span className="whitespace-pre-wrap">{item}</span>
               </li>
             ))}

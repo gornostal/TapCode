@@ -1,8 +1,10 @@
 # Instructions
 
-Implement the first todo item, run tests, and remove the item from this file.
+Implement the first todo item,
+run tests,
+remove the item from this file,
+and commit everything.
 
 # TODO
 
-- refactor routes.ts: separate logic from http request handling
 - file view should show line numbers
