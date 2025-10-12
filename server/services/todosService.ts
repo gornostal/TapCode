@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import type { TodosResponse } from "@shared/messages";
-import { parseTodoItems, appendTodoItem } from "../utils/todos";
+import { parseTodoItems, addTodoItem } from "../utils/todos";
 
 /**
  * Gets all todo items from the TODO.md file
@@ -20,7 +20,7 @@ export const addTodo = async (
   text: string,
 ): Promise<{ text: string }> => {
   const todoContents = await fs.readFile(todoPath, "utf8");
-  const updated = appendTodoItem(todoContents, text);
+  const updated = addTodoItem(todoContents, text);
   await fs.writeFile(todoPath, updated, "utf8");
 
   return { text };

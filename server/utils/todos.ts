@@ -21,37 +21,66 @@ export const parseTodoItems = (contents: string): string[] => {
   const { headerEndIndex } = locateTodoHeader(contents);
   const section = contents.slice(headerEndIndex);
 
-  // Split by double newlines to get blocks
-  const blocks = section.split(/\n\n+/);
+  const lines = section.split("\n");
   const items: string[] = [];
+  let currentItem = "";
+  let inItem = false;
 
-  for (const block of blocks) {
-    const trimmedBlock = block.trim();
-
-    if (!trimmedBlock) {
-      continue;
-    }
-
-    // Check if block starts with a header (stop processing)
-    if (trimmedBlock.startsWith("#")) {
+  for (const line of lines) {
+    // Check if we hit a new header (stop processing)
+    if (line.trim().startsWith("#")) {
       break;
     }
 
-    // If block starts with "- ", remove the dash and add the rest
-    if (trimmedBlock.startsWith("- ")) {
-      const text = trimmedBlock.slice(2);
-      items.push(text);
+    // Skip empty lines when not in an item
+    if (!inItem && !line.trim()) {
       continue;
     }
 
-    // Otherwise, add the entire block as-is (for backwards compatibility)
-    items.push(trimmedBlock);
+    // Check if this line starts a new item (starts with "- ")
+    if (line.startsWith("- ")) {
+      // Save previous item if exists
+      if (currentItem) {
+        items.push(currentItem.trim());
+      }
+      // Start new item (remove the "-" prefix)
+      currentItem = line.slice(1);
+      inItem = true;
+    }
+    // Check if this is a continuation line (starts with exactly 2 spaces and we're in an item)
+    else if (inItem && line.startsWith("  ")) {
+      // Add continuation line (remove 2-space indentation)
+      currentItem += "\n" + line.slice(1).trim();
+    }
+    // Check if this is an empty line within an item
+    else if (inItem && !line.trim()) {
+      currentItem += "\n";
+    }
+    // If we're not in an item and line has content, treat as standalone item
+    else if (!inItem && line.trim()) {
+      items.push(line.trim());
+    }
+    // If we're in an item and encounter a non-indented, non-empty line that doesn't start with "- "
+    else if (
+      inItem &&
+      line.trim() &&
+      !line.startsWith("  ") &&
+      !line.startsWith("- ")
+    ) {
+      // This shouldn't happen in well-formed input, but handle it gracefully
+      currentItem += "\n" + line.trim();
+    }
+  }
+
+  // Add the last item if exists
+  if (currentItem) {
+    items.push(currentItem.trim());
   }
 
   return items;
 };
 
-export const appendTodoItem = (contents: string, item: string): string => {
+export const addTodoItem = (contents: string, item: string): string => {
   const sanitized = item.trim();
 
   if (!sanitized) {
@@ -65,21 +94,10 @@ export const appendTodoItem = (contents: string, item: string): string => {
   const before = contents.slice(0, headerEndIndex);
   const after = contents.slice(headerEndIndex);
 
-  // Ensure the item starts with "- " if it doesn't already
-  const itemWithDash = sanitized.startsWith("- ")
-    ? sanitized
-    : `- ${sanitized}`;
+  const paddedLines = sanitized.split("\n").map((line, index) =>
+    index === 0 ? `- ${line}` : `  ${line}`
+  );
+  const formattedItem = paddedLines.join("\n");
 
-  // Add double newline before the item
-  const needsLeadingNewline = !before.endsWith("\n");
-  const prefix = needsLeadingNewline ? "\n\n" : "\n";
-
-  // Add single newline after the item, but only if there's existing content
-  // If the existing content already starts with a newline, we add just one more to make it double
-  let suffix = "";
-  if (after.length > 0) {
-    suffix = after.startsWith("\n") ? "" : "\n";
-  }
-
-  return `${before}${prefix}${itemWithDash}${suffix}${after}`;
+  return `${before}\n\n${formattedItem}${after}`;
 };

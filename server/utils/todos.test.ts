@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendTodoItem, parseTodoItems } from "./todos";
+import { addTodoItem, parseTodoItems } from "./todos";
 
 const withTodoSection = `# Instructions
 
@@ -10,6 +10,26 @@ Implement the first todo item, run tests, and remove the item from this file.
 - add GET todos API endpoint
 
 - file view should show line numbers
+
+# Footer
+
+Thanks!
+`;
+
+const withMultilineTodo = `# Instructions
+
+Implement the first todo item, run tests, and remove the item from this file.
+
+# TODO
+
+- Item can span across multiple
+  lines by keeping 2-space indentation.
+  There can be multiple paragraphs separated with \\n\\n.
+
+  This is still the same item.
+
+- This, however, is a new item.
+- And this. Althought it doesn't have a paragraph break.
 
 # Footer
 
@@ -74,11 +94,21 @@ Do the chores
       "file view should show line numbers",
     ]);
   });
+
+  it("parses complex multiline todo items with proper indentation", () => {
+    const items = parseTodoItems(withMultilineTodo);
+
+    expect(items).toEqual([
+      "Item can span across multiple\nlines by keeping 2-space indentation.\nThere can be multiple paragraphs separated with \\n\\n.\n\nThis is still the same item.",
+      "This, however, is a new item.",
+      "And this. Althought it doesn't have a paragraph break.",
+    ]);
+  });
 });
 
-describe("appendTodoItem", () => {
+describe("addTodoItem", () => {
   it("inserts the new item directly under the TODO header", () => {
-    const updated = appendTodoItem(withTodoSection, "- new shiny feature");
+    const updated = addTodoItem(withTodoSection, "new shiny feature");
 
     expect(updated).toContain(
       "# TODO\n\n- new shiny feature\n\n- add GET todos API endpoint",
@@ -86,41 +116,52 @@ describe("appendTodoItem", () => {
   });
 
   it("preserves existing trailing content", () => {
-    const updated = appendTodoItem(withTodoSection, "- add logging");
+    const updated = addTodoItem(withTodoSection, "- add logging");
 
     expect(updated.endsWith("# Footer\n\nThanks!\n")).toBe(true);
   });
 
   it("adds newline padding when the header is not followed by one", () => {
     const contents = "# TODO\n\n- current\n";
-    const updated = appendTodoItem(contents, "- future");
+    const updated = addTodoItem(contents, "future");
 
     expect(updated).toBe("# TODO\n\n- future\n\n- current\n");
   });
 
   it("throws when the TODO header is missing", () => {
-    const act = () => appendTodoItem("# Something else\n", "task");
+    const act = () => addTodoItem("# Something else\n", "task");
 
     expect(act).toThrowError(/TODO section not found/);
   });
 
   it("throws when the item is blank", () => {
-    const act = () => appendTodoItem("# TODO\n", "  ");
+    const act = () => addTodoItem("# TODO\n", "  ");
 
     expect(act).toThrowError(/todo text is required/);
   });
 
   it("adds dash prefix if item doesn't start with one", () => {
     const contents = "# TODO\n\n- existing\n";
-    const updated = appendTodoItem(contents, "without dash");
+    const updated = addTodoItem(contents, "without dash");
 
     expect(updated).toContain("# TODO\n\n- without dash\n\n- existing\n");
   });
 
   it("handles multiline items with the correct format", () => {
     const contents = "# TODO\n\n- existing\n";
-    const updated = appendTodoItem(contents, "line one\nline two");
+    const updated = addTodoItem(contents, "line one\nline two");
 
-    expect(updated).toContain("# TODO\n\n- line one\nline two\n\n- existing\n");
+    expect(updated).toContain("# TODO\n\n- line one\n  line two\n\n- existing\n");
+  });
+
+  it("preserves complex multiline formatting when appending to existing multiline todos", () => {
+    const updated = addTodoItem(
+      withMultilineTodo,
+      "New multiline item\nwith proper indentation\n\nand paragraph breaks",
+    );
+
+    expect(updated).toContain(
+      "# TODO\n\n- New multiline item\n  with proper indentation\n  \n  and paragraph breaks\n\n- Item can span across multiple",
+    );
   });
 });
