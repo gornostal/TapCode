@@ -1,13 +1,25 @@
 # Repository Guidelines
 
+## Project Overview
+
+PocketIDE is a mobile-friendly web application designed to help developers code effectively from smartphones by providing a streamlined interface for file browsing, code viewing with syntax highlighting, and todo list management. The application pairs developers with coding agents and provides a web UI where they can review generated code and steer the agents with additional instructions.
+
 ## Project Structure & Module Organization
 
 PocketIDE is split between a Vite React client and a typed Express server.
 
-- `client/src/` holds UI entry points (`main.tsx`, `App.tsx`) and global styles in `index.css`; imports use the `@` alias.
-- `server/` bootstraps Express (`index.ts`), defines routes in `routes.ts`, and wires Vite middleware via `vite.ts`; utilities live in `server/utils/`.
-- `shared/` stores cross-layer contracts such as `messages.ts`, re-exported through the `@shared` alias.
-- Build artifacts land in `dist/public` and `dist/server`; keep generated output out of Git.
+- `client/src/` holds UI entry points (`main.tsx`, `App.tsx`) and components; imports use the `@` alias
+- `server/` contains Express routes, services layer for business logic, and utilities in `server/utils/`
+- `shared/` stores TypeScript type definitions, re-exported through the `@shared` alias
+- Build artifacts land in `dist/public` and `dist/server`; keep generated output out of Git
+
+## Key Features
+
+- Mobile-friendly file browser with directory navigation
+- Fuzzy file search for quick navigation
+- Syntax-highlighted code preview
+- Todo list management from TODO.md
+- Client-side routing between file list, file viewer, and todo pages
 
 ## Build, Test, and Development Commands
 
