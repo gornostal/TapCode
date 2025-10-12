@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { TasksResponse } from "@shared/messages";
+import MultilineTaskModal from "@/components/MultilineTaskModal";
 
 type TaskListProps = {
   projectName: string;
@@ -15,6 +16,7 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -158,6 +160,10 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
     setDragOverIndex(null);
   };
 
+  const handleMultilineSubmit = async (text: string) => {
+    await addTask(text);
+  };
+
   return (
     <>
       <header>
@@ -208,6 +214,14 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
             disabled={isSubmitting}
           >
             {isSubmitting ? "Adding…" : "Add item"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsMultilineModalOpen(true)}
+            className="w-full rounded border border-slate-700 px-3 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:border-slate-600 hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            disabled={isSubmitting}
+          >
+            Multiline
           </button>
           {submitError ? (
             <p className="text-sm text-rose-400 sm:w-full sm:text-right">
@@ -264,6 +278,11 @@ const TaskList = ({ projectName, onBackToBrowser }: TaskListProps) => {
           </ul>
         )}
       </div>
+      <MultilineTaskModal
+        isOpen={isMultilineModalOpen}
+        onClose={() => setIsMultilineModalOpen(false)}
+        onSubmit={handleMultilineSubmit}
+      />
     </>
   );
 };

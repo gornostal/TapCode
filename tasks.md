@@ -6,8 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- The Add Item function in tasks should support multiline input. Do this by keeping the one-line input, but adding a button to open a multiline text area on a new page or modal.
-
 - move title (h1) from the page section to a static header bar that shows just the project name in the middle
 
 - instead of having "back to files" button and current di/file name in the body, create a fixed bar above the toolbar that will display current path, and the "back" button on the far right
