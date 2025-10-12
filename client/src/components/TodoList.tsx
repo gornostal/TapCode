@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { TodosResponse } from "@shared/messages";
 
 type TodoListProps = {
@@ -10,6 +10,9 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
   const [todos, setTodos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newTodoText, setNewTodoText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -52,6 +55,61 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
     };
   }, []);
 
+  const addTodo = async (trimmed: string) => {
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/todos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: trimmed }),
+      });
+
+      if (!response.ok) {
+        let message = `Request failed with status ${response.status}`;
+
+        try {
+          const data = (await response.json()) as { error?: string };
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // Ignore JSON parse errors and fall back to default message.
+        }
+
+        throw new Error(message);
+      }
+
+      const data = (await response.json()) as { text?: string };
+
+      if (!data.text) {
+        throw new Error("Unexpected server response.");
+      }
+
+      setTodos((current) => [...current, data.text as string]);
+      setNewTodoText("");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = newTodoText.trim();
+
+    if (!trimmed) {
+      setSubmitError("Enter a todo item before adding it.");
+      return;
+    }
+
+    setSubmitError(null);
+    void addTodo(trimmed);
+  };
+
   return (
     <>
       <header>
@@ -66,7 +124,7 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
           <span className="font-mono">TODO.md</span>.
         </p>
         <p className="mt-2 text-sm text-slate-500">
-          Use the file browser to add new todos or mark them complete.
+          Add new todos below or use the file browser to mark them complete.
         </p>
       </header>
 
@@ -80,6 +138,35 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
             Back to files
           </button>
         </div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-2 rounded border border-slate-800 bg-slate-900/70 p-4 sm:flex-row sm:items-center sm:gap-3"
+        >
+          <label htmlFor="new-todo-text" className="sr-only">
+            New todo item
+          </label>
+          <input
+            id="new-todo-text"
+            name="text"
+            placeholder="Add a new todo item"
+            className="w-full rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
+            value={newTodoText}
+            onChange={(event) => setNewTodoText(event.target.value)}
+            disabled={isSubmitting}
+          />
+          <button
+            type="submit"
+            className="w-full rounded bg-slate-100 px-3 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-900 transition hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Adding…" : "Add item"}
+          </button>
+          {submitError ? (
+            <p className="text-sm text-rose-400 sm:w-full sm:text-right">
+              {submitError}
+            </p>
+          ) : null}
+        </form>
 
         {isLoading ? (
           <p className="py-4 font-mono text-sm text-slate-400">
@@ -95,9 +182,9 @@ const TodoList = ({ projectName, onBackToBrowser }: TodoListProps) => {
           </p>
         ) : (
           <ul className="space-y-3">
-            {todos.map((item) => (
+            {todos.map((item, index) => (
               <li
-                key={item}
+                key={`${item}-${index}`}
                 className="flex items-start gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-100"
               >
                 <span aria-hidden className="mt-0.5 text-lg">
