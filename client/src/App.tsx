@@ -476,8 +476,8 @@ function App() {
                             ? "loading"
                             : isActiveFile
                               ? "open"
-                              : "file"
-                          : "directory";
+                              : null
+                          : null;
 
                       return (
                         <li
@@ -517,9 +517,11 @@ function App() {
                               <span>{label}</span>
                             </button>
                           )}
-                          <span className="whitespace-nowrap text-xs uppercase tracking-wider text-slate-500">
-                            {statusLabel}
-                          </span>
+                          {statusLabel && (
+                            <span className="whitespace-nowrap text-xs uppercase tracking-wider text-slate-500">
+                              {statusLabel}
+                            </span>
+                          )}
                         </li>
                       );
                     })}
