@@ -1,9 +1,11 @@
 import { useMemo } from "react";
-import hljs from "highlight.js/lib/common";
-import "highlight.js/styles/github-dark.css";
-
 import type { FileContentResponse } from "@shared/messages";
 import NavigationBar from "@/components/NavigationBar";
+import {
+  highlightCode,
+  escapeHtml,
+  type HighlightResult,
+} from "@/utils/syntaxHighlighting";
 
 const PREVIEW_BYTE_LIMIT = 200_000;
 
@@ -23,31 +25,6 @@ const formatBytes = (bytes: number): string => {
 
   const precision = value >= 10 ? 0 : 1;
   return `${value.toFixed(precision)} ${units[unitIndex] ?? "KB"}`;
-};
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-const addLineNumbers = (html: string): string => {
-  const lines = html.split("\n");
-  const lineNumberWidth = lines.length.toString().length;
-
-  return lines
-    .map((line, index) => {
-      const lineNumber = (index + 1).toString().padStart(lineNumberWidth, " ");
-      return `<span class="line-number">${lineNumber}</span>${line}`;
-    })
-    .join("\n");
-};
-
-type HighlightResult = {
-  html: string;
-  language: string | null;
 };
 
 type FilePreviewProps = {
@@ -72,36 +49,7 @@ const FilePreview = ({
       return null;
     }
 
-    try {
-      let htmlContent: string;
-      let detectedLanguage: string | null;
-
-      if (
-        selectedFile.language &&
-        hljs.getLanguage(selectedFile.language) !== undefined
-      ) {
-        const result = hljs.highlight(selectedFile.content, {
-          language: selectedFile.language,
-          ignoreIllegals: true,
-        });
-        htmlContent = result.value;
-        detectedLanguage = result.language ?? selectedFile.language ?? null;
-      } else {
-        const result = hljs.highlightAuto(selectedFile.content);
-        htmlContent = result.value;
-        detectedLanguage = result.language ?? null;
-      }
-
-      return {
-        html: addLineNumbers(htmlContent),
-        language: detectedLanguage,
-      };
-    } catch {
-      return {
-        html: addLineNumbers(escapeHtml(selectedFile.content)),
-        language: selectedFile.language ?? null,
-      };
-    }
+    return highlightCode(selectedFile.content, selectedFile.language);
   }, [selectedFile]);
 
   const highlightedLanguageLabel =

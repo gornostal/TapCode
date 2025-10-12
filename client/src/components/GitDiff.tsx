@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { GitDiffResponse } from "@shared/messages";
 import NavigationBar from "@/components/NavigationBar";
+import {
+  highlightCode,
+  escapeHtml,
+  type HighlightResult,
+} from "@/utils/syntaxHighlighting";
 
 type GitDiffProps = {
   onBackToBrowser: () => void;
@@ -10,6 +15,15 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
   const [diff, setDiff] = useState<GitDiffResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const highlighted = useMemo<HighlightResult | null>(() => {
+    if (!diff?.diff) {
+      return null;
+    }
+
+    // Use "diff" language for git diff syntax highlighting
+    return highlightCode(diff.diff, "diff");
+  }, [diff]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -70,9 +84,28 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
             Unable to load git diff: {error}
           </p>
         ) : diff ? (
-          <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
-            <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-slate-300">
-              {diff.diff}
+          <div
+            className="overflow-x-auto"
+            style={{
+              width: "100vw",
+              position: "relative",
+              left: "50%",
+              right: "50%",
+              marginLeft: "-50vw",
+              marginRight: "-50vw",
+            }}
+          >
+            <pre className="min-w-full rounded-lg bg-slate-950/60 text-sm leading-relaxed">
+              <code
+                className={`hljs ${
+                  highlighted?.language
+                    ? `language-${highlighted.language}`
+                    : ""
+                }`}
+                dangerouslySetInnerHTML={{
+                  __html: highlighted?.html ?? escapeHtml(diff.diff),
+                }}
+              />
             </pre>
           </div>
         ) : null}
