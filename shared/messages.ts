@@ -14,6 +14,7 @@ export interface FilesResponse {
   directory: string;
   parentDirectory: string | null;
   items: FileListItem[];
+  projectName: string;
 }
 
 export interface FileContentResponse {

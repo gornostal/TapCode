@@ -10,6 +10,7 @@ import {
   normalizeRelativeFilePath,
   readProjectFile,
 } from "./utils/fileContent";
+import { projectBaseName } from "./utils/paths";
 
 const normalizeQueryParam = (value: unknown): string => {
   if (typeof value === "string") {
@@ -94,6 +95,7 @@ export function registerRoutes(app: Express) {
           directory,
           parentDirectory: parentDirectoryOf(directory),
           items,
+          projectName: projectBaseName,
         };
         res.json(response);
       })

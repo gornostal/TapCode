@@ -67,6 +67,7 @@ function App() {
   const [parentDirectory, setParentDirectory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState("");
 
   const [selectedFile, setSelectedFile] = useState<FileContentResponse | null>(
     null,
@@ -126,6 +127,7 @@ function App() {
         if (!controller.signal.aborted) {
           setFiles(data.items);
           setParentDirectory(data.parentDirectory);
+          setProjectName(data.projectName);
           setError(null);
 
           if (data.directory !== currentDirectory) {
@@ -320,26 +322,16 @@ function App() {
         {isFileRoute ? (
           <>
             <header>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-                PocketIDE
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-                File view
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {projectName || "Loading project"}
               </h1>
-              <p className="mt-2 text-base text-slate-400">
-                Showing{" "}
-                <span className="font-mono">
-                  {displayedFilePath ? `/${displayedFilePath}` : "Loading file"}
-                </span>
-                .
-              </p>
             </header>
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/80 shadow-lg shadow-slate-950/40 backdrop-blur">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-5 py-3">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-slate-500">
-                    File view
+                    {projectName || "Project"}
                   </p>
                   <p className="mt-1 font-mono text-sm text-slate-300">
                     {displayedFilePath
@@ -422,12 +414,12 @@ function App() {
         ) : (
           <>
             <header>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-                PocketIDE
-              </p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-                Project files
+                {projectName || "Loading project"}
               </h1>
+              <p className="mt-2 text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Project files
+              </p>
               <p className="mt-2 text-base text-slate-400">
                 Listing items inside{" "}
                 <span className="font-mono">{currentDirectoryLabel}</span>.

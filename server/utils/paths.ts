@@ -1,6 +1,7 @@
 import path from "node:path";
 
 const projectRoot = path.resolve(process.env.POCKETIDE_ROOT ?? process.cwd());
+export const projectBaseName = path.basename(projectRoot);
 
 export const resolveFromRoot = (...segments: string[]) =>
   path.join(projectRoot, ...segments);
