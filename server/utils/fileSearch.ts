@@ -74,6 +74,29 @@ export async function listDirectoryContents(
     throw error;
   }
 
+  // Load gitignore rules from root down to current directory
+  const pathSegments = normalizedDirectory
+    ? normalizedDirectory.split("/")
+    : [];
+  let currentRules: IgnoreRule[] = await loadIgnoreRulesForDirectory(
+    [],
+    root,
+    "",
+  );
+
+  // Load rules for each parent directory leading to the target
+  let currentPath = "";
+  let currentAbsolute = root;
+  for (const segment of pathSegments) {
+    currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+    currentAbsolute = path.join(currentAbsolute, segment);
+    currentRules = await loadIgnoreRulesForDirectory(
+      currentRules,
+      currentAbsolute,
+      currentPath,
+    );
+  }
+
   const items: FileListItem[] = [];
 
   for (const entry of dirEntries) {
@@ -86,6 +109,11 @@ export async function listDirectoryContents(
         ? `${normalizedDirectory}/${entry.name}`
         : entry.name;
 
+      // Check if directory should be ignored
+      if (shouldIgnorePath(toPosixPath(relativePath), true, currentRules)) {
+        continue;
+      }
+
       items.push({ path: toPosixPath(relativePath), kind: "directory" });
       continue;
     }
@@ -97,6 +125,11 @@ export async function listDirectoryContents(
     const relativePath = normalizedDirectory
       ? `${normalizedDirectory}/${entry.name}`
       : entry.name;
+
+    // Check if file should be ignored
+    if (shouldIgnorePath(toPosixPath(relativePath), false, currentRules)) {
+      continue;
+    }
 
     items.push({ path: toPosixPath(relativePath), kind: "file" });
   }

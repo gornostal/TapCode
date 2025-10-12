@@ -11,7 +11,12 @@ import {
   reorderTask,
   removeTask,
 } from "./services/tasksService";
-import { getGitStatus, getGitDiff } from "./services/gitService";
+import {
+  getGitStatus,
+  getGitDiff,
+  stageAll,
+  commitStaged,
+} from "./services/gitService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
@@ -150,6 +155,34 @@ export function registerRoutes(app: Express) {
     getGitDiff()
       .then((response) => {
         res.json(response);
+      })
+      .catch((error) => {
+        handleGitError(error, res);
+      });
+  });
+
+  router.post("/git/stage-all", (_req, res) => {
+    stageAll()
+      .then(() => {
+        res.status(200).json({ success: true });
+      })
+      .catch((error) => {
+        handleGitError(error, res);
+      });
+  });
+
+  router.post("/git/commit", (req, res) => {
+    const body = req.body as unknown;
+    const validationResult = extractTextFromBody(body);
+
+    if ("error" in validationResult) {
+      res.status(400).json({ error: validationResult.error });
+      return;
+    }
+
+    commitStaged(validationResult.text)
+      .then(() => {
+        res.status(200).json({ success: true });
       })
       .catch((error) => {
         handleGitError(error, res);

@@ -22,7 +22,8 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
     }
 
     // Use "diff" language for git diff syntax highlighting
-    return highlightCode(diff.diff, "diff");
+    // Hide line numbers for git diffs
+    return highlightCode(diff.diff, "diff", false);
   }, [diff]);
 
   useEffect(() => {

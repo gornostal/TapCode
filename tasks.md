@@ -6,8 +6,5 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Implement API and UI to stage all files (git add -A)
+- Remove sub navigation for git from the toolbar. Instead git menu should open status page
 
-- Implement API and UI to commit staged files
-
-- collectFilesFromRoot shows `test.log` file even though `*.log` is in gitignore

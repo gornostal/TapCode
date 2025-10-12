@@ -49,7 +49,7 @@ const FilePreview = ({
       return null;
     }
 
-    return highlightCode(selectedFile.content, selectedFile.language);
+    return highlightCode(selectedFile.content, selectedFile.language, true);
   }, [selectedFile]);
 
   const highlightedLanguageLabel =

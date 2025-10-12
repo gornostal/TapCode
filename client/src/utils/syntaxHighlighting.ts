@@ -29,6 +29,7 @@ export type HighlightResult = {
 export const highlightCode = (
   content: string,
   language?: string | null,
+  showLineNumbers = true,
 ): HighlightResult => {
   try {
     let htmlContent: string;
@@ -48,12 +49,13 @@ export const highlightCode = (
     }
 
     return {
-      html: addLineNumbers(htmlContent),
+      html: showLineNumbers ? addLineNumbers(htmlContent) : htmlContent,
       language: detectedLanguage,
     };
   } catch {
+    const escapedContent = escapeHtml(content);
     return {
-      html: addLineNumbers(escapeHtml(content)),
+      html: showLineNumbers ? addLineNumbers(escapedContent) : escapedContent,
       language: language ?? null,
     };
   }

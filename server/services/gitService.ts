@@ -96,3 +96,37 @@ export const getGitDiff = async (): Promise<GitDiffResponse> => {
     throw new Error(`Failed to get git diff: ${(error as Error).message}`);
   }
 };
+
+/**
+ * Stages all changes (equivalent to git add -A)
+ */
+export const stageAll = async (): Promise<void> => {
+  const projectRoot = resolveFromRoot("");
+
+  try {
+    await execAsync("git add -A", {
+      cwd: projectRoot,
+    });
+  } catch (error) {
+    throw new Error(`Failed to stage all changes: ${(error as Error).message}`);
+  }
+};
+
+/**
+ * Commits staged changes with the given message
+ */
+export const commitStaged = async (message: string): Promise<void> => {
+  const projectRoot = resolveFromRoot("");
+
+  if (!message || !message.trim()) {
+    throw new Error("Commit message cannot be empty");
+  }
+
+  try {
+    await execAsync(`git commit -m ${JSON.stringify(message)}`, {
+      cwd: projectRoot,
+    });
+  } catch (error) {
+    throw new Error(`Failed to commit changes: ${(error as Error).message}`);
+  }
+};
