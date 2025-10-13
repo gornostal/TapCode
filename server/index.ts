@@ -1,10 +1,28 @@
 import express from "express";
 import { createServer } from "node:http";
+import path from "node:path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { log, logError } from "./utils/logger";
+import { setProjectRoot } from "./utils/paths";
 
 async function bootstrap() {
+  // Parse command-line arguments
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    console.error("Error: Project path is required");
+    console.error("Usage: tapcode <path>");
+    console.error("Example: tapcode . (for current directory)");
+    process.exit(1);
+  }
+
+  const projectPath = args[0];
+  const resolvedPath = path.resolve(process.cwd(), projectPath);
+
+  // Set the project root for the application
+  setProjectRoot(resolvedPath);
+  log(`Project root set to: ${resolvedPath}`);
   const app = express();
   app.use(express.json());
 

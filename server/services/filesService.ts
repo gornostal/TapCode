@@ -24,7 +24,7 @@ export const getFiles = async (
     directory,
     parentDirectory: parentDirectoryOf(directory),
     items,
-    projectName: projectBaseName,
+    projectName: projectBaseName(),
   };
 };
 

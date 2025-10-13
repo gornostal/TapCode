@@ -4,11 +4,11 @@
   "description": "TapCode prototype with typed Express server and Vite React client.",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
+    "dev": "NODE_ENV=development tsx server/index.ts .",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc --project tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/server/index.js",
+    "start": "NODE_ENV=production node dist/server/index.js .",
     "check": "tsc --noEmit",
     "test:unit": "vitest run --pool=vmThreads",
     "lint": "eslint . --ext .ts,.tsx",
