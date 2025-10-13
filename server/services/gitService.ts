@@ -43,7 +43,7 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
     const unstaged: string[] = [];
     const untracked: string[] = [];
 
-    const lines = statusOutput.trim().split("\n").filter(Boolean);
+    const lines = statusOutput.split("\n").filter((line) => line.length > 0);
     for (const line of lines) {
       const status = line.substring(0, 2);
       const filePath = line.substring(3);
