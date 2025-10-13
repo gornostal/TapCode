@@ -1,6 +1,10 @@
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const projectRoot = path.resolve(process.env.POCKETIDE_ROOT ?? process.cwd());
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(
+  process.env.POCKETIDE_ROOT ?? path.resolve(currentDir, "../.."),
+);
 export const projectBaseName = path.basename(projectRoot);
 
 export const resolveFromRoot = (...segments: string[]) =>
