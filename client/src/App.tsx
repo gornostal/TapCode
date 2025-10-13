@@ -285,6 +285,13 @@ function App() {
     setRoute({ page: "list" });
   }, [setRoute]);
 
+  const handleNavigateToRoot = useCallback(() => {
+    window.history.pushState({ page: "list" }, "", "/");
+    setRoute({ page: "list" });
+    resetFileViewer();
+    setCurrentDirectory("");
+  }, [setRoute, resetFileViewer]);
+
   const currentDirectoryLabel = currentDirectory ? `/${currentDirectory}` : "/";
   const canNavigateUp = parentDirectory !== null;
 
@@ -371,6 +378,7 @@ function App() {
         onOpenFile={handleOpenFileFromSearch}
       />
       <Toolbar
+        onNavigateToRoot={handleNavigateToRoot}
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
         onOpenTaskList={openTasksPage}

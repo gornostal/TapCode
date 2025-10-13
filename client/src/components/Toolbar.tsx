@@ -4,6 +4,7 @@ type ToolbarButton = {
 };
 
 type ToolbarProps = {
+  onNavigateToRoot: () => void;
   onGoToFileToggle: () => void;
   isGoToFileOpen: boolean;
   onOpenTaskList: () => void;
@@ -13,13 +14,14 @@ type ToolbarProps = {
 };
 
 const TOOLBAR_BUTTONS: ToolbarButton[] = [
-  { label: "…", ariaLabel: "Open more options" },
+  { label: "Files" },
   { label: "Go to file" },
   { label: "Git" },
   { label: "Tasks" },
 ];
 
 const Toolbar = ({
+  onNavigateToRoot,
   onGoToFileToggle,
   isGoToFileOpen,
   onOpenTaskList,
@@ -36,7 +38,9 @@ const Toolbar = ({
         <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-emerald-500/20 opacity-80" />
         {buttons.map((button, index) => {
           const handleClick = () => {
-            if (button.label === "Git") {
+            if (button.label === "Files") {
+              onNavigateToRoot();
+            } else if (button.label === "Git") {
               onOpenGitStatus();
             } else if (button.label === "Go to file") {
               onGoToFileToggle();
@@ -46,6 +50,7 @@ const Toolbar = ({
           };
 
           const isDisabled =
+            button.label !== "Files" &&
             button.label !== "Go to file" &&
             button.label !== "Tasks" &&
             button.label !== "Git";
