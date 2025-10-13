@@ -138,16 +138,19 @@ const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
 
   return (
     <>
+      {error && (
+        <div className="sticky top-0 z-10 rounded border border-rose-700 bg-rose-950/90 p-4 backdrop-blur-sm">
+          <p className="font-mono text-sm text-rose-300">
+            <span className="font-semibold">Error:</span> {error}
+          </p>
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {isLoading ? (
           <p className="py-4 font-mono text-sm text-slate-400">
             Loading git status…
           </p>
-        ) : error ? (
-          <p className="py-4 font-mono text-sm text-rose-400">
-            Unable to load git status: {error}
-          </p>
-        ) : status ? (
+        ) : error ? null : status ? (
           <>
             <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
               <div className="space-y-2">
@@ -199,7 +202,7 @@ const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
                   <button
                     onClick={() => void handleCommit()}
                     disabled={isCommitting || !commitMessage.trim()}
-                    className="rounded border border-sky-700 bg-sky-900/40 px-4 py-2 font-mono text-sm text-sky-300 transition-colors hover:bg-sky-900/60 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded border border-sky-700 bg-sky-900/40 px-4 py-2 font-mono text-sm text-sky-300 transition-colors hover:bg-sky-900/60 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCommitting ? "Committing..." : "Commit"}
                   </button>
