@@ -6,12 +6,17 @@ type MultilineTaskModalProps = {
   onSubmit: (text: string) => Promise<void>;
 };
 
+const MULTILINE_DRAFT_STORAGE_KEY = "multilineTask-draft";
+
 const MultilineTaskModal = ({
   isOpen,
   onClose,
   onSubmit,
 }: MultilineTaskModalProps) => {
-  const [taskText, setTaskText] = useState("");
+  const [taskText, setTaskText] = useState(() => {
+    // Load draft from session storage on mount
+    return sessionStorage.getItem(MULTILINE_DRAFT_STORAGE_KEY) || "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -24,10 +29,18 @@ const MultilineTaskModal = ({
 
   useEffect(() => {
     if (!isOpen) {
-      setTaskText("");
       setSubmitError(null);
     }
   }, [isOpen]);
+
+  // Save draft to session storage whenever it changes
+  useEffect(() => {
+    if (taskText) {
+      sessionStorage.setItem(MULTILINE_DRAFT_STORAGE_KEY, taskText);
+    } else {
+      sessionStorage.removeItem(MULTILINE_DRAFT_STORAGE_KEY);
+    }
+  }, [taskText]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -44,6 +57,8 @@ const MultilineTaskModal = ({
     void (async () => {
       try {
         await onSubmit(trimmed);
+        setTaskText("");
+        sessionStorage.removeItem(MULTILINE_DRAFT_STORAGE_KEY);
         onClose();
       } catch (err) {
         setSubmitError(err instanceof Error ? err.message : "Unknown error");

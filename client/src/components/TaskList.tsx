@@ -7,11 +7,16 @@ type TaskListProps = {
   onBackToBrowser: () => void;
 };
 
+const DRAFT_STORAGE_KEY = "taskList-draft";
+
 const TaskList = ({ onBackToBrowser }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newTaskText, setNewTaskText] = useState("");
+  const [newTaskText, setNewTaskText] = useState(() => {
+    // Load draft from session storage on mount
+    return sessionStorage.getItem(DRAFT_STORAGE_KEY) || "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -59,6 +64,15 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
     };
   }, []);
 
+  // Save draft to session storage whenever it changes
+  useEffect(() => {
+    if (newTaskText) {
+      sessionStorage.setItem(DRAFT_STORAGE_KEY, newTaskText);
+    } else {
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+  }, [newTaskText]);
+
   const addTask = async (trimmed: string) => {
     setIsSubmitting(true);
 
@@ -94,6 +108,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
 
       setTasks((current) => [data.text as string, ...current]);
       setNewTaskText("");
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Unknown error");
     } finally {
