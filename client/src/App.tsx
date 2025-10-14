@@ -338,7 +338,7 @@ function App() {
   return (
     <main className="min-h-screen bg-slate-950 pb-28 text-slate-100">
       <Header projectName={projectName} />
-      <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 pt-20 pb-12 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-20 pb-12 sm:px-6 lg:px-8">
         {isFileRoute ? (
           <FilePreview
             projectName={projectName}

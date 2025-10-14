@@ -4,6 +4,7 @@ type NavigationBarProps = {
   disabled?: boolean;
   onIncreaseFontSize?: () => void;
   onDecreaseFontSize?: () => void;
+  onAnnotate?: () => void;
 };
 
 const NavigationBar = ({
@@ -12,6 +13,7 @@ const NavigationBar = ({
   disabled = false,
   onIncreaseFontSize,
   onDecreaseFontSize,
+  onAnnotate,
 }: NavigationBarProps) => (
   <div className="fixed bottom-[3.25rem] left-0 right-0 z-20 border-t border-b border-slate-800 bg-slate-950">
     <div
@@ -24,6 +26,23 @@ const NavigationBar = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        {onAnnotate && (
+          <button
+            type="button"
+            onClick={onAnnotate}
+            className="flex-shrink-0 rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+            aria-label="Annotate selected lines"
+            title="Create annotation for selected lines"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        )}
         {onDecreaseFontSize && onIncreaseFontSize && (
           <div className="flex items-center gap-1">
             <button

@@ -9,4 +9,20 @@
   color: #64748b;
   user-select: none;
   border-right: 1px solid #334155;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.line-number:hover {
+  color: #e2e8f0;
+  border-right-color: #475569;
+}
+
+.line-number-selected {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-right-color: #94a3b8;
 }

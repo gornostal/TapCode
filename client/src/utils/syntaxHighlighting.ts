@@ -16,7 +16,9 @@ export const addLineNumbers = (html: string): string => {
   return lines
     .map((line, index) => {
       const lineNumber = (index + 1).toString().padStart(lineNumberWidth, " ");
-      return `<span class="line-number">${lineNumber}</span>${line}`;
+      return `<span class="line-number" data-line="${
+        index + 1
+      }">${lineNumber}</span>${line}`;
     })
     .join("\n");
 };
