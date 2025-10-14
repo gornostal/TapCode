@@ -30,7 +30,7 @@ const Toolbar = ({
           <button
             type="button"
             onClick={onAnnotate}
-            className="flex-shrink-0 rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+            className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
             aria-label="Annotate selected lines"
             title="Create annotation for selected lines"
           >
@@ -48,7 +48,7 @@ const Toolbar = ({
             <button
               type="button"
               onClick={onDecreaseFontSize}
-              className="flex-shrink-0 rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+              className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
               aria-label="Decrease font size"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -62,7 +62,7 @@ const Toolbar = ({
             <button
               type="button"
               onClick={onIncreaseFontSize}
-              className="flex-shrink-0 rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+              className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
               aria-label="Increase font size"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -75,7 +75,7 @@ const Toolbar = ({
           type="button"
           onClick={onBack}
           disabled={disabled}
-          className="flex-shrink-0 rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           aria-label="Go back"
         >
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

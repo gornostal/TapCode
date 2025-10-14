@@ -83,7 +83,7 @@ const TabBar = ({
               } ${
                 isDisabled
                   ? "cursor-not-allowed opacity-100"
-                  : "hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-100"
+                  : "cursor-pointer hover:text-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-100"
               }`}
             >
               <span className="break-words text-center leading-tight">
