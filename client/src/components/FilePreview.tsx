@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { FileContentResponse } from "@shared/messages";
 import NavigationBar from "@/components/NavigationBar";
 import {
@@ -44,6 +44,8 @@ const FilePreview = ({
   fileError,
   onBackToBrowser,
 }: FilePreviewProps) => {
+  const [fontSize, setFontSize] = useState(10);
+
   const highlighted = useMemo<HighlightResult | null>(() => {
     if (!selectedFile || selectedFile.isBinary || !selectedFile.content) {
       return null;
@@ -51,6 +53,14 @@ const FilePreview = ({
 
     return highlightCode(selectedFile.content, selectedFile.language, true);
   }, [selectedFile]);
+
+  const handleIncreaseFontSize = () => {
+    setFontSize((prev) => Math.min(prev + 2, 32));
+  };
+
+  const handleDecreaseFontSize = () => {
+    setFontSize((prev) => Math.max(prev - 2, 6));
+  };
 
   const highlightedLanguageLabel =
     highlighted?.language ?? selectedFile?.language ?? null;
@@ -111,7 +121,10 @@ const FilePreview = ({
                 marginRight: "-50vw",
               }}
             >
-              <pre className="min-w-full rounded-lg bg-slate-950/60 text-sm leading-relaxed">
+              <pre
+                className="min-w-full rounded-lg bg-slate-950/60 leading-relaxed"
+                style={{ fontSize: `${fontSize}px` }}
+              >
                 <code
                   className={`hljs ${
                     highlighted?.language
@@ -137,7 +150,12 @@ const FilePreview = ({
         Use Back to files or your browser history to return to the project
         listing.
       </footer>
-      <NavigationBar currentPath={currentPath} onBack={onBackToBrowser} />
+      <NavigationBar
+        currentPath={currentPath}
+        onBack={onBackToBrowser}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
+      />
     </>
   );
 };
