@@ -354,6 +354,7 @@ function App() {
           <GitStatus
             onBackToBrowser={handleBackToBrowser}
             onOpenGitDiff={openGitDiffPage}
+            onOpenFile={openFilePage}
           />
         ) : isGitDiffRoute ? (
           <GitDiff onBackToBrowser={handleBackToBrowser} />

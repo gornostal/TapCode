@@ -5,9 +5,14 @@ import NavigationBar from "@/components/NavigationBar";
 type GitStatusProps = {
   onBackToBrowser: () => void;
   onOpenGitDiff: () => void;
+  onOpenFile: (path: string) => void;
 };
 
-const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
+const GitStatus = ({
+  onBackToBrowser,
+  onOpenGitDiff,
+  onOpenFile,
+}: GitStatusProps) => {
   const [status, setStatus] = useState<GitStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +133,12 @@ const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
               key={`${file}-${index}`}
               className="font-mono text-sm text-slate-300"
             >
-              {file}
+              <button
+                onClick={() => onOpenFile(file)}
+                className="w-full cursor-pointer text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
+              >
+                {file}
+              </button>
             </li>
           ))}
         </ul>
@@ -220,7 +230,12 @@ const GitStatus = ({ onBackToBrowser, onOpenGitDiff }: GitStatusProps) => {
                       key={`${file}-${index}`}
                       className="font-mono text-sm text-slate-300"
                     >
-                      {file}
+                      <button
+                        onClick={() => onOpenFile(file)}
+                        className="w-full cursor-pointer text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
+                      >
+                        {file}
+                      </button>
                     </li>
                   ))}
                 </ul>
