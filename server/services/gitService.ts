@@ -78,16 +78,39 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
 };
 
 /**
- * Gets the git diff showing all changes (staged and unstaged)
+ * Gets the git diff showing only unstaged and new (untracked) files
  */
 export const getGitDiff = async (): Promise<GitDiffResponse> => {
   const projectRoot = resolveFromRoot("");
 
   try {
-    // Get diff for both staged and unstaged changes
-    const { stdout: diff } = await execAsync("git diff HEAD", {
+    // Get diff for unstaged changes only (excludes staged files)
+    const { stdout: unstagedDiff } = await execAsync("git diff", {
       cwd: projectRoot,
     });
+
+    // Get untracked files
+    const { stdout: untrackedFiles } = await execAsync(
+      "git ls-files --others --exclude-standard",
+      {
+        cwd: projectRoot,
+      },
+    );
+
+    let diff = unstagedDiff;
+
+    // Add untracked files to the diff output
+    if (untrackedFiles.trim()) {
+      const untrackedList = untrackedFiles.trim().split("\n");
+      const untrackedSection = untrackedList
+        .map(
+          (file) =>
+            `diff --git a/${file} b/${file}\nnew file\n--- /dev/null\n+++ b/${file}\n`,
+        )
+        .join("\n");
+
+      diff = diff ? `${diff}\n${untrackedSection}` : untrackedSection;
+    }
 
     return {
       diff: diff || "No changes",

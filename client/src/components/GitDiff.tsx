@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import type { GitDiffResponse } from "@shared/messages";
-import NavigationBar from "@/components/NavigationBar";
+import Toolbar from "@/components/Toolbar";
 import AnnotationModal from "@/components/AnnotationModal";
 import {
   highlightCode,
@@ -261,7 +261,7 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
         selectedLines={selectedLineDetails}
         filename={annotationFilename}
       />
-      <NavigationBar
+      <Toolbar
         currentPath="Git Changes"
         onBack={onBackToBrowser}
         onIncreaseFontSize={handleIncreaseFontSize}

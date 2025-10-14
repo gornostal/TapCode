@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { TasksResponse } from "@shared/messages";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
-import NavigationBar from "@/components/NavigationBar";
+import Toolbar from "@/components/Toolbar";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
@@ -325,7 +325,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
-      <NavigationBar currentPath="Tasks" onBack={onBackToBrowser} />
+      <Toolbar currentPath="Tasks" onBack={onBackToBrowser} />
     </>
   );
 };

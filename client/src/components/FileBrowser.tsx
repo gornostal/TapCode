@@ -1,5 +1,5 @@
 import type { FileListItem } from "@shared/messages";
-import NavigationBar from "@/components/NavigationBar";
+import Toolbar from "@/components/Toolbar";
 
 type FileBrowserProps = {
   currentDirectoryLabel: string;
@@ -114,7 +114,7 @@ const FileBrowser = ({
     <footer className="text-xs text-slate-500">
       File list updates on page refresh to reflect the current file system.
     </footer>
-    <NavigationBar
+    <Toolbar
       currentPath={currentDirectoryLabel}
       onBack={onNavigateUp}
       disabled={!canNavigateUp}

@@ -6,5 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- View Git Diff button should show only unstaged files + new files in the diff. Update the appropriate API endpoint
+- Mouse cursor should appear as a pointer when hovering over clickable items in the Toolbar and TabBar
 - If file names overflow box width in Git Status page, they should be truncated with ellipsis
+- helper text about annotations

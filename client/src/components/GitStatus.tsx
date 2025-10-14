@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { GitStatusResponse } from "@shared/messages";
-import NavigationBar from "@/components/NavigationBar";
+import Toolbar from "@/components/Toolbar";
 
 type GitStatusProps = {
   onBackToBrowser: () => void;
@@ -269,7 +269,7 @@ const GitStatus = ({
           </>
         ) : null}
       </div>
-      <NavigationBar currentPath="Git Status" onBack={onBackToBrowser} />
+      <Toolbar currentPath="Git Status" onBack={onBackToBrowser} />
     </>
   );
 };

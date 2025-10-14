@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import type { FileContentResponse } from "@shared/messages";
-import NavigationBar from "@/components/NavigationBar";
+import Toolbar from "@/components/Toolbar";
 import AnnotationModal from "@/components/AnnotationModal";
 import {
   highlightCode,
@@ -292,7 +292,7 @@ const FilePreview = ({
         selectedLines={selectedLineDetails}
         filename={annotationFilename}
       />
-      <NavigationBar
+      <Toolbar
         currentPath={currentPath}
         onBack={onBackToBrowser}
         onIncreaseFontSize={handleIncreaseFontSize}

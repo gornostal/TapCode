@@ -13,7 +13,7 @@ import GitStatus from "@/components/GitStatus";
 import GoToFileSearch from "@/components/GoToFileSearch";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
-import Toolbar from "@/components/Toolbar";
+import TabBar from "@/components/TabBar";
 
 type RouteState =
   | {
@@ -378,7 +378,7 @@ function App() {
         onClose={handleCloseGoToFile}
         onOpenFile={handleOpenFileFromSearch}
       />
-      <Toolbar
+      <TabBar
         onNavigateToRoot={handleNavigateToRoot}
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
