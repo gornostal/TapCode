@@ -135,7 +135,7 @@ const GitStatus = ({
             >
               <button
                 onClick={() => onOpenFile(file)}
-                className="w-full cursor-pointer text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
+                className="w-full cursor-pointer truncate text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
               >
                 {file}
               </button>
@@ -232,7 +232,7 @@ const GitStatus = ({
                     >
                       <button
                         onClick={() => onOpenFile(file)}
-                        className="w-full cursor-pointer text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
+                        className="w-full cursor-pointer truncate text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
                       >
                         {file}
                       </button>
