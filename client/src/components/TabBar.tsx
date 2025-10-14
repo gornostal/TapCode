@@ -7,6 +7,8 @@ type TabBarProps = {
   onNavigateToRoot: () => void;
   onGoToFileToggle: () => void;
   isGoToFileOpen: boolean;
+  onCommandRunnerToggle: () => void;
+  isCommandRunnerOpen: boolean;
   onOpenTaskList: () => void;
   isTaskListActive: boolean;
   onOpenGitStatus: () => void;
@@ -16,6 +18,7 @@ type TabBarProps = {
 const TABBAR_BUTTONS: TabBarButton[] = [
   { label: "Files" },
   { label: "Go to file" },
+  { label: "Command" },
   { label: "Git" },
   { label: "Tasks" },
 ];
@@ -24,6 +27,8 @@ const TabBar = ({
   onNavigateToRoot,
   onGoToFileToggle,
   isGoToFileOpen,
+  onCommandRunnerToggle,
+  isCommandRunnerOpen,
   onOpenTaskList,
   isTaskListActive,
   onOpenGitStatus,
@@ -44,6 +49,8 @@ const TabBar = ({
               onOpenGitStatus();
             } else if (button.label === "Go to file") {
               onGoToFileToggle();
+            } else if (button.label === "Command") {
+              onCommandRunnerToggle();
             } else if (button.label === "Tasks") {
               onOpenTaskList();
             }
@@ -52,17 +59,20 @@ const TabBar = ({
           const isDisabled =
             button.label !== "Files" &&
             button.label !== "Go to file" &&
+            button.label !== "Command" &&
             button.label !== "Tasks" &&
             button.label !== "Git";
 
           const isPressed =
             button.label === "Go to file"
               ? isGoToFileOpen
-              : button.label === "Tasks"
-                ? isTaskListActive
-                : button.label === "Git"
-                  ? isGitActive
-                  : undefined;
+              : button.label === "Command"
+                ? isCommandRunnerOpen
+                : button.label === "Tasks"
+                  ? isTaskListActive
+                  : button.label === "Git"
+                    ? isGitActive
+                    : undefined;
 
           return (
             <button
@@ -76,6 +86,7 @@ const TabBar = ({
                 index < buttons.length - 1 ? "border-r border-slate-800" : ""
               } ${
                 (button.label === "Go to file" && isGoToFileOpen) ||
+                (button.label === "Command" && isCommandRunnerOpen) ||
                 (button.label === "Tasks" && isTaskListActive) ||
                 (button.label === "Git" && isGitActive)
                   ? "bg-slate-900 text-sky-200"

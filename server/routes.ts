@@ -17,12 +17,14 @@ import {
   stageAll,
   commitStaged,
 } from "./services/gitService";
+import { getShellSuggestions } from "./services/shellService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
   handleFileContentError,
   handleTaskError,
   handleGitError,
+  handleShellError,
 } from "./utils/errorHandling";
 
 export function registerRoutes(app: Express) {
@@ -187,6 +189,22 @@ export function registerRoutes(app: Express) {
       .catch((error) => {
         handleGitError(error, res);
       });
+  });
+
+  router.get("/shell/suggestions", (req, res) => {
+    const query = normalizeQueryParam(req.query.q).trim();
+
+    if (!query) {
+      res.status(400).json({ error: "Query parameter 'q' is required" });
+      return;
+    }
+
+    try {
+      const result = getShellSuggestions(query);
+      res.json(result);
+    } catch (error) {
+      handleShellError(error, res);
+    }
   });
 
   app.use("/api", router);

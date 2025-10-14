@@ -38,3 +38,12 @@ export interface GitStatusResponse {
 export interface GitDiffResponse {
   diff: string;
 }
+
+export interface HistoryEntry {
+  command: string;
+  timestamp?: number;
+}
+
+export interface ShellSuggestionsResponse {
+  commands: HistoryEntry[];
+}

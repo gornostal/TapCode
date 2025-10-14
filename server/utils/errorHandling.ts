@@ -81,3 +81,11 @@ export const handleGitError = (error: unknown, res: Response): void => {
   // Git errors are typically operational failures
   res.status(500).json({ error: (error as Error).message });
 };
+
+/**
+ * Handles shell-related errors and sends appropriate HTTP responses
+ */
+export const handleShellError = (error: unknown, res: Response): void => {
+  // Shell errors are typically operational failures
+  res.status(500).json({ error: (error as Error).message });
+};

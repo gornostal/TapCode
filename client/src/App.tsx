@@ -11,6 +11,7 @@ import FilePreview from "@/components/FilePreview";
 import GitDiff from "@/components/GitDiff";
 import GitStatus from "@/components/GitStatus";
 import GoToFileSearch from "@/components/GoToFileSearch";
+import CommandRunner from "@/components/CommandRunner";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
 import TabBar from "@/components/TabBar";
@@ -77,6 +78,7 @@ function App() {
   const [fileError, setFileError] = useState<string | null>(null);
   const fileRequestRef = useRef<AbortController | null>(null);
   const [isGoToFileOpen, setIsGoToFileOpen] = useState(false);
+  const [isCommandRunnerOpen, setIsCommandRunnerOpen] = useState(false);
 
   const resetFileViewer = useCallback(() => {
     if (fileRequestRef.current) {
@@ -244,6 +246,14 @@ function App() {
     setIsGoToFileOpen(false);
   }, []);
 
+  const handleCommandRunnerToggle = useCallback(() => {
+    setIsCommandRunnerOpen((previous) => !previous);
+  }, []);
+
+  const handleCloseCommandRunner = useCallback(() => {
+    setIsCommandRunnerOpen(false);
+  }, []);
+
   const handleOpenFileFromSearch = useCallback(
     (path: string) => {
       openFilePage(path);
@@ -332,6 +342,7 @@ function App() {
   useEffect(() => {
     if (route.page !== "list") {
       setIsGoToFileOpen(false);
+      setIsCommandRunnerOpen(false);
     }
   }, [route]);
 
@@ -378,10 +389,16 @@ function App() {
         onClose={handleCloseGoToFile}
         onOpenFile={handleOpenFileFromSearch}
       />
+      <CommandRunner
+        isOpen={isCommandRunnerOpen}
+        onClose={handleCloseCommandRunner}
+      />
       <TabBar
         onNavigateToRoot={handleNavigateToRoot}
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
+        onCommandRunnerToggle={handleCommandRunnerToggle}
+        isCommandRunnerOpen={isCommandRunnerOpen}
         onOpenTaskList={openTasksPage}
         isTaskListActive={isTaskRoute}
         onOpenGitStatus={openGitStatusPage}

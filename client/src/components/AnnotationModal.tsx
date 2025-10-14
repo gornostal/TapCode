@@ -109,7 +109,7 @@ const AnnotationModal = ({
 
         {selectedLines.length > 0 && (
           <div className="mb-4 rounded border border-slate-700 bg-slate-950/50 p-3">
-            <p className="mb-2 text-sm font-medium text-slate-300">
+            <p className="mb-2 text-sm font-medium text-slate-300 break-all">
               Selected code from {filename}:
             </p>
             <pre className="text-xs text-slate-400 overflow-x-auto">
