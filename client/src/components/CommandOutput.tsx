@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { highlightCode } from "@/utils/syntaxHighlighting";
 import Toolbar from "@/components/Toolbar";
-import type { CommandOutput } from "@shared/commandRunner";
+import type { CommandOutput, CommandStopResponse } from "@shared/commandRunner";
 
 type SSEEvent =
   | {
@@ -20,6 +20,9 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   const [isComplete, setIsComplete] = useState(false);
   const [exitCode, setExitCode] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
+  const [stopError, setStopError] = useState<string | null>(null);
+  const [exitMessage, setExitMessage] = useState<string | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,10 +90,16 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
                   case "exit":
                     setIsComplete(true);
                     setExitCode(data.code ?? null);
+                    setExitMessage(data.data);
+                    setIsStopping(false);
                     return;
 
                   case "error":
                     setError(data.data);
+                    setIsComplete(true);
+                    setExitCode(null);
+                    setExitMessage(null);
+                    setIsStopping(false);
                     return;
                 }
               } catch (err) {
@@ -106,6 +115,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
 
         console.error("Stream connection error:", err);
         setError(err instanceof Error ? err.message : "Connection failed");
+        setIsStopping(false);
       }
     };
 
@@ -128,7 +138,78 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
     }
   }, [output]);
 
+  useEffect(() => {
+    setIsStopping(false);
+    setStopError(null);
+    setExitMessage(null);
+  }, [sessionId]);
+
+  const handleStop = async () => {
+    setStopError(null);
+    setIsStopping(true);
+
+    try {
+      const response = await fetch(`/api/commands/${sessionId}`, {
+        method: "DELETE",
+      });
+
+      if (response.status === 404) {
+        throw new Error("Command not found");
+      }
+
+      const data = (await response
+        .json()
+        .catch(() => null)) as CommandStopResponse | null;
+
+      if (!response.ok) {
+        throw new Error(`Failed to stop command: ${response.status}`);
+      }
+
+      if (data?.status === "already_complete") {
+        setIsStopping(false);
+        setIsComplete(true);
+      }
+    } catch (err) {
+      console.error("Error stopping command:", err);
+      setStopError(
+        err instanceof Error ? err.message : "Failed to stop command",
+      );
+      setIsStopping(false);
+    }
+  };
+
   const highlighted = highlightCode(output, "bash", false);
+  const statusText = (() => {
+    if (!isComplete) {
+      return isStopping ? "Stopping..." : "Running...";
+    }
+
+    if (exitMessage) {
+      return exitCode === null
+        ? exitMessage
+        : `${exitMessage} (code ${exitCode})`;
+    }
+
+    return exitCode === null
+      ? "Process exited"
+      : `Process exited with code ${exitCode}`;
+  })();
+
+  const statusClassName = (() => {
+    if (!isComplete) {
+      return isStopping ? "text-orange-400" : "text-blue-400";
+    }
+
+    if (exitMessage && exitMessage.toLowerCase().includes("stopped")) {
+      return "text-orange-400";
+    }
+
+    if (exitCode === 0) {
+      return "text-green-500";
+    }
+
+    return "text-red-500";
+  })();
 
   return (
     <>
@@ -137,18 +218,26 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
           Command Output
         </p>
         <div className="mt-2 flex items-center gap-3">
-          {isComplete ? (
-            <span
-              className={`text-sm ${
-                exitCode === 0 ? "text-green-500" : "text-red-500"
-              }`}
+          <span className={`text-sm ${statusClassName}`}>{statusText}</span>
+          <button
+            type="button"
+            onClick={() => {
+              void handleStop();
+            }}
+            disabled={isComplete || isStopping}
+            className="flex items-center gap-2 rounded border border-red-800 px-3 py-1 text-xs font-medium uppercase tracking-wider text-red-400 transition hover:border-red-600 hover:bg-red-900/40 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500 disabled:hover:bg-transparent"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
             >
-              Process exited with code {exitCode}
-            </span>
-          ) : (
-            <span className="text-sm text-blue-400">Running...</span>
-          )}
+              <rect x="5" y="5" width="10" height="10" rx="1" />
+            </svg>
+            <span>Stop</span>
+          </button>
         </div>
+        {stopError && <p className="mt-1 text-xs text-red-400">{stopError}</p>}
       </header>
 
       <div className="flex flex-col gap-4">

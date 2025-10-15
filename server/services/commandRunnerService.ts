@@ -18,6 +18,8 @@ interface RunningCommand {
   exitCode?: number;
   command: string;
   startTime: number;
+  stopRequested: boolean;
+  forceKillTimer: NodeJS.Timeout | null;
 }
 
 // Store running commands by session ID
@@ -25,6 +27,64 @@ const runningCommands = new Map<string, RunningCommand>();
 
 // Clean up completed commands after 5 minutes
 const CLEANUP_DELAY = 5 * 60 * 1000;
+const STOP_FORCE_TIMEOUT_MS = 5 * 1000;
+const isWindows = process.platform === "win32";
+
+function sendSignalToProcess(
+  sessionId: string,
+  runningCommand: RunningCommand,
+  signal: NodeJS.Signals,
+): boolean {
+  const child = runningCommand.process;
+  const pid = child.pid;
+
+  if (!pid || child.killed) {
+    return false;
+  }
+
+  if (!isWindows) {
+    try {
+      process.kill(-pid, signal);
+      return true;
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err?.code === "ESRCH") {
+        return false;
+      }
+      log(
+        `Failed to send ${signal} to process group for session ${sessionId}: ${
+          err?.message ?? error
+        }`,
+      );
+      try {
+        return child.kill(signal);
+      } catch (innerError) {
+        log(
+          `Fallback ${signal} delivery failed for session ${sessionId}: ${
+            (innerError as Error)?.message ?? innerError
+          }`,
+        );
+        return false;
+      }
+    }
+  }
+
+  try {
+    return child.kill(signal);
+  } catch (error) {
+    log(
+      `Failed to send ${signal} to session ${sessionId}: ${
+        (error as Error)?.message ?? error
+      }`,
+    );
+    return false;
+  }
+}
+
+type StopCommandResult =
+  | { status: "not_found" }
+  | { status: "already_complete"; exitCode?: number }
+  | { status: "stopping" };
 
 export function runCommand(
   command: string,
@@ -51,6 +111,7 @@ export function runCommand(
       shell: true,
       // Disable output buffering
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      detached: !isWindows,
     });
 
     runningCommand = {
@@ -59,6 +120,8 @@ export function runCommand(
       isComplete: false,
       command,
       startTime: Date.now(),
+      stopRequested: false,
+      forceKillTimer: null,
     };
 
     runningCommands.set(currentSessionId, runningCommand);
@@ -76,15 +139,32 @@ export function runCommand(
     });
 
     // Handle process exit
-    childProcess.on("close", (code) => {
+    childProcess.on("close", (code, signal) => {
+      if (runningCommand.forceKillTimer) {
+        clearTimeout(runningCommand.forceKillTimer);
+      }
+      runningCommand.forceKillTimer = null;
+
+      const exitMessage = (() => {
+        if (runningCommand.stopRequested) {
+          return signal
+            ? `Process stopped by user (signal ${signal})`
+            : "Process stopped by user";
+        }
+        if (signal) {
+          return `Process terminated by signal ${signal}`;
+        }
+        return "Process exited";
+      })();
+
       const output: CommandOutput = {
         type: "exit",
-        data: `Process exited`,
-        code: code ?? 0,
+        data: exitMessage,
+        code: code ?? undefined,
       };
       runningCommand.output.push(output);
       runningCommand.isComplete = true;
-      runningCommand.exitCode = code ?? 0;
+      runningCommand.exitCode = code ?? undefined;
 
       // Clean up after delay
       setTimeout(() => {
@@ -100,6 +180,10 @@ export function runCommand(
         data: `Failed to start command: ${error.message}`,
       };
       runningCommand.output.push(output);
+      if (runningCommand.forceKillTimer) {
+        clearTimeout(runningCommand.forceKillTimer);
+        runningCommand.forceKillTimer = null;
+      }
       runningCommand.isComplete = true;
 
       // Clean up after delay
@@ -178,6 +262,7 @@ export function getCommandRuns(): CommandRunSummary[] {
       startTime: runningCommand.startTime,
       isComplete: runningCommand.isComplete,
       exitCode: runningCommand.exitCode,
+      stopRequested: runningCommand.stopRequested,
     }),
   );
 
@@ -185,4 +270,88 @@ export function getCommandRuns(): CommandRunSummary[] {
   runs.sort((a, b) => b.startTime - a.startTime);
 
   return runs;
+}
+
+export function stopCommand(sessionId: string): StopCommandResult {
+  const runningCommand = runningCommands.get(sessionId);
+
+  if (!runningCommand) {
+    return { status: "not_found" };
+  }
+
+  if (runningCommand.isComplete) {
+    return {
+      status: "already_complete",
+      exitCode: runningCommand.exitCode,
+    };
+  }
+
+  const wasAlreadyRequested = runningCommand.stopRequested;
+
+  if (!wasAlreadyRequested) {
+    runningCommand.stopRequested = true;
+    runningCommand.output.push({
+      type: "stderr",
+      data: "Termination requested by user\n",
+    });
+  } else {
+    runningCommand.output.push({
+      type: "stderr",
+      data: "Termination already requested; reinforcing stop signal\n",
+    });
+  }
+
+  const signalsToTry: NodeJS.Signals[] = isWindows
+    ? ["SIGTERM"]
+    : ["SIGINT", "SIGTERM"];
+  let deliveredSignal: NodeJS.Signals | null = null;
+
+  for (const signal of signalsToTry) {
+    const delivered = sendSignalToProcess(sessionId, runningCommand, signal);
+    if (delivered) {
+      deliveredSignal = signal;
+      runningCommand.output.push({
+        type: "stderr",
+        data: `Sent ${signal} to process\n`,
+      });
+      break;
+    }
+  }
+
+  if (!deliveredSignal) {
+    runningCommand.output.push({
+      type: "stderr",
+      data: "Unable to deliver graceful stop signal; process may continue running\n",
+    });
+  }
+
+  if (!runningCommand.forceKillTimer) {
+    const timeout = setTimeout(() => {
+      if (!runningCommand.isComplete && runningCommands.has(sessionId)) {
+        log(`Force killing session ${sessionId} after timeout`);
+        runningCommand.output.push({
+          type: "stderr",
+          data: "Force killing process with SIGKILL\n",
+        });
+        const killDelivered = sendSignalToProcess(
+          sessionId,
+          runningCommand,
+          "SIGKILL",
+        );
+        if (!killDelivered) {
+          runningCommand.output.push({
+            type: "stderr",
+            data: "Force kill signal could not be delivered; manual intervention may be required\n",
+          });
+        }
+      }
+      runningCommand.forceKillTimer = null;
+    }, STOP_FORCE_TIMEOUT_MS);
+    if (typeof timeout.unref === "function") {
+      timeout.unref();
+    }
+    runningCommand.forceKillTimer = timeout;
+  }
+
+  return { status: "stopping" };
 }

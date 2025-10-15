@@ -10,4 +10,13 @@ export interface CommandRunSummary {
   startTime: number;
   isComplete: boolean;
   exitCode?: number;
+  stopRequested: boolean;
+}
+
+export type CommandStopStatus = "not_found" | "already_complete" | "stopping";
+
+export interface CommandStopResponse {
+  sessionId: string;
+  status: CommandStopStatus;
+  exitCode?: number;
 }

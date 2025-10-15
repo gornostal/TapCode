@@ -155,73 +155,104 @@ const CommandRunner = ({
     };
   }, [fetchRunningCommands]);
 
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const startCommand = useCallback(async () => {
+    const commandToRun = query.trim() || results[0]?.command;
+    if (!commandToRun) {
+      return;
+    }
 
-      const commandToRun = query.trim() || results[0]?.command;
-      if (!commandToRun) {
-        return;
+    try {
+      // Start the command by making a POST request
+      const response = await fetch("/api/command/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: commandToRun }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start command");
       }
 
-      try {
-        // Start the command by making a POST request
-        const response = await fetch("/api/command/run", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text: commandToRun }),
-        });
+      // Read the SSE stream to get the sessionId from the first event
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("No response body");
+      }
 
-        if (!response.ok) {
-          throw new Error("Failed to start command");
-        }
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-        // Read the SSE stream to get the sessionId from the first event
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("No response body");
-        }
+      // Read the first event which contains the session ID
+      const { value } = await reader.read();
+      if (value) {
+        buffer = decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
 
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        // Read the first event which contains the session ID
-        const { value } = await reader.read();
-        if (value) {
-          buffer = decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6);
-              try {
-                const data = JSON.parse(dataStr) as { type: string; data: string };
-                if (data.type === "session") {
-                  // Got the session ID, navigate to output view
-                  setQuery("");
-                  onOpenCommandOutput(data.data);
-                  // Cancel the reader since we're navigating away
-                  reader.cancel();
-                  return;
-                }
-              } catch (err) {
-                console.error("Error parsing SSE message:", err);
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6);
+            try {
+              const data = JSON.parse(dataStr) as {
+                type: string;
+                data: string;
+              };
+              if (data.type === "session") {
+                // Got the session ID, navigate to output view
+                setQuery("");
+                onOpenCommandOutput(data.data);
+                // Cancel the reader since we're navigating away
+                await reader.cancel();
+                return;
               }
+            } catch (err) {
+              console.error("Error parsing SSE message:", err);
             }
           }
         }
+      }
 
-        // If we didn't get a session ID, fall back to refreshing the list
-        reader.cancel();
-        void fetchRunningCommands();
-        setQuery("");
+      // If we didn't get a session ID, fall back to refreshing the list
+      await reader.cancel();
+      void fetchRunningCommands();
+      setQuery("");
+    } catch (err) {
+      console.error("Error starting command:", err);
+    }
+  }, [query, results, fetchRunningCommands, onOpenCommandOutput]);
+
+  const handleSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void startCommand();
+    },
+    [startCommand],
+  );
+
+  const handleStopCommand = useCallback(
+    async (sessionId: string) => {
+      setRunningCommands((prev) =>
+        prev.map((cmd) =>
+          cmd.sessionId === sessionId ? { ...cmd, stopRequested: true } : cmd,
+        ),
+      );
+
+      try {
+        const response = await fetch(`/api/commands/${sessionId}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok && response.status !== 404) {
+          throw new Error(`Failed to stop command: ${response.status}`);
+        }
       } catch (err) {
-        console.error("Error starting command:", err);
+        console.error("Error stopping command:", err);
+      } finally {
+        void fetchRunningCommands();
       }
     },
-    [query, results, fetchRunningCommands, onOpenCommandOutput],
+    [fetchRunningCommands],
   );
 
   const emptyStateMessage = useMemo(() => {
@@ -303,46 +334,82 @@ const CommandRunner = ({
             <ul className="space-y-2">
               {runningCommands.map((cmd) => (
                 <li key={cmd.sessionId}>
-                  <button
-                    type="button"
-                    onClick={() => onOpenCommandOutput(cmd.sessionId)}
-                    className="flex w-full items-center justify-between gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-left text-sm transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
-                  >
-                    <div className="flex-1 space-y-1">
-                      <div className="font-mono text-slate-100">
-                        {cmd.command}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenCommandOutput(cmd.sessionId)}
+                      className="flex w-full flex-1 items-center justify-between gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-left text-sm transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+                    >
+                      <div className="flex-1 space-y-1">
+                        <div className="font-mono text-slate-100">
+                          {cmd.command}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span>{formatTime(cmd.startTime)}</span>
+                          {cmd.isComplete ? (
+                            cmd.stopRequested ? (
+                              <span className="text-orange-400">stopped</span>
+                            ) : (
+                              <span
+                                className={
+                                  cmd.exitCode === 0
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                }
+                              >
+                                {typeof cmd.exitCode === "number"
+                                  ? `exited ${cmd.exitCode}`
+                                  : "exited"}
+                              </span>
+                            )
+                          ) : cmd.stopRequested ? (
+                            <span className="text-orange-400">stopping...</span>
+                          ) : (
+                            <span className="text-blue-400">running...</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <span>{formatTime(cmd.startTime)}</span>
-                        {cmd.isComplete ? (
-                          <span
-                            className={
-                              cmd.exitCode === 0
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }
-                          >
-                            exited {cmd.exitCode}
-                          </span>
-                        ) : (
-                          <span className="text-blue-400">running...</span>
-                        )}
-                      </div>
-                    </div>
-                    <span aria-hidden className="text-slate-500">
-                      <svg
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      <span aria-hidden className="text-slate-500">
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </span>
+                    </button>
+                    {!cmd.isComplete && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleStopCommand(cmd.sessionId);
+                        }}
+                        disabled={cmd.stopRequested}
+                        className="rounded border border-slate-800 bg-slate-900/60 px-3 py-3 text-sm text-slate-400 transition hover:border-red-700 hover:bg-red-900/20 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-800 disabled:hover:bg-slate-900/60 disabled:hover:text-slate-400"
+                        title={
+                          cmd.stopRequested ? "Stopping..." : "Stop command"
+                        }
                       >
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </span>
-                  </button>
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="6" y="6" width="12" height="12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

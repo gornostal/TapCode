@@ -18,7 +18,11 @@ import {
   commitStaged,
 } from "./services/gitService";
 import { getShellSuggestions } from "./services/shellService";
-import { runCommand, getCommandRuns } from "./services/commandRunnerService";
+import {
+  runCommand,
+  getCommandRuns,
+  stopCommand,
+} from "./services/commandRunnerService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
@@ -220,12 +224,16 @@ export function registerRoutes(app: Express) {
     const bodyObj = body as Record<string, unknown>;
 
     // Extract text and sessionId
-    const text = typeof bodyObj.text === "string" ? bodyObj.text.trim() : undefined;
-    const sessionId = typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+    const text =
+      typeof bodyObj.text === "string" ? bodyObj.text.trim() : undefined;
+    const sessionId =
+      typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
 
     // Either text or sessionId must be provided
     if (!text && !sessionId) {
-      res.status(400).json({ error: "Either 'text' or 'sessionId' is required" });
+      res
+        .status(400)
+        .json({ error: "Either 'text' or 'sessionId' is required" });
       return;
     }
 
@@ -242,6 +250,40 @@ export function registerRoutes(app: Express) {
   router.get("/command/runs", (_req, res) => {
     const runs = getCommandRuns();
     res.json(runs);
+  });
+
+  router.delete("/commands/:id", (req, res) => {
+    const idParam = req.params.id;
+
+    if (typeof idParam !== "string" || !idParam.trim()) {
+      res.status(400).json({ error: "Command session id is required" });
+      return;
+    }
+
+    const sessionId = idParam.trim();
+    const result = stopCommand(sessionId);
+
+    switch (result.status) {
+      case "not_found": {
+        res.status(404).json({ error: "Command not found" });
+        return;
+      }
+      case "already_complete": {
+        res.status(200).json({
+          sessionId,
+          status: result.status,
+          exitCode: result.exitCode,
+        });
+        return;
+      }
+      case "stopping": {
+        res.status(202).json({
+          sessionId,
+          status: result.status,
+        });
+        return;
+      }
+    }
   });
 
   app.use("/api", router);
