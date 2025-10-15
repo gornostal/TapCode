@@ -69,7 +69,7 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
           `/api/shell/suggestions?${params.toString()}`,
           {
             signal: controller.signal,
-          },
+          }
         );
 
         if (!response.ok) {
@@ -110,8 +110,14 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
   }, [query]);
 
   const handleResultClick = useCallback((command: string) => {
-    // TODO: Implement submit function
-    console.log("Command selected:", command);
+    setQuery(command);
+    // Focus the input and move cursor to the end
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(command.length, command.length);
+      }
+    }, 0);
   }, []);
 
   const handleSubmit = useCallback(
@@ -124,12 +130,12 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
         console.log("Command submitted:", firstResult.command);
       }
     },
-    [results],
+    [results]
   );
 
   const emptyStateMessage = useMemo(() => {
     if (!query.trim()) {
-      return "Enter command to execute.";
+      return "Enter a command to execute.";
     }
 
     if (error) {
@@ -153,9 +159,6 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
         </p>
         <p className="mt-2 text-base text-slate-400">
           Execute shell commands with real-time output
-        </p>
-        <p className="mt-2 text-sm text-slate-500">
-          Search your shell history or type a new command to run
         </p>
       </header>
 
@@ -199,8 +202,19 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
                   <span className="flex-1 break-all font-mono">
                     {result.command}
                   </span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Run
+                  <span aria-hidden className="text-slate-500">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17 17L7 7" />
+                      <path d="M7 15V7h8" />
+                    </svg>
                   </span>
                 </button>
               </li>
