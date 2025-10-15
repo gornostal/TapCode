@@ -12,6 +12,7 @@ import GitDiff from "@/components/GitDiff";
 import GitStatus from "@/components/GitStatus";
 import GoToFileSearch from "@/components/GoToFileSearch";
 import CommandRunner from "@/components/CommandRunner";
+import CommandOutput from "@/components/CommandOutput";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
 import TabBar from "@/components/TabBar";
@@ -31,6 +32,10 @@ type RouteState =
       page: "commands";
     }
   | {
+      page: "command-output";
+      sessionId: string;
+    }
+  | {
       page: "git-status";
     }
   | {
@@ -46,6 +51,15 @@ const parseRoute = (): RouteState => {
 
   if (pathname.startsWith("/commands")) {
     return { page: "commands" };
+  }
+
+  if (pathname.startsWith("/command-output")) {
+    const params = new URLSearchParams(search);
+    const sessionId = params.get("sessionId");
+
+    if (sessionId && sessionId.trim()) {
+      return { page: "command-output", sessionId };
+    }
   }
 
   if (pathname.startsWith("/git/status")) {
@@ -270,6 +284,22 @@ function App() {
     setRoute({ page: "commands" });
   }, [setRoute]);
 
+  const openCommandOutputPage = useCallback(
+    (sessionId: string) => {
+      const params = new URLSearchParams();
+      params.set("sessionId", sessionId);
+
+      window.history.pushState(
+        { page: "command-output", sessionId },
+        "",
+        `/command-output?${params.toString()}`,
+      );
+
+      setRoute({ page: "command-output", sessionId });
+    },
+    [setRoute],
+  );
+
   const openGitStatusPage = useCallback(() => {
     window.history.pushState({ page: "git-status" }, "", "/git/status");
     setRoute({ page: "git-status" });
@@ -288,6 +318,7 @@ function App() {
       (state.page === "file" ||
         state.page === "tasks" ||
         state.page === "commands" ||
+        state.page === "command-output" ||
         state.page === "git-status" ||
         state.page === "git-diff")
     ) {
@@ -338,6 +369,7 @@ function App() {
   const isFileRoute = route.page === "file";
   const isTaskRoute = route.page === "tasks";
   const isCommandsRoute = route.page === "commands";
+  const isCommandOutputRoute = route.page === "command-output";
   const isGitStatusRoute = route.page === "git-status";
   const isGitDiffRoute = route.page === "git-diff";
   const isGitRouteActive = isGitStatusRoute || isGitDiffRoute;
@@ -366,7 +398,15 @@ function App() {
         ) : isTaskRoute ? (
           <TaskList onBackToBrowser={handleBackToBrowser} />
         ) : isCommandsRoute ? (
-          <CommandRunner onBackToBrowser={handleBackToBrowser} />
+          <CommandRunner
+            onBackToBrowser={handleBackToBrowser}
+            onOpenCommandOutput={openCommandOutputPage}
+          />
+        ) : isCommandOutputRoute ? (
+          <CommandOutput
+            sessionId={route.sessionId}
+            onBackToBrowser={handleBackToBrowser}
+          />
         ) : isGitStatusRoute ? (
           <GitStatus
             onBackToBrowser={handleBackToBrowser}

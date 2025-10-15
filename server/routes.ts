@@ -210,32 +210,33 @@ export function registerRoutes(app: Express) {
 
   router.post("/command/run", (req, res) => {
     const body = req.body as unknown;
-    const validationResult = extractTextFromBody(body);
 
-    if ("error" in validationResult) {
-      res.status(400).json({ error: validationResult.error });
+    // Validate body is an object
+    if (typeof body !== "object" || body === null) {
+      res.status(400).json({ error: "Request body must be an object" });
       return;
     }
 
-    const command = validationResult.text;
-    if (!command) {
+    const bodyObj = body as Record<string, unknown>;
+
+    // Extract text and sessionId
+    const text = typeof bodyObj.text === "string" ? bodyObj.text.trim() : undefined;
+    const sessionId = typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+
+    // Either text or sessionId must be provided
+    if (!text && !sessionId) {
+      res.status(400).json({ error: "Either 'text' or 'sessionId' is required" });
+      return;
+    }
+
+    // If text is provided, it cannot be empty
+    if (text !== undefined && !text) {
       res.status(400).json({ error: "Command cannot be empty" });
       return;
     }
 
-    // Extract optional sessionId from body for reconnection support
-    let sessionId: string | undefined;
-    if (
-      typeof body === "object" &&
-      body !== null &&
-      "sessionId" in body &&
-      typeof body.sessionId === "string"
-    ) {
-      sessionId = body.sessionId;
-    }
-
-    // Run command with SSE streaming
-    runCommand(command, res, sessionId);
+    // Run command with SSE streaming (text may be undefined for reconnection)
+    runCommand(text || "", res, sessionId);
   });
 
   router.get("/command/runs", (_req, res) => {

@@ -9,15 +9,21 @@ import {
 } from "react";
 
 import type { HistoryEntry, ShellSuggestionsResponse } from "@shared/messages";
+import type { CommandRunSummary } from "@shared/commandRunner";
 import Toolbar from "@/components/Toolbar";
 
 type CommandRunnerProps = {
   onBackToBrowser: () => void;
+  onOpenCommandOutput: (sessionId: string) => void;
 };
 
 const SEARCH_DEBOUNCE_MS = 150;
+const REFRESH_INTERVAL_MS = 2000;
 
-const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
+const CommandRunner = ({
+  onBackToBrowser,
+  onOpenCommandOutput,
+}: CommandRunnerProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const requestRef = useRef<AbortController | null>(null);
 
@@ -25,6 +31,10 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
   const [results, setResults] = useState<HistoryEntry[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [runningCommands, setRunningCommands] = useState<CommandRunSummary[]>(
+    [],
+  );
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -120,17 +130,98 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
     }, 0);
   }, []);
 
+  const fetchRunningCommands = useCallback(async () => {
+    try {
+      const response = await fetch("/api/command/runs");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch running commands`);
+      }
+      const data = (await response.json()) as CommandRunSummary[];
+      setRunningCommands(data);
+    } catch (err) {
+      console.error("Error fetching running commands:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchRunningCommands();
+
+    const intervalId = setInterval(() => {
+      void fetchRunningCommands();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [fetchRunningCommands]);
+
   const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      const [firstResult] = results;
-      if (firstResult) {
-        // TODO: Implement submit function
-        console.log("Command submitted:", firstResult.command);
+      const commandToRun = query.trim() || results[0]?.command;
+      if (!commandToRun) {
+        return;
+      }
+
+      try {
+        // Start the command by making a POST request
+        const response = await fetch("/api/command/run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: commandToRun }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to start command");
+        }
+
+        // Read the SSE stream to get the sessionId from the first event
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("No response body");
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        // Read the first event which contains the session ID
+        const { value } = await reader.read();
+        if (value) {
+          buffer = decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const dataStr = line.slice(6);
+              try {
+                const data = JSON.parse(dataStr) as { type: string; data: string };
+                if (data.type === "session") {
+                  // Got the session ID, navigate to output view
+                  setQuery("");
+                  onOpenCommandOutput(data.data);
+                  // Cancel the reader since we're navigating away
+                  reader.cancel();
+                  return;
+                }
+              } catch (err) {
+                console.error("Error parsing SSE message:", err);
+              }
+            }
+          }
+        }
+
+        // If we didn't get a session ID, fall back to refreshing the list
+        reader.cancel();
+        void fetchRunningCommands();
+        setQuery("");
+      } catch (err) {
+        console.error("Error starting command:", err);
       }
     },
-    [results],
+    [query, results, fetchRunningCommands, onOpenCommandOutput],
   );
 
   const emptyStateMessage = useMemo(() => {
@@ -150,6 +241,24 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
 
     return null;
   }, [error, isSearching, query, results.length]);
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+
+    if (diff < 60000) {
+      return "just now";
+    } else if (diff < 3600000) {
+      const minutes = Math.floor(diff / 60000);
+      return `${minutes}m ago`;
+    } else if (diff < 86400000) {
+      const hours = Math.floor(diff / 3600000);
+      return `${hours}h ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   return (
     <>
@@ -185,6 +294,60 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
             />
           </div>
         </form>
+
+        {runningCommands.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-400">
+              Running & Recent Commands
+            </h3>
+            <ul className="space-y-2">
+              {runningCommands.map((cmd) => (
+                <li key={cmd.sessionId}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenCommandOutput(cmd.sessionId)}
+                    className="flex w-full items-center justify-between gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-left text-sm transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+                  >
+                    <div className="flex-1 space-y-1">
+                      <div className="font-mono text-slate-100">
+                        {cmd.command}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span>{formatTime(cmd.startTime)}</span>
+                        {cmd.isComplete ? (
+                          <span
+                            className={
+                              cmd.exitCode === 0
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }
+                          >
+                            exited {cmd.exitCode}
+                          </span>
+                        ) : (
+                          <span className="text-blue-400">running...</span>
+                        )}
+                      </div>
+                    </div>
+                    <span aria-hidden className="text-slate-500">
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {emptyStateMessage ? (
           <p className="py-4 font-mono text-sm text-slate-400">
