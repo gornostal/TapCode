@@ -69,7 +69,7 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
           `/api/shell/suggestions?${params.toString()}`,
           {
             signal: controller.signal,
-          }
+          },
         );
 
         if (!response.ok) {
@@ -130,7 +130,7 @@ const CommandRunner = ({ onBackToBrowser }: CommandRunnerProps) => {
         console.log("Command submitted:", firstResult.command);
       }
     },
-    [results]
+    [results],
   );
 
   const emptyStateMessage = useMemo(() => {
