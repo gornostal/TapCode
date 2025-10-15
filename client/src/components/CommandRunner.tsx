@@ -257,7 +257,7 @@ const CommandRunner = ({
 
   const emptyStateMessage = useMemo(() => {
     if (!query.trim()) {
-      return "Enter a command to execute.";
+      return null;
     }
 
     if (error) {
@@ -320,7 +320,7 @@ const CommandRunner = ({
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Start typing a command"
+              placeholder="Enter a shell command"
               className="flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:outline-none"
             />
           </div>
