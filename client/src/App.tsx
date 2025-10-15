@@ -28,6 +28,9 @@ type RouteState =
       page: "tasks";
     }
   | {
+      page: "commands";
+    }
+  | {
       page: "git-status";
     }
   | {
@@ -39,6 +42,10 @@ const parseRoute = (): RouteState => {
 
   if (pathname.startsWith("/tasks")) {
     return { page: "tasks" };
+  }
+
+  if (pathname.startsWith("/commands")) {
+    return { page: "commands" };
   }
 
   if (pathname.startsWith("/git/status")) {
@@ -78,7 +85,6 @@ function App() {
   const [fileError, setFileError] = useState<string | null>(null);
   const fileRequestRef = useRef<AbortController | null>(null);
   const [isGoToFileOpen, setIsGoToFileOpen] = useState(false);
-  const [isCommandRunnerOpen, setIsCommandRunnerOpen] = useState(false);
 
   const resetFileViewer = useCallback(() => {
     if (fileRequestRef.current) {
@@ -246,14 +252,6 @@ function App() {
     setIsGoToFileOpen(false);
   }, []);
 
-  const handleCommandRunnerToggle = useCallback(() => {
-    setIsCommandRunnerOpen((previous) => !previous);
-  }, []);
-
-  const handleCloseCommandRunner = useCallback(() => {
-    setIsCommandRunnerOpen(false);
-  }, []);
-
   const handleOpenFileFromSearch = useCallback(
     (path: string) => {
       openFilePage(path);
@@ -265,6 +263,11 @@ function App() {
   const openTasksPage = useCallback(() => {
     window.history.pushState({ page: "tasks" }, "", "/tasks");
     setRoute({ page: "tasks" });
+  }, [setRoute]);
+
+  const openCommandsPage = useCallback(() => {
+    window.history.pushState({ page: "commands" }, "", "/commands");
+    setRoute({ page: "commands" });
   }, [setRoute]);
 
   const openGitStatusPage = useCallback(() => {
@@ -284,6 +287,7 @@ function App() {
       state &&
       (state.page === "file" ||
         state.page === "tasks" ||
+        state.page === "commands" ||
         state.page === "git-status" ||
         state.page === "git-diff")
     ) {
@@ -333,6 +337,7 @@ function App() {
 
   const isFileRoute = route.page === "file";
   const isTaskRoute = route.page === "tasks";
+  const isCommandsRoute = route.page === "commands";
   const isGitStatusRoute = route.page === "git-status";
   const isGitDiffRoute = route.page === "git-diff";
   const isGitRouteActive = isGitStatusRoute || isGitDiffRoute;
@@ -342,7 +347,6 @@ function App() {
   useEffect(() => {
     if (route.page !== "list") {
       setIsGoToFileOpen(false);
-      setIsCommandRunnerOpen(false);
     }
   }, [route]);
 
@@ -361,6 +365,8 @@ function App() {
           />
         ) : isTaskRoute ? (
           <TaskList onBackToBrowser={handleBackToBrowser} />
+        ) : isCommandsRoute ? (
+          <CommandRunner onBackToBrowser={handleBackToBrowser} />
         ) : isGitStatusRoute ? (
           <GitStatus
             onBackToBrowser={handleBackToBrowser}
@@ -389,16 +395,12 @@ function App() {
         onClose={handleCloseGoToFile}
         onOpenFile={handleOpenFileFromSearch}
       />
-      <CommandRunner
-        isOpen={isCommandRunnerOpen}
-        onClose={handleCloseCommandRunner}
-      />
       <TabBar
         onNavigateToRoot={handleNavigateToRoot}
         onGoToFileToggle={handleGoToFileToggle}
         isGoToFileOpen={isGoToFileOpen}
-        onCommandRunnerToggle={handleCommandRunnerToggle}
-        isCommandRunnerOpen={isCommandRunnerOpen}
+        onOpenCommands={openCommandsPage}
+        isCommandsActive={isCommandsRoute}
         onOpenTaskList={openTasksPage}
         isTaskListActive={isTaskRoute}
         onOpenGitStatus={openGitStatusPage}
