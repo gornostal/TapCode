@@ -28,7 +28,7 @@ export const parseTaskItems = (contents: string): string[] => {
 
   for (const line of lines) {
     // Check if we hit a new header (stop processing)
-    if (line.trim().startsWith("#")) {
+    if (line.startsWith("#")) {
       break;
     }
 

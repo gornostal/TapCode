@@ -18,6 +18,7 @@ import {
   commitStaged,
 } from "./services/gitService";
 import { getShellSuggestions } from "./services/shellService";
+import { runCommand, getCommandRuns } from "./services/commandRunnerService";
 import { extractTextFromBody } from "./utils/validation";
 import {
   handleFileError,
@@ -205,6 +206,41 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       handleShellError(error, res);
     }
+  });
+
+  router.post("/command/run", (req, res) => {
+    const body = req.body as unknown;
+    const validationResult = extractTextFromBody(body);
+
+    if ("error" in validationResult) {
+      res.status(400).json({ error: validationResult.error });
+      return;
+    }
+
+    const command = validationResult.text;
+    if (!command) {
+      res.status(400).json({ error: "Command cannot be empty" });
+      return;
+    }
+
+    // Extract optional sessionId from body for reconnection support
+    let sessionId: string | undefined;
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "sessionId" in body &&
+      typeof body.sessionId === "string"
+    ) {
+      sessionId = body.sessionId;
+    }
+
+    // Run command with SSE streaming
+    runCommand(command, res, sessionId);
+  });
+
+  router.get("/command/runs", (_req, res) => {
+    const runs = getCommandRuns();
+    res.json(runs);
   });
 
   app.use("/api", router);
