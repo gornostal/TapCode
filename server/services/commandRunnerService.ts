@@ -22,6 +22,20 @@ interface RunningCommand {
   forceKillTimer: NodeJS.Timeout | null;
 }
 
+type OutputPushFn = (output: CommandOutput) => void;
+
+// Transformers can buffer partial stdout (e.g. newline-delimited JSON) and
+// flush the remainder on process exit, so we expose both chunk handling and
+// an optional finalize hook instead of a simple `(chunk: string) => string`.
+export interface StdoutTransformer {
+  handleChunk: (chunk: string, push: OutputPushFn) => void;
+  finalize?: (push: OutputPushFn) => void;
+}
+
+export interface RunCommandOptions {
+  stdoutTransformer?: StdoutTransformer;
+}
+
 // Store running commands by session ID
 const runningCommands = new Map<string, RunningCommand>();
 
@@ -76,6 +90,7 @@ export function runCommand(
   command: string,
   res: Response,
   sessionId?: string,
+  options?: RunCommandOptions,
 ): void {
   const projectRoot = getProjectRoot();
   let runningCommand: RunningCommand;
@@ -113,16 +128,26 @@ export function runCommand(
 
     runningCommands.set(currentSessionId, runningCommand);
 
+    const pushOutput: OutputPushFn = (output) => {
+      runningCommand.output.push(output);
+    };
+
+    const stdoutTransformer = options?.stdoutTransformer;
+
     // Handle stdout
     childProcess.stdout.on("data", (data: Buffer) => {
-      const output: CommandOutput = { type: "stdout", data: data.toString() };
-      runningCommand.output.push(output);
+      const chunk = data.toString();
+      if (stdoutTransformer) {
+        stdoutTransformer.handleChunk(chunk, pushOutput);
+      } else {
+        pushOutput({ type: "stdout", data: chunk });
+      }
     });
 
     // Handle stderr
     childProcess.stderr.on("data", (data: Buffer) => {
       const output: CommandOutput = { type: "stderr", data: data.toString() };
-      runningCommand.output.push(output);
+      pushOutput(output);
     });
 
     // Handle process exit
@@ -144,12 +169,16 @@ export function runCommand(
         return "Process exited";
       })();
 
+      if (stdoutTransformer?.finalize) {
+        stdoutTransformer.finalize(pushOutput);
+      }
+
       const output: CommandOutput = {
         type: "exit",
         data: exitMessage,
         code: code ?? undefined,
       };
-      runningCommand.output.push(output);
+      pushOutput(output);
       runningCommand.isComplete = true;
       runningCommand.exitCode = code ?? undefined;
 
@@ -166,7 +195,7 @@ export function runCommand(
         type: "error",
         data: `Failed to start command: ${error.message}`,
       };
-      runningCommand.output.push(output);
+      pushOutput(output);
       if (runningCommand.forceKillTimer) {
         clearTimeout(runningCommand.forceKillTimer);
         runningCommand.forceKillTimer = null;

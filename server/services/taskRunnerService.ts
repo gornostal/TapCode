@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AgentName } from "@shared/agents";
 import { runCommand } from "./commandRunnerService";
+import { createClaudeStdoutTransformer } from "../utils/agents/claudeOutputTransformer";
 
 function quoteForShellArgument(argument: string): string {
   return `'${argument.replace(/'/g, `'\\''`)}'`;
@@ -41,5 +42,9 @@ export function runTask(
   }
 
   const command = buildTaskRunCommand(trimmedDescription, agent);
-  runCommand(command, res, sessionId);
+  const options =
+    agent === "claude"
+      ? { stdoutTransformer: createClaudeStdoutTransformer() }
+      : undefined;
+  runCommand(command, res, sessionId, options);
 }
