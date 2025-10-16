@@ -5,6 +5,8 @@ type ToolbarProps = {
   onIncreaseFontSize?: () => void;
   onDecreaseFontSize?: () => void;
   onAnnotate?: () => void;
+  onDelete?: () => void;
+  deleteDisabled?: boolean;
 };
 
 const Toolbar = ({
@@ -14,6 +16,8 @@ const Toolbar = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   onAnnotate,
+  onDelete,
+  deleteDisabled = true,
 }: ToolbarProps) => (
   <div className="fixed bottom-[3.25rem] left-0 right-0 z-20 border-t border-b border-slate-800 bg-slate-950">
     <div
@@ -26,6 +30,27 @@ const Toolbar = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleteDisabled}
+            className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+            aria-label="Delete selected task"
+            title="Delete selected task"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M3 3 L13 13 M13 3 L3 13" />
+            </svg>
+          </button>
+        )}
         {onAnnotate && (
           <button
             type="button"

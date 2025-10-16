@@ -6,4 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- Make sure first letter is not capitalized when user types cmd in client/src/components/CommandRunner.tsx
+
 - helper text about annotations

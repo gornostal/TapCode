@@ -22,6 +22,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -179,9 +180,11 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
     await addTask(text);
   };
 
-  const deleteTask = async (index: number) => {
+  const deleteTask = async () => {
+    if (selectedIndex === null) return;
+
     try {
-      const response = await fetch(`/api/tasks/${index}`, {
+      const response = await fetch(`/api/tasks/${selectedIndex}`, {
         method: "DELETE",
       });
 
@@ -191,6 +194,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
 
       const data = (await response.json()) as TasksResponse;
       setTasks(data.items);
+      setSelectedIndex(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete task");
     }
@@ -264,60 +268,48 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
             Nothing left on the list. Nice work!
           </p>
         ) : (
-          <ul className="space-y-3">
-            {tasks.map((item, index) => (
-              <li
-                key={`${item}-${index}`}
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDrop={(e) => handleDrop(e, index)}
-                className={`group flex cursor-move items-center gap-3 rounded border px-4 py-3 text-sm text-slate-100 transition-all ${
-                  draggedIndex === index
-                    ? "border-slate-600 bg-slate-800/90 opacity-50"
-                    : dragOverIndex === index && draggedIndex !== null
-                      ? "border-slate-500 bg-slate-800/80"
-                      : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80"
-                }`}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <svg
-                    className="h-4 w-4 flex-shrink-0 text-slate-600 transition-colors group-hover:text-slate-400"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                  >
-                    <circle cx="4" cy="3" r="1.5" />
-                    <circle cx="12" cy="3" r="1.5" />
-                    <circle cx="4" cy="8" r="1.5" />
-                    <circle cx="12" cy="8" r="1.5" />
-                    <circle cx="4" cy="13" r="1.5" />
-                    <circle cx="12" cy="13" r="1.5" />
-                  </svg>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void deleteTask(index);
+          <>
+            <ul className="space-y-3">
+              {tasks.map((item, index) => (
+                <li
+                  key={`${item}-${index}`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onClick={() => setSelectedIndex(index)}
+                  className={`group flex cursor-move items-center gap-3 rounded border px-4 py-3 text-sm text-slate-100 transition-all ${
+                    selectedIndex === index
+                      ? "border-slate-500 bg-slate-800/90 ring-2 ring-slate-500"
+                      : draggedIndex === index
+                        ? "border-slate-600 bg-slate-800/90 opacity-50"
+                        : dragOverIndex === index && draggedIndex !== null
+                          ? "border-slate-500 bg-slate-800/80"
+                          : "border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/80"
+                  }`}
+                >
+                  <span
+                    className="flex-1 whitespace-pre-wrap"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
-                    className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
-                    aria-label="Delete task"
                   >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    >
-                      <path d="M3 3 L13 13 M13 3 L3 13" />
-                    </svg>
-                  </button>
-                </div>
-                <span className="flex-1 whitespace-pre-wrap">{item}</span>
-              </li>
-            ))}
-          </ul>
+                    {item}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {tasks.length > 1 && (
+              <p className="text-xs text-slate-500">
+                Items can be reordered by dragging
+              </p>
+            )}
+          </>
         )}
       </div>
       <MultilineTaskModal
@@ -325,7 +317,14 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
-      <Toolbar currentPath="Tasks" onBack={onBackToBrowser} />
+      <Toolbar
+        currentPath="Tasks"
+        onBack={onBackToBrowser}
+        onDelete={() => {
+          void deleteTask();
+        }}
+        deleteDisabled={selectedIndex === null}
+      />
     </>
   );
 };
