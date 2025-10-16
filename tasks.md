@@ -6,13 +6,17 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
+
+- Fix shell command autosuggestions: they don't appear anymore
+
+- move PID file from ~/.tapcode.pid to `$HOME/.local/state/tapcode/pid` or `~/Library/Logs/tapcode/pid` for mac.
+
 - Put session id in response headers
 
 - Command output view should also have + - toolbar buttons like GitDiff.tsx
 
-- Make sure first letter is not capitalized when user types cmd in client/src/components/CommandRunner.tsx
-
-- Add more logs to the code. Don't log command output.
+- Add more logs to the code. Don't log command output, but among other things, log http requests which resulted in code >= 400 including requests to non-existent API
 
 - helper text about annotations
 
@@ -21,10 +25,6 @@ Note: This file may change while work is being done - new items may be added.
   extract everything from message.ts to files by type (e.g. tasks.ts) and remove messages.ts
 
 - move killExistingInstance from server/index.ts to utils
-
-- move PID file from ~/.tapcode.pid to `$HOME/.local/state/tapcode/pid` or `~/Library/Logs/tapcode/pid` for mac.
-
-- Use Pino logging lib (npm install pino) instead of current implementation in ./server/logger.ts.
 
 - In addition to stdout logs, log to file: `$HOME/.local/state/tapcode/tapcode.log` or `~/Library/Logs/tapcode/tapcode.log` for mac.
   Delete log file on startup so it alwsys contains logs from last run.
