@@ -247,15 +247,27 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
           </div>
         ) : (
           <div
-            ref={outputRef}
-            className="max-h-[70vh] overflow-auto rounded border border-slate-800 bg-slate-950/50 p-4"
+            className="overflow-x-auto"
+            style={{
+              width: "100vw",
+              position: "relative",
+              left: "50%",
+              right: "50%",
+              marginLeft: "-50vw",
+              marginRight: "-50vw",
+            }}
           >
-            <pre className="font-mono text-sm">
-              <code
-                className="hljs"
-                dangerouslySetInnerHTML={{ __html: highlighted.html }}
-              />
-            </pre>
+            <div
+              ref={outputRef}
+              className="max-h-[70vh] overflow-auto"
+            >
+              <pre className="min-w-full rounded-lg bg-slate-950/60 font-mono text-sm leading-relaxed">
+                <code
+                  className="hljs"
+                  dangerouslySetInnerHTML={{ __html: highlighted.html }}
+                />
+              </pre>
+            </div>
           </div>
         )}
       </div>
