@@ -1,3 +1,5 @@
+import type { AgentName } from "./agents";
+
 export type FileKind = "file" | "directory";
 
 export interface FileListItem {
@@ -24,6 +26,12 @@ export interface FileContentResponse {
 
 export interface TasksResponse {
   items: string[];
+}
+
+export interface RunTaskRequest {
+  description?: string;
+  sessionId?: string;
+  agent: AgentName;
 }
 
 export interface GitStatusResponse {

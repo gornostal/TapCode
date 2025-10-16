@@ -1,16 +1,28 @@
 import { Response } from "express";
+import { AgentName } from "@shared/agents";
 import { runCommand } from "./commandRunnerService";
 
 function quoteForShellArgument(argument: string): string {
   return `'${argument.replace(/'/g, `'\\''`)}'`;
 }
 
-export function buildTaskRunCommand(description: string): string {
-  return `codex --full-auto exec ${quoteForShellArgument(description)}`;
+export function buildTaskRunCommand(
+  description: string,
+  agent: AgentName,
+): string {
+  switch (agent) {
+    case "codex":
+      return `codex --full-auto exec ${quoteForShellArgument(description)}`;
+    case "claude":
+      return `claude --verbose --output-format stream-json -p ${quoteForShellArgument(description)}`;
+    default:
+      throw new Error(`Unsupported agent: ${agent as string}`);
+  }
 }
 
 export function runTask(
   description: string | undefined,
+  agent: AgentName,
   res: Response,
   sessionId?: string,
 ): void {
@@ -28,6 +40,6 @@ export function runTask(
     throw new Error("Task description cannot be empty");
   }
 
-  const command = buildTaskRunCommand(trimmedDescription);
+  const command = buildTaskRunCommand(trimmedDescription, agent);
   runCommand(command, res, sessionId);
 }

@@ -32,6 +32,7 @@ import {
   handleShellError,
 } from "./utils/errorHandling";
 import { runTask } from "./services/taskRunnerService";
+import { isAgentName } from "@shared/agents";
 
 export function registerRoutes(app: Express) {
   const router = Router();
@@ -111,6 +112,14 @@ export function registerRoutes(app: Express) {
       typeof bodyObj.description === "string" ? bodyObj.description : undefined;
     const sessionId =
       typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+    const agentValue = bodyObj.agent;
+
+    if (!isAgentName(agentValue)) {
+      res.status(400).json({ error: "Agent must be one of: codex, claude" });
+      return;
+    }
+
+    const agent = agentValue;
     const trimmedDescription =
       description !== undefined ? description.trim() : undefined;
 
@@ -127,7 +136,7 @@ export function registerRoutes(app: Express) {
     }
 
     try {
-      runTask(trimmedDescription, res, sessionId);
+      runTask(trimmedDescription, agent, res, sessionId);
     } catch (error) {
       res
         .status(500)

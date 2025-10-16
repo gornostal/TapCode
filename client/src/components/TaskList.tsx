@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import type { TasksResponse } from "@shared/messages";
+import { AgentName } from "@shared/agents";
+import type { RunTaskRequest, TasksResponse } from "@shared/messages";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
 import Toolbar from "@/components/Toolbar";
 
@@ -25,6 +26,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentName>("codex");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -189,9 +191,9 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     }
 
     const selectedTask = tasks[selectedIndex];
-    const trimmedTask = selectedTask?.trim();
+    const task = selectedTask?.trim();
 
-    if (!trimmedTask) {
+    if (!task) {
       setRunError("Selected task is empty.");
       return;
     }
@@ -199,12 +201,17 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     setRunError(null);
 
     try {
+      const requestBody: RunTaskRequest = {
+        description: task,
+        agent: selectedAgent,
+      };
+
       const response = await fetch("/api/tasks/run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ description: trimmedTask }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -283,7 +290,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         err instanceof Error ? err.message : "Failed to start task run.",
       );
     }
-  }, [selectedIndex, tasks, onOpenCommandOutput]);
+  }, [selectedIndex, tasks, onOpenCommandOutput, selectedAgent]);
 
   const deleteTask = async () => {
     if (selectedIndex === null) return;
@@ -429,6 +436,26 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       {runError ? (
         <p className="mt-2 text-sm text-rose-400">{runError}</p>
       ) : null}
+      <div className="mt-4 flex items-center gap-3">
+        <label
+          htmlFor="agent-select"
+          className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400"
+        >
+          Agent
+        </label>
+        <select
+          id="agent-select"
+          name="agent"
+          value={selectedAgent}
+          onChange={(event) =>
+            setSelectedAgent(event.target.value as AgentName)
+          }
+          className="w-full max-w-xs rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
+        >
+          <option value="codex">Codex</option>
+          <option value="claude">Claude</option>
+        </select>
+      </div>
       <Toolbar
         currentPath="Tasks"
         onBack={onBackToBrowser}

@@ -97,6 +97,7 @@ export function runCommand(
       shell: true,
       // Disable output buffering
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      stdio: ["ignore", "pipe", "pipe"],
       detached: true,
     });
 
