@@ -1,4 +1,10 @@
-import { Router, type Express } from "express";
+import {
+  Router,
+  type Express,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import { resolveFromRoot } from "./utils/paths";
 import {
   normalizeQueryParam,
@@ -34,10 +40,14 @@ import {
 } from "./utils/errorHandling";
 import { runTask } from "./services/taskRunnerService";
 import { isAgentName } from "@shared/agents";
+import { createHttpErrorLogger } from "./middleware/httpErrorLogger";
+import { logError } from "./utils/logger";
 
 export function registerRoutes(app: Express) {
   const router = Router();
   const taskPath = resolveFromRoot("tasks.md");
+
+  app.use("/api", createHttpErrorLogger());
 
   router.get("/files", (req, res, next) => {
     const query = normalizeQueryParam(req.query.q).trim();
@@ -361,4 +371,43 @@ export function registerRoutes(app: Express) {
   });
 
   app.use("/api", router);
+
+  app.use("/api", (req, res) => {
+    res.status(404).json({ error: "Endpoint not found" });
+  });
+
+  app.use(
+    "/api",
+    (error: unknown, req: Request, res: Response, next: NextFunction): void => {
+      void next;
+
+      if (res.headersSent) {
+        return;
+      }
+
+      const statusFromError =
+        typeof (error as { status?: number })?.status === "number"
+          ? (error as { status?: number }).status
+          : undefined;
+
+      const statusCode =
+        statusFromError !== undefined && statusFromError >= 400
+          ? statusFromError
+          : 500;
+
+      if (statusCode >= 500) {
+        logError(
+          error,
+          `Unhandled API error for ${req.method} ${req.originalUrl}`,
+        );
+      }
+
+      const responseMessage =
+        statusCode >= 500
+          ? "Internal server error"
+          : ((error as Error)?.message ?? "Request failed");
+
+      res.status(statusCode).json({ error: responseMessage });
+    },
+  );
 }

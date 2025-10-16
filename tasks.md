@@ -6,17 +6,15 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
+- Shell suggestions are mixed with command history in CommandRunner component. Fix that problem and also make the suggestion list items more compact
 
-- Fix shell command autosuggestions: they don't appear anymore
+- Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
 
 - move PID file from ~/.tapcode.pid to `$HOME/.local/state/tapcode/pid` or `~/Library/Logs/tapcode/pid` for mac.
 
 - Put session id in response headers
 
 - Command output view should also have + - toolbar buttons like GitDiff.tsx
-
-- Add more logs to the code. Don't log command output, but among other things, log http requests which resulted in code >= 400 including requests to non-existent API
 
 - helper text about annotations
 
@@ -28,3 +26,4 @@ Note: This file may change while work is being done - new items may be added.
 
 - In addition to stdout logs, log to file: `$HOME/.local/state/tapcode/tapcode.log` or `~/Library/Logs/tapcode/tapcode.log` for mac.
   Delete log file on startup so it alwsys contains logs from last run.
+  Update AGENTS.md with info where app logs are stored.
