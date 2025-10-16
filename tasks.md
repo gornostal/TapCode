@@ -6,13 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Commit changes
-
-- Change syntax to markdown
-  
-  client/src/components/CommandOutput.tsx:
-  181: const highlighted = highlightCode(output, "bash", false);
-
 - Put session id in response headers
 
 - Command output view should also have + - toolbar buttons like GitDiff.tsx

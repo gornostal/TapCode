@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AgentName } from "@shared/agents";
+import { AgentName, isAgentName } from "@shared/agents";
 import type {
   RunTaskRequest,
   TasksResponse,
@@ -15,6 +15,7 @@ type TaskListProps = {
 };
 
 const DRAFT_STORAGE_KEY = "taskList-draft";
+const AGENT_STORAGE_KEY = "taskList-selectedAgent";
 
 const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
@@ -32,7 +33,22 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState<AgentName>("codex");
+  const [selectedAgent, setSelectedAgent] = useState<AgentName>(() => {
+    if (typeof window === "undefined") {
+      return "codex";
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem(AGENT_STORAGE_KEY);
+      if (isAgentName(storedValue)) {
+        return storedValue;
+      }
+    } catch {
+      // Ignore storage access issues and fall back to default.
+    }
+
+    return "codex";
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -83,6 +99,18 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       sessionStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   }, [newTaskText]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(AGENT_STORAGE_KEY, selectedAgent);
+    } catch {
+      // Ignore storage persistence issues to avoid surfacing errors in UI.
+    }
+  }, [selectedAgent]);
 
   const addTask = async (trimmed: string) => {
     setIsSubmitting(true);
@@ -449,7 +477,32 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
             Nothing left on the list. Nice work!
           </p>
         ) : (
-          <>
+          <div className="flex flex-col gap-3">
+            {tasks.length > 1 ? (
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="agent-select"
+                  className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400"
+                >
+                  Agent
+                </label>
+                <select
+                  id="agent-select"
+                  name="agent"
+                  value={selectedAgent}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    if (isAgentName(value)) {
+                      setSelectedAgent(value);
+                    }
+                  }}
+                  className="w-full max-w-xs rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                >
+                  <option value="codex">Codex</option>
+                  <option value="claude">Claude</option>
+                </select>
+              </div>
+            ) : null}
             <ul className="space-y-3">
               {tasks.map((item, index) => (
                 <li
@@ -498,7 +551,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
                 Items can be reordered by dragging
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
       <MultilineTaskModal
@@ -515,26 +568,6 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       {runError ? (
         <p className="mt-2 text-sm text-rose-400">{runError}</p>
       ) : null}
-      <div className="mt-4 flex items-center gap-3">
-        <label
-          htmlFor="agent-select"
-          className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400"
-        >
-          Agent
-        </label>
-        <select
-          id="agent-select"
-          name="agent"
-          value={selectedAgent}
-          onChange={(event) =>
-            setSelectedAgent(event.target.value as AgentName)
-          }
-          className="w-full max-w-xs rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
-        >
-          <option value="codex">Codex</option>
-          <option value="claude">Claude</option>
-        </select>
-      </div>
       <Toolbar
         currentPath="Tasks"
         onBack={onBackToBrowser}

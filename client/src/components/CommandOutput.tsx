@@ -178,7 +178,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
     }
   };
 
-  const highlighted = highlightCode(output, "bash", false);
+  const highlighted = highlightCode(output, "markdown", false);
   const statusText = (() => {
     if (!isComplete) {
       return isStopping ? "Stopping..." : "Running...";
@@ -257,10 +257,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
               marginRight: "-50vw",
             }}
           >
-            <div
-              ref={outputRef}
-              className="max-h-[70vh] overflow-auto"
-            >
+            <div ref={outputRef} className="max-h-[70vh] overflow-auto">
               <pre className="min-w-full rounded-lg bg-slate-950/60 font-mono text-sm leading-relaxed">
                 <code
                   className="hljs"
