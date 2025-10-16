@@ -25,8 +25,8 @@ interface RunningCommand {
 // Store running commands by session ID
 const runningCommands = new Map<string, RunningCommand>();
 
-// Clean up completed commands after 5 minutes
-const CLEANUP_DELAY = 5 * 60 * 1000;
+// Clean up completed commands after 60 minutes
+const CLEANUP_DELAY = 60 * 60 * 1000;
 const STOP_FORCE_TIMEOUT_MS = 5 * 1000;
 const isWindows = process.platform === "win32";
 
