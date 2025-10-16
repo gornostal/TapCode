@@ -321,6 +321,7 @@ const CommandRunner = ({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Enter a shell command"
+              autoCapitalize="none"
               className="flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:outline-none"
             />
           </div>
