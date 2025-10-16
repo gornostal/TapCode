@@ -396,7 +396,10 @@ function App() {
             onBackToBrowser={handleBackToBrowser}
           />
         ) : isTaskRoute ? (
-          <TaskList onBackToBrowser={handleBackToBrowser} />
+          <TaskList
+            onBackToBrowser={handleBackToBrowser}
+            onOpenCommandOutput={openCommandOutputPage}
+          />
         ) : isCommandsRoute ? (
           <CommandRunner
             onBackToBrowser={handleBackToBrowser}

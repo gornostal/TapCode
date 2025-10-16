@@ -31,6 +31,7 @@ import {
   handleGitError,
   handleShellError,
 } from "./utils/errorHandling";
+import { runTask } from "./services/taskRunnerService";
 
 export function registerRoutes(app: Express) {
   const router = Router();
@@ -95,6 +96,43 @@ export function registerRoutes(app: Express) {
       .catch((error) => {
         handleTaskError(error, res, next);
       });
+  });
+
+  router.post("/tasks/run", (req, res) => {
+    const body = req.body as unknown;
+
+    if (typeof body !== "object" || body === null) {
+      res.status(400).json({ error: "Request body must be an object" });
+      return;
+    }
+
+    const bodyObj = body as Record<string, unknown>;
+    const description =
+      typeof bodyObj.description === "string" ? bodyObj.description : undefined;
+    const sessionId =
+      typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+    const trimmedDescription =
+      description !== undefined ? description.trim() : undefined;
+
+    if (trimmedDescription === undefined && !sessionId) {
+      res
+        .status(400)
+        .json({ error: "Either 'description' or 'sessionId' is required" });
+      return;
+    }
+
+    if (!sessionId && trimmedDescription === "") {
+      res.status(400).json({ error: "Task description cannot be empty" });
+      return;
+    }
+
+    try {
+      runTask(trimmedDescription, res, sessionId);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: (error as Error)?.message ?? "Failed to run task" });
+    }
   });
 
   router.put("/tasks/reorder", (req, res, next) => {

@@ -7,6 +7,8 @@ type ToolbarProps = {
   onAnnotate?: () => void;
   onDelete?: () => void;
   deleteDisabled?: boolean;
+  onRun?: () => void;
+  runDisabled?: boolean;
 };
 
 const Toolbar = ({
@@ -18,6 +20,8 @@ const Toolbar = ({
   onAnnotate,
   onDelete,
   deleteDisabled = true,
+  onRun,
+  runDisabled = false,
 }: ToolbarProps) => (
   <div className="fixed bottom-[3.25rem] left-0 right-0 z-20 border-t border-b border-slate-800 bg-slate-950">
     <div
@@ -30,6 +34,42 @@ const Toolbar = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        {onRun && (
+          <button
+            type="button"
+            onClick={onRun}
+            disabled={runDisabled}
+            className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-emerald-900/30 hover:text-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+            aria-label="Run selected task"
+            title="Run selected task"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 12L12 3.75" />
+              <path d="M12 12L12 20.25" />
+              <path d="M12 12L3.75 12" />
+              <path d="M12 12L20.25 12" />
+              <path d="M12 12L17.3 6.7" />
+              <path d="M12 12L6.7 17.3" />
+              <path d="M12 12L6.7 6.7" />
+              <path d="M12 12L17.3 17.3" />
+              <circle
+                cx="12"
+                cy="12"
+                r="1.5"
+                fill="currentColor"
+                stroke="none"
+              />
+            </svg>
+          </button>
+        )}
         {onDelete && (
           <button
             type="button"

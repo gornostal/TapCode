@@ -1,15 +1,16 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { TasksResponse } from "@shared/messages";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
 import Toolbar from "@/components/Toolbar";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
+  onOpenCommandOutput: (sessionId: string) => void;
 };
 
 const DRAFT_STORAGE_KEY = "taskList-draft";
 
-const TaskList = ({ onBackToBrowser }: TaskListProps) => {
+const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +24,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -180,6 +182,109 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
     await addTask(text);
   };
 
+  const handleRunSelectedTask = useCallback(async () => {
+    if (selectedIndex === null) {
+      setRunError("Select a task to run before starting it.");
+      return;
+    }
+
+    const selectedTask = tasks[selectedIndex];
+    const trimmedTask = selectedTask?.trim();
+
+    if (!trimmedTask) {
+      setRunError("Selected task is empty.");
+      return;
+    }
+
+    setRunError(null);
+
+    try {
+      const response = await fetch("/api/tasks/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description: trimmedTask }),
+      });
+
+      if (!response.ok) {
+        let message = `Request failed with status ${response.status}`;
+
+        try {
+          const data = (await response.json()) as { error?: string };
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // Ignore JSON parse errors as we'll surface default message.
+        }
+
+        throw new Error(message);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("Server did not return a response body.");
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let sessionId: string | null = null;
+
+      while (!sessionId) {
+        const { value, done } = await reader.read();
+
+        if (value) {
+          buffer += decoder.decode(value, { stream: !done });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) {
+              continue;
+            }
+
+            const payload = line.slice(6);
+            try {
+              const parsed = JSON.parse(payload) as {
+                type?: string;
+                data?: unknown;
+              };
+              if (
+                parsed?.type === "session" &&
+                typeof parsed.data === "string" &&
+                parsed.data
+              ) {
+                sessionId = parsed.data;
+                break;
+              }
+            } catch {
+              // Ignore individual parse errors and continue reading.
+            }
+          }
+        }
+
+        if (done) {
+          break;
+        }
+      }
+
+      await reader.cancel();
+
+      if (!sessionId) {
+        throw new Error(
+          "Task run started but session information was missing.",
+        );
+      }
+
+      onOpenCommandOutput(sessionId);
+    } catch (err) {
+      setRunError(
+        err instanceof Error ? err.message : "Failed to start task run.",
+      );
+    }
+  }, [selectedIndex, tasks, onOpenCommandOutput]);
+
   const deleteTask = async () => {
     if (selectedIndex === null) return;
 
@@ -195,6 +300,7 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
       const data = (await response.json()) as TasksResponse;
       setTasks(data.items);
       setSelectedIndex(null);
+      setRunError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete task");
     }
@@ -278,7 +384,10 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
                   onDragEnd={handleDragEnd}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDrop={(e) => handleDrop(e, index)}
-                  onClick={() => setSelectedIndex(index)}
+                  onClick={() => {
+                    setSelectedIndex(index);
+                    setRunError(null);
+                  }}
                   className={`group flex cursor-move items-center gap-3 rounded border px-4 py-3 text-sm text-slate-100 transition-all ${
                     selectedIndex === index
                       ? "border-slate-500 bg-slate-800/90 ring-2 ring-slate-500"
@@ -317,6 +426,9 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
+      {runError ? (
+        <p className="mt-2 text-sm text-rose-400">{runError}</p>
+      ) : null}
       <Toolbar
         currentPath="Tasks"
         onBack={onBackToBrowser}
@@ -324,6 +436,10 @@ const TaskList = ({ onBackToBrowser }: TaskListProps) => {
           void deleteTask();
         }}
         deleteDisabled={selectedIndex === null}
+        onRun={() => {
+          void handleRunSelectedTask();
+        }}
+        runDisabled={selectedIndex === null}
       />
     </>
   );
