@@ -6,6 +6,10 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- Remove cmd sessions after two hours instead of 5m
+
+- Command output view should also have + - toolbar buttons like GitDiff.tsx
+
 - Make sure first letter is not capitalized when user types cmd in client/src/components/CommandRunner.tsx
 
 - helper text about annotations
