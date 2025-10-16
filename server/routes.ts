@@ -17,7 +17,7 @@ import {
   stageAll,
   commitStaged,
 } from "./services/gitService";
-import { getShellSuggestions } from "./services/shellService";
+import { getShellSuggestions } from "./services/shellHistoryService";
 import {
   runCommand,
   getCommandRuns,
