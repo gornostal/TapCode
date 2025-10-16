@@ -7,9 +7,9 @@ Note: This file may change while work is being done - new items may be added.
 # Tasks
 
 - Disable auto capitalization of the first letter
-  
+
   client/src/components/CommandRunner.tsx:
-  317:             <input
+  317: <input
 
 - Remove cmd sessions after two hours instead of 5m
 

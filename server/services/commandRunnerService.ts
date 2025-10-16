@@ -28,7 +28,6 @@ const runningCommands = new Map<string, RunningCommand>();
 // Clean up completed commands after 60 minutes
 const CLEANUP_DELAY = 60 * 60 * 1000;
 const STOP_FORCE_TIMEOUT_MS = 5 * 1000;
-const isWindows = process.platform === "win32";
 
 function sendSignalToProcess(
   sessionId: string,
@@ -42,42 +41,29 @@ function sendSignalToProcess(
     return false;
   }
 
-  if (!isWindows) {
-    try {
-      process.kill(-pid, signal);
-      return true;
-    } catch (error) {
-      const err = error as NodeJS.ErrnoException;
-      if (err?.code === "ESRCH") {
-        return false;
-      }
-      log(
-        `Failed to send ${signal} to process group for session ${sessionId}: ${
-          err?.message ?? error
-        }`,
-      );
-      try {
-        return child.kill(signal);
-      } catch (innerError) {
-        log(
-          `Fallback ${signal} delivery failed for session ${sessionId}: ${
-            (innerError as Error)?.message ?? innerError
-          }`,
-        );
-        return false;
-      }
-    }
-  }
-
   try {
-    return child.kill(signal);
+    process.kill(-pid, signal);
+    return true;
   } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err?.code === "ESRCH") {
+      return false;
+    }
     log(
-      `Failed to send ${signal} to session ${sessionId}: ${
-        (error as Error)?.message ?? error
+      `Failed to send ${signal} to process group for session ${sessionId}: ${
+        err?.message ?? error
       }`,
     );
-    return false;
+    try {
+      return child.kill(signal);
+    } catch (innerError) {
+      log(
+        `Fallback ${signal} delivery failed for session ${sessionId}: ${
+          (innerError as Error)?.message ?? innerError
+        }`,
+      );
+      return false;
+    }
   }
 }
 
@@ -111,7 +97,7 @@ export function runCommand(
       shell: true,
       // Disable output buffering
       env: { ...process.env, PYTHONUNBUFFERED: "1" },
-      detached: !isWindows,
+      detached: true,
     });
 
     runningCommand = {
@@ -301,9 +287,7 @@ export function stopCommand(sessionId: string): StopCommandResult {
     });
   }
 
-  const signalsToTry: NodeJS.Signals[] = isWindows
-    ? ["SIGTERM"]
-    : ["SIGINT", "SIGTERM"];
+  const signalsToTry: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
   let deliveredSignal: NodeJS.Signals | null = null;
 
   for (const signal of signalsToTry) {
