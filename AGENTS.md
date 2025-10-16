@@ -18,7 +18,11 @@ TapCode is split between a Vite React client and a typed Express server.
 - Mobile-friendly file browser with directory navigation
 - Fuzzy file search for quick navigation
 - Syntax-highlighted code preview
+- Git status display, diff viewing, commits
+- Shell command autocompletion from ~/.bash_history, etc.
+- Shell command execution with real-time output streaming
 - Task list management from tasks.md
+- Task execution using coding agents (codex and claude)
 - Client-side routing between file list, file viewer, and task pages
 
 ## Build, Test, and Development Commands
@@ -36,10 +40,7 @@ Install dependencies with `npm install` on Node.js ≥ 18.17.
 
 The codebase uses strict TypeScript and functional React components. Favor PascalCase for components (`App.tsx`), camelCase for variables, and kebab-case for CSS classes. Keep indentation at two spaces; Prettier (default config) governs whitespace and quote style, while ESLint enforces TypeScript and React Hooks best practices. Prefer configured aliases (`@/...`, `@shared/...`) over long relative paths, and avoid disabling linters unless a rule is demonstrably incorrect.
 
-## Testing Guidelines
+## Coding & Testing Guidelines
 
-Run 'npm run test' to verify the code.
-
-## Commit & Pull Request Guidelines
-
-Match the existing history by writing short, imperative commit subjects (e.g., `Add hello route handler`) and use bodies to reference issues or context. Every PR should explain user-facing or DX-impacting changes, document the scripts you ran (`npm run dev`, `npm run test`, etc.), and attach screenshots or logs when UI or API behavior shifts. Ensure `npm run test` passes locally before requesting review, and call out any follow-up tasks in a checklist.
+- Use `./shared` for shared types between client and server.
+- Run 'npm run test' to verify the code.
