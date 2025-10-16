@@ -4,6 +4,7 @@ import {
   parseTaskItems,
   addTaskItem,
   reorderTaskItem,
+  updateTaskItem,
   removeTaskItem,
 } from "../utils/tasks";
 
@@ -41,6 +42,22 @@ export const reorderTask = async (
 ): Promise<TasksResponse> => {
   const taskContents = await fs.readFile(taskPath, "utf8");
   const updated = reorderTaskItem(taskContents, fromIndex, toIndex);
+  await fs.writeFile(taskPath, updated, "utf8");
+
+  const items = parseTaskItems(updated);
+  return { items };
+};
+
+/**
+ * Updates a task item at the specified index
+ */
+export const updateTask = async (
+  taskPath: string,
+  index: number,
+  text: string,
+): Promise<TasksResponse> => {
+  const taskContents = await fs.readFile(taskPath, "utf8");
+  const updated = updateTaskItem(taskContents, index, text);
   await fs.writeFile(taskPath, updated, "utf8");
 
   const items = parseTaskItems(updated);

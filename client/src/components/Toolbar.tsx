@@ -5,6 +5,8 @@ type ToolbarProps = {
   onIncreaseFontSize?: () => void;
   onDecreaseFontSize?: () => void;
   onAnnotate?: () => void;
+  onEdit?: () => void;
+  editDisabled?: boolean;
   onDelete?: () => void;
   deleteDisabled?: boolean;
   onRun?: () => void;
@@ -18,6 +20,8 @@ const Toolbar = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   onAnnotate,
+  onEdit,
+  editDisabled = true,
   onDelete,
   deleteDisabled = true,
   onRun,
@@ -67,6 +71,29 @@ const Toolbar = ({
                 fill="currentColor"
                 stroke="none"
               />
+            </svg>
+          </button>
+        )}
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={editDisabled}
+            className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-sky-900/30 hover:text-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+            aria-label="Edit selected task"
+            title="Edit selected task"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15.728 2.272a2.5 2.5 0 00-3.536 0L4 10.464V14h3.536l8.192-8.192a2.5 2.5 0 000-3.536z" />
+              <path d="M11.5 3.5L14.5 6.5" />
             </svg>
           </button>
         )}

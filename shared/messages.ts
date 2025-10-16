@@ -28,6 +28,10 @@ export interface TasksResponse {
   items: string[];
 }
 
+export interface UpdateTaskRequest {
+  text: string;
+}
+
 export interface RunTaskRequest {
   description?: string;
   sessionId?: string;

@@ -1,6 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AgentName } from "@shared/agents";
-import type { RunTaskRequest, TasksResponse } from "@shared/messages";
+import type {
+  RunTaskRequest,
+  TasksResponse,
+  UpdateTaskRequest,
+} from "@shared/messages";
+import EditTaskModal from "@/components/EditTaskModal";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
 import Toolbar from "@/components/Toolbar";
 
@@ -24,6 +29,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<AgentName>("codex");
@@ -184,6 +190,57 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     await addTask(text);
   };
 
+  const updateTask = async (index: number, text: string) => {
+    try {
+      const requestBody: UpdateTaskRequest = { text };
+      const response = await fetch(`/api/tasks/${index}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        let message = `Request failed with status ${response.status}`;
+
+        try {
+          const data = (await response.json()) as { error?: string };
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // Ignore JSON parse errors and fall back to default message.
+        }
+
+        throw new Error(message);
+      }
+
+      const data = (await response.json()) as TasksResponse;
+      const updatedItems = data.items;
+
+      setTasks(updatedItems);
+      if (updatedItems.length === 0) {
+        setSelectedIndex(null);
+      } else {
+        const nextSelectedIndex = Math.min(index, updatedItems.length - 1);
+        setSelectedIndex(nextSelectedIndex);
+      }
+      setRunError(null);
+      setError(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update task";
+      setError(message);
+
+      if (err instanceof Error) {
+        throw err;
+      }
+
+      throw new Error(message);
+    }
+  };
+
   const handleRunSelectedTask = useCallback(async () => {
     if (selectedIndex === null) {
       setRunError("Select a task to run before starting it.");
@@ -313,6 +370,17 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     }
   };
 
+  const handleEditSubmit = async (text: string) => {
+    if (selectedIndex === null) {
+      throw new Error("Select a task before saving changes.");
+    }
+
+    await updateTask(selectedIndex, text);
+  };
+
+  const selectedTask =
+    selectedIndex !== null ? (tasks[selectedIndex] ?? "") : "";
+
   return (
     <>
       <header>
@@ -395,6 +463,11 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
                     setSelectedIndex(index);
                     setRunError(null);
                   }}
+                  onDoubleClick={() => {
+                    setSelectedIndex(index);
+                    setRunError(null);
+                    setIsEditModalOpen(true);
+                  }}
                   className={`group flex cursor-move items-center gap-3 rounded border px-4 py-3 text-sm text-slate-100 transition-all ${
                     selectedIndex === index
                       ? "border-slate-500 bg-slate-800/90 ring-2 ring-slate-500"
@@ -433,6 +506,12 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         onClose={() => setIsMultilineModalOpen(false)}
         onSubmit={handleMultilineSubmit}
       />
+      <EditTaskModal
+        isOpen={isEditModalOpen}
+        initialValue={selectedTask}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditSubmit}
+      />
       {runError ? (
         <p className="mt-2 text-sm text-rose-400">{runError}</p>
       ) : null}
@@ -459,6 +538,12 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       <Toolbar
         currentPath="Tasks"
         onBack={onBackToBrowser}
+        onEdit={() => {
+          if (selectedIndex !== null) {
+            setIsEditModalOpen(true);
+          }
+        }}
+        editDisabled={selectedIndex === null}
         onDelete={() => {
           void deleteTask();
         }}

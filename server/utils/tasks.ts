@@ -191,6 +191,77 @@ export const reorderTaskItem = (
   return `${before}\n\n${formattedItems}\n${after}`;
 };
 
+export const updateTaskItem = (
+  contents: string,
+  index: number,
+  text: string,
+): string => {
+  const sanitized = text.trim();
+
+  if (!sanitized) {
+    const error = Object.assign(new Error("task text is required"), {
+      code: "EINVALIDTASK",
+    });
+    throw error;
+  }
+
+  const items = parseTaskItems(contents);
+
+  if (index < 0 || index >= items.length) {
+    const error = Object.assign(
+      new Error(
+        `Invalid index: ${index}. Must be between 0 and ${items.length - 1}`,
+      ),
+      { code: "EINVALIDINDEX" },
+    );
+    throw error;
+  }
+
+  items[index] = sanitized;
+
+  const { headerEndIndex } = locateTaskHeader(contents);
+  const before = contents.slice(0, headerEndIndex);
+
+  const afterHeader = contents.slice(headerEndIndex);
+  const lines = afterHeader.split("\n");
+  let tasksSectionEnd = 0;
+  let foundFirstItem = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (!foundFirstItem && !line.trim()) {
+      continue;
+    }
+
+    if (line.trim().startsWith("#")) {
+      break;
+    }
+
+    if (line.startsWith("- ") || (foundFirstItem && line.startsWith("  "))) {
+      foundFirstItem = true;
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && !line.trim()) {
+      tasksSectionEnd = i + 1;
+    } else if (foundFirstItem && line.trim() && !line.startsWith("  ")) {
+      break;
+    }
+  }
+
+  const after = lines.slice(tasksSectionEnd).join("\n");
+
+  const formattedItems = items
+    .map((item) => {
+      const itemLines = item.split("\n");
+      return itemLines
+        .map((line, lineIndex) => (lineIndex === 0 ? `- ${line}` : `  ${line}`))
+        .join("\n");
+    })
+    .join("\n\n");
+
+  return `${before}\n\n${formattedItems}\n${after}`;
+};
+
 export const removeTaskItem = (contents: string, index: number): string => {
   const items = parseTaskItems(contents);
 

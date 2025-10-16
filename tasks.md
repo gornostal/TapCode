@@ -6,7 +6,15 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Don't use bash type for highlighting command output
+- Render highlight.js container so it fills full screen width. See how it's done in GitDiff component.
+  
+  client/src/components/CommandOutput.tsx:
+  256:                 dangerouslySetInnerHTML={{ __html: highlighted.html }}
+
+- Change syntax to markdown
+  
+  client/src/components/CommandOutput.tsx:
+  181: const highlighted = highlightCode(output, "bash", false);
 
 - Put session id in response headers
 

@@ -9,6 +9,7 @@ import {
   getTasks,
   addTask,
   reorderTask,
+  updateTask,
   removeTask,
 } from "./services/tasksService";
 import {
@@ -169,6 +170,32 @@ export function registerRoutes(app: Express) {
     }
 
     reorderTask(taskPath, fromIndex, toIndex)
+      .then((result) => {
+        res.json(result);
+      })
+      .catch((error) => {
+        handleTaskError(error, res, next);
+      });
+  });
+
+  router.put("/tasks/:index(\\d+)", (req, res, next) => {
+    const indexParam = req.params.index;
+    const index = Number.parseInt(indexParam, 10);
+
+    if (Number.isNaN(index)) {
+      res.status(400).json({ error: "index must be a valid number" });
+      return;
+    }
+
+    const body = req.body as unknown;
+    const validationResult = extractTextFromBody(body);
+
+    if ("error" in validationResult) {
+      res.status(400).json({ error: validationResult.error });
+      return;
+    }
+
+    updateTask(taskPath, index, validationResult.text)
       .then((result) => {
         res.json(result);
       })

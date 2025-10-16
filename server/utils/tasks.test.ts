@@ -4,6 +4,7 @@ import {
   parseTaskItems,
   reorderTaskItem,
   removeTaskItem,
+  updateTaskItem,
 } from "./tasks";
 
 const withTaskSection = `# Instructions
@@ -271,6 +272,65 @@ describe("reorderTaskItem", () => {
     const items = parseTaskItems(updated);
 
     expect(items).toEqual(["second", "third", "first"]);
+  });
+});
+
+describe("updateTaskItem", () => {
+  it("updates the task at the specified index", () => {
+    const updated = updateTaskItem(
+      withTaskSection,
+      1,
+      "refresh file viewer design",
+    );
+    const items = parseTaskItems(updated);
+
+    expect(items).toEqual([
+      "add GET tasks API endpoint",
+      "refresh file viewer design",
+    ]);
+  });
+
+  it("trims the provided text before saving", () => {
+    const updated = updateTaskItem(withTaskSection, 0, "  tidy task  ");
+    const items = parseTaskItems(updated);
+
+    expect(items[0]).toBe("tidy task");
+  });
+
+  it("formats multiline updates with proper indentation", () => {
+    const updated = updateTaskItem(
+      withTaskSection,
+      0,
+      "First line\nSecond line",
+    );
+
+    expect(updated).toContain(
+      "- First line\n  Second line\n\n- file view should show line numbers",
+    );
+  });
+
+  it("preserves content after the tasks section", () => {
+    const updated = updateTaskItem(withTaskSection, 0, "keep footer safe");
+
+    expect(updated.endsWith("# Footer\n\nThanks!\n")).toBe(true);
+  });
+
+  it("throws when index is out of bounds (negative)", () => {
+    const act = () => updateTaskItem(withTaskSection, -1, "noop");
+
+    expect(act).toThrowError(/Invalid index/);
+  });
+
+  it("throws when index is out of bounds (too large)", () => {
+    const act = () => updateTaskItem(withTaskSection, 10, "noop");
+
+    expect(act).toThrowError(/Invalid index/);
+  });
+
+  it("throws when the provided text is blank", () => {
+    const act = () => updateTaskItem(withTaskSection, 0, "   ");
+
+    expect(act).toThrowError(/task text is required/);
   });
 });
 
