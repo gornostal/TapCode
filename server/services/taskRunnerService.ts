@@ -41,7 +41,9 @@ export function runTask(
     throw new Error("Task description cannot be empty");
   }
 
-  const command = buildTaskRunCommand(trimmedDescription, agent);
+  const descriptionWithInstruction = `${trimmedDescription}\n\nRemove this task from ./tasks.md when finished`;
+
+  const command = buildTaskRunCommand(descriptionWithInstruction, agent);
   const options =
     agent === "claude"
       ? { stdoutTransformer: createClaudeStdoutTransformer() }

@@ -6,6 +6,8 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- When receiving a task run request in the server side, append  paragraph: "Remove this task from ./tasks.md when finished"
+
 - Commit all changes
 
 - Don't use bash type for highlighting command output
