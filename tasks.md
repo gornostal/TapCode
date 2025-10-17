@@ -6,8 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Show more context when running git diff. See server/services/gitService.ts
-
 - helper text about annotations
 
 - Reorganize ./shared:

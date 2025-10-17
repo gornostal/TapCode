@@ -21,7 +21,7 @@ function getLogFilePath(): string {
   }
 }
 
-// Ensure log directory exists and delete old log file
+// Ensure log directory exists
 function prepareLogFile(): string {
   const logFilePath = getLogFilePath();
   const logDir = path.dirname(logFilePath);
@@ -31,11 +31,7 @@ function prepareLogFile(): string {
     fs.mkdirSync(logDir, { recursive: true });
   }
 
-  // Delete existing log file if it exists
-  if (fs.existsSync(logFilePath)) {
-    fs.unlinkSync(logFilePath);
-  }
-
+  console.log(`[Logger] Log file will be written to: ${logFilePath}`);
   return logFilePath;
 }
 
@@ -95,9 +91,28 @@ export const logger = createLogger({
     new transports.File({
       filename: logFilePath,
       format: combine(timestamp(), fileFormat),
+      options: { flags: "w" }, // Truncate log file on each startup
     }),
   ],
 });
+
+// Test that logger is working on initialization
+logger.info("Logger initialized successfully", {
+  logFile: logFilePath,
+  logLevel: process.env.NODE_ENV === "production" ? "info" : "debug",
+});
+
+/**
+ * Gracefully close all logger transports and flush any pending writes
+ */
+export function closeLogger(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    logger.end(() => {
+      logger.close();
+      resolve();
+    });
+  });
+}
 
 export function log(message: string, meta?: Record<string, unknown>) {
   if (meta) {

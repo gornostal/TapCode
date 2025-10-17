@@ -4,7 +4,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
-import { log, logError } from "./utils/logger";
+import { log, logError, closeLogger } from "./utils/logger";
 import { setProjectRoot } from "./utils/paths";
 import { killExistingInstance, PID_FILE } from "./utils/processManagement";
 
@@ -98,7 +98,7 @@ async function bootstrap() {
           logError(error);
           process.exitCode = 1;
         }
-        cleanupPidFile()
+        Promise.all([cleanupPidFile(), closeLogger()])
           .then(() => {
             process.exit();
           })
@@ -113,6 +113,6 @@ async function bootstrap() {
 
 bootstrap().catch(async (error) => {
   logError(error);
-  await cleanupPidFile();
+  await Promise.all([cleanupPidFile(), closeLogger()]);
   process.exit(1);
 });
