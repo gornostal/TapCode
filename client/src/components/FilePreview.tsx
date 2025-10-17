@@ -13,6 +13,7 @@ import {
   escapeHtml,
   type HighlightResult,
 } from "@/utils/syntaxHighlighting";
+import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
 const PREVIEW_BYTE_LIMIT = 200_000;
 
@@ -51,7 +52,8 @@ const FilePreview = ({
   fileError,
   onBackToBrowser,
 }: FilePreviewProps) => {
-  const [fontSize, setFontSize] = useState(10);
+  const { fontSize, increaseFontSize, decreaseFontSize } =
+    usePersistentFontSize("tapcode:editorFontSize");
   const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
   const [isAnnotationModalOpen, setIsAnnotationModalOpen] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
@@ -125,14 +127,6 @@ const FilePreview = ({
 
       return [...prev, lineNumber].sort((a, b) => a - b);
     });
-  };
-
-  const handleIncreaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 32));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 6));
   };
 
   const highlightedLanguageLabel =
@@ -295,8 +289,8 @@ const FilePreview = ({
       <Toolbar
         statusText={currentPath}
         onBack={onBackToBrowser}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
+        onIncreaseFontSize={increaseFontSize}
+        onDecreaseFontSize={decreaseFontSize}
         onAnnotate={showAnnotateButton ? handleOpenAnnotationModal : undefined}
       />
     </>

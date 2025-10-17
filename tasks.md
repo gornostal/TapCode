@@ -6,15 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Use Increment step of one instead of two.
-  Also in GitDiff.tsx and command output viewer.
-  Also extract this common logic to a separate module.
-  Also save selected font size to local storage and use it next time.
-
-  client/src/components/FilePreview.tsx:
-  131: setFontSize((prev) => Math.min(prev + 2, 32));
-  135: setFontSize((prev) => Math.max(prev - 2, 6));
-
 - Line number selection should reset when submitting an annotation. An update in highlight module will probably be required too. And also in GitDiff.tsx
 
   client/src/components/FilePreview.tsx:

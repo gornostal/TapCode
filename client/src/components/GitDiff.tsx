@@ -13,6 +13,7 @@ import {
   escapeHtml,
   type HighlightResult,
 } from "@/utils/syntaxHighlighting";
+import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
 type GitDiffProps = {
   onBackToBrowser: () => void;
@@ -22,7 +23,8 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
   const [diff, setDiff] = useState<GitDiffResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(10);
+  const { fontSize, increaseFontSize, decreaseFontSize } =
+    usePersistentFontSize("tapcode:editorFontSize");
   const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
   const [isAnnotationModalOpen, setIsAnnotationModalOpen] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
@@ -97,14 +99,6 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
 
       return [...prev, lineNumber].sort((a, b) => a - b);
     });
-  };
-
-  const handleIncreaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 32));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 6));
   };
 
   const selectedLineDetails = useMemo(
@@ -264,8 +258,8 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
       <Toolbar
         statusText="Git Changes"
         onBack={onBackToBrowser}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
+        onIncreaseFontSize={increaseFontSize}
+        onDecreaseFontSize={decreaseFontSize}
         onAnnotate={showAnnotateButton ? handleOpenAnnotationModal : undefined}
       />
     </>

@@ -6,6 +6,7 @@ import {
   type CommandOutput,
   type CommandStopResponse,
 } from "@shared/commandRunner";
+import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
 type CommandOutputProps = {
   sessionId: string;
@@ -19,7 +20,8 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isStopping, setIsStopping] = useState(false);
   const [exitMessage, setExitMessage] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(10);
+  const { fontSize, increaseFontSize, decreaseFontSize } =
+    usePersistentFontSize("tapcode:editorFontSize");
   const [command, setCommand] = useState<string>("");
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -142,42 +144,38 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
     setExitMessage(null);
   }, [sessionId]);
 
-  const handleStop = async () => {
+  const handleStop = () => {
     setIsStopping(true);
 
-    try {
-      const response = await fetch(`/api/commands/${sessionId}`, {
-        method: "DELETE",
-      });
+    const stopCommand = async () => {
+      try {
+        const response = await fetch(`/api/commands/${sessionId}`, {
+          method: "DELETE",
+        });
 
-      if (response.status === 404) {
-        throw new Error("Command not found");
-      }
+        if (response.status === 404) {
+          throw new Error("Command not found");
+        }
 
-      const data = (await response
-        .json()
-        .catch(() => null)) as CommandStopResponse | null;
+        const data = (await response
+          .json()
+          .catch(() => null)) as CommandStopResponse | null;
 
-      if (!response.ok) {
-        throw new Error(`Failed to stop command: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`Failed to stop command: ${response.status}`);
+        }
 
-      if (data?.status === "already_complete") {
+        if (data?.status === "already_complete") {
+          setIsStopping(false);
+          setIsComplete(true);
+        }
+      } catch (err) {
+        console.error("Error stopping command:", err);
         setIsStopping(false);
-        setIsComplete(true);
       }
-    } catch (err) {
-      console.error("Error stopping command:", err);
-      setIsStopping(false);
-    }
-  };
+    };
 
-  const handleIncreaseFontSize = () => {
-    setFontSize((prev) => Math.min(prev + 2, 32));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize((prev) => Math.max(prev - 2, 6));
+    void stopCommand();
   };
 
   const highlighted = highlightCode(output, "markdown", false);
@@ -192,9 +190,9 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         : `${exitMessage} (code ${exitCode})`;
     }
 
-    return exitCode === null
-      ? "Process exited"
-      : `Process exited with code ${exitCode}`;
+    return exitCode === 0
+      ? "Exited: OK"
+      : `Error: ${exitCode}`;
   })();
 
   return (
@@ -245,8 +243,8 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
       <Toolbar
         statusText={statusText}
         onBack={onBackToBrowser}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
+        onIncreaseFontSize={increaseFontSize}
+        onDecreaseFontSize={decreaseFontSize}
         onStop={handleStop}
         stopDisabled={isComplete || isStopping}
       />
