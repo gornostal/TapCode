@@ -56,6 +56,7 @@ const FilePreview = ({
     usePersistentFontSize("tapcode:editorFontSize");
   const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
   const [isAnnotationModalOpen, setIsAnnotationModalOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
 
   const highlighted = useMemo<HighlightResult | null>(() => {
@@ -196,6 +197,20 @@ const FilePreview = ({
     setSelectedLineNumbers([]);
   };
 
+  const handleCopyPath = async () => {
+    if (!displayedFilePath) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(displayedFilePath);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy path:", error);
+    }
+  };
+
   const showAnnotateButton =
     Boolean(selectedFile?.content) && !selectedFile?.isBinary;
 
@@ -203,10 +218,43 @@ const FilePreview = ({
     <>
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-slate-500">
-              {projectName || "Project"}
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-slate-400 font-mono">
+              {displayedFilePath || "No file selected"}
             </p>
+            {displayedFilePath && (
+              <button
+                onClick={handleCopyPath}
+                className="text-slate-400 hover:text-slate-200 transition-colors"
+                title="Copy path"
+                type="button"
+              >
+                {copySuccess ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
           <div className="flex w-full flex-col items-start gap-3 text-xs uppercase tracking-wider text-slate-500 sm:w-auto sm:flex-row sm:items-center sm:text-right">
             {selectedFile && (
