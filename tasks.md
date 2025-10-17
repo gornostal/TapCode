@@ -7,7 +7,3 @@ Note: This file may change while work is being done - new items may be added.
 # Tasks
 
 - helper text about annotations
-
-- Reorganize ./shared:
-  messages.ts should not import agents.ts -- import from agents directly
-  extract everything from message.ts to files by type (e.g. tasks.ts) and remove messages.ts

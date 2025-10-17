@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import type { FileListItem, FilesResponse } from "@shared/messages";
+import type { FileListItem, FilesResponse } from "@shared/files";
 
 type GoToFileSearchProps = {
   isOpen: boolean;

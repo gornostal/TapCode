@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { GitStatusResponse } from "@shared/messages";
+import type { GitStatusResponse } from "@shared/git";
 import Toolbar from "@/components/Toolbar";
 
 type GitStatusProps = {

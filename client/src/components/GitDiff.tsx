@@ -5,7 +5,7 @@ import {
   useRef,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import type { GitDiffResponse } from "@shared/messages";
+import type { GitDiffResponse } from "@shared/git";
 import Toolbar from "@/components/Toolbar";
 import AnnotationModal from "@/components/AnnotationModal";
 import {

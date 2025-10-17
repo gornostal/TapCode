@@ -1,4 +1,4 @@
-import type { FileListItem } from "@shared/messages";
+import type { FileListItem } from "@shared/files";
 import Toolbar from "@/components/Toolbar";
 
 type FileBrowserProps = {

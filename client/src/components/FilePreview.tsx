@@ -5,7 +5,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import type { FileContentResponse } from "@shared/messages";
+import type { FileContentResponse } from "@shared/files";
 import Toolbar from "@/components/Toolbar";
 import AnnotationModal from "@/components/AnnotationModal";
 import {

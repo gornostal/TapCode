@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import type { HistoryEntry, ShellSuggestionsResponse } from "@shared/messages";
+import type { HistoryEntry, ShellSuggestionsResponse } from "@shared/shell";
 import {
   COMMAND_SESSION_HEADER,
   type CommandRunSummary,

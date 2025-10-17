@@ -5,7 +5,7 @@ import type {
   RunTaskRequest,
   TasksResponse,
   UpdateTaskRequest,
-} from "@shared/messages";
+} from "@shared/tasks";
 import EditTaskModal from "@/components/EditTaskModal";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
 import Toolbar from "@/components/Toolbar";

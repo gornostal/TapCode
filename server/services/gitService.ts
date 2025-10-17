@@ -1,4 +1,4 @@
-import type { GitStatusResponse, GitDiffResponse } from "@shared/messages";
+import type { GitStatusResponse, GitDiffResponse } from "@shared/git";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { resolveFromRoot } from "../utils/paths";

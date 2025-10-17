@@ -4,7 +4,7 @@ import type {
   FileContentResponse,
   FileListItem,
   FilesResponse,
-} from "@shared/messages";
+} from "@shared/files";
 
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
