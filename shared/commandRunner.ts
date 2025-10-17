@@ -20,3 +20,6 @@ export interface CommandStopResponse {
   status: CommandStopStatus;
   exitCode?: number;
 }
+
+export const COMMAND_SESSION_HEADER = "x-command-session-id";
+export const COMMAND_TEXT_HEADER = "x-command-text";

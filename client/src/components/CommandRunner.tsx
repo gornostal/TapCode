@@ -9,7 +9,10 @@ import {
 } from "react";
 
 import type { HistoryEntry, ShellSuggestionsResponse } from "@shared/messages";
-import type { CommandRunSummary } from "@shared/commandRunner";
+import {
+  COMMAND_SESSION_HEADER,
+  type CommandRunSummary,
+} from "@shared/commandRunner";
 import Toolbar from "@/components/Toolbar";
 
 type CommandRunnerProps = {
@@ -175,52 +178,34 @@ const CommandRunner = ({
         throw new Error("Failed to start command");
       }
 
-      // Read the SSE stream to get the sessionId from the first event
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No response body");
-      }
+      const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);
 
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      // Read the first event which contains the session ID
-      const { value } = await reader.read();
-      if (value) {
-        buffer = decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6);
-            try {
-              const data = JSON.parse(dataStr) as {
-                type: string;
-                data: string;
-              };
-              if (data.type === "session") {
-                // Got the session ID, navigate to output view
-                setQuery("");
-                onOpenCommandOutput(data.data);
-                // Cancel the reader since we're navigating away
-                await reader.cancel();
-                return;
-              }
-            } catch (err) {
-              console.error("Error parsing SSE message:", err);
-            }
-          }
+      if (!sessionIdFromHeader) {
+        if (response.body) {
+          const reader = response.body.getReader();
+          await reader.cancel().catch(() => {
+            // Ignore cancellation errors; stream may already be closed.
+          });
         }
+        throw new Error("Command session header was missing");
       }
 
-      // If we didn't get a session ID, fall back to refreshing the list
-      await reader.cancel();
-      void fetchRunningCommands();
+      if (response.body) {
+        const reader = response.body.getReader();
+        await reader.cancel().catch(() => {
+          // Ignore cancellation errors; stream may already be closed.
+        });
+      }
+
       setQuery("");
+      onOpenCommandOutput(sessionIdFromHeader);
+      return;
     } catch (err) {
       console.error("Error starting command:", err);
+      void fetchRunningCommands();
+      setQuery("");
     }
-  }, [trimmedQuery, results, fetchRunningCommands, onOpenCommandOutput]);
+  }, [trimmedQuery, results, onOpenCommandOutput, fetchRunningCommands]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {

@@ -1,15 +1,11 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { highlightCode } from "@/utils/syntaxHighlighting";
 import Toolbar from "@/components/Toolbar";
-import type { CommandOutput, CommandStopResponse } from "@shared/commandRunner";
-
-type SSEEvent =
-  | {
-      type: "session";
-      data: string;
-      command: string;
-    }
-  | CommandOutput;
+import {
+  COMMAND_TEXT_HEADER,
+  type CommandOutput,
+  type CommandStopResponse,
+} from "@shared/commandRunner";
 
 type CommandOutputProps = {
   sessionId: string;
@@ -47,6 +43,11 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
           throw new Error(`Failed to connect: ${response.status}`);
         }
 
+        const headerCommand = response.headers.get(COMMAND_TEXT_HEADER);
+        if (headerCommand) {
+          setCommand(decodeURIComponent(headerCommand));
+        }
+
         reader = response.body?.getReader() ?? null;
         if (!reader) {
           throw new Error("No response body");
@@ -75,14 +76,9 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
             if (line.startsWith("data: ")) {
               const dataStr = line.slice(6);
               try {
-                const data = JSON.parse(dataStr) as SSEEvent;
+                const data = JSON.parse(dataStr) as CommandOutput;
 
                 switch (data.type) {
-                  case "session":
-                    // Session ID and command received
-                    setCommand(data.command);
-                    break;
-
                   case "stdout":
                     setOutput((prev) => prev + data.data);
                     break;

@@ -3,9 +3,11 @@ import { Response } from "express";
 import { getProjectRoot } from "../utils/paths";
 import { log } from "../utils/logger";
 import { randomBytes } from "node:crypto";
-import type {
-  CommandOutput,
-  CommandRunSummary,
+import {
+  COMMAND_SESSION_HEADER,
+  COMMAND_TEXT_HEADER,
+  type CommandOutput,
+  type CommandRunSummary,
 } from "../../shared/commandRunner";
 
 // Re-export types for convenience
@@ -217,12 +219,10 @@ export function runCommand(
     Connection: "keep-alive",
     // Disable any buffering
     "X-Accel-Buffering": "no",
+    // Expose session metadata via headers for easier access in fetch handlers.
+    [COMMAND_SESSION_HEADER]: currentSessionId!,
+    [COMMAND_TEXT_HEADER]: encodeURIComponent(runningCommand.command),
   });
-
-  // Send session ID and command to client
-  res.write(
-    `data: ${JSON.stringify({ type: "session", data: currentSessionId, command: runningCommand.command })}\n\n`,
-  );
 
   // Send all buffered output
   let outputIndex = 0;

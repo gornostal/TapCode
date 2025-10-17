@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AgentName, isAgentName } from "@shared/agents";
+import { COMMAND_SESSION_HEADER } from "@shared/commandRunner";
 import type {
   RunTaskRequest,
   TasksResponse,
@@ -314,62 +315,14 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         throw new Error(message);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Server did not return a response body.");
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let sessionId: string | null = null;
-
-      while (!sessionId) {
-        const { value, done } = await reader.read();
-
-        if (value) {
-          buffer += decoder.decode(value, { stream: !done });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) {
-              continue;
-            }
-
-            const payload = line.slice(6);
-            try {
-              const parsed = JSON.parse(payload) as {
-                type?: string;
-                data?: unknown;
-              };
-              if (
-                parsed?.type === "session" &&
-                typeof parsed.data === "string" &&
-                parsed.data
-              ) {
-                sessionId = parsed.data;
-                break;
-              }
-            } catch {
-              // Ignore individual parse errors and continue reading.
-            }
-          }
-        }
-
-        if (done) {
-          break;
-        }
-      }
-
-      await reader.cancel();
-
-      if (!sessionId) {
+      const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);
+      if (!sessionIdFromHeader) {
         throw new Error(
           "Task run started but session information was missing.",
         );
       }
 
-      onOpenCommandOutput(sessionId);
+      onOpenCommandOutput(sessionIdFromHeader);
     } catch (err) {
       setRunError(
         err instanceof Error ? err.message : "Failed to start task run.",

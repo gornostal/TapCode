@@ -6,7 +6,7 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- In commandRunnerService, Put session id in response headers instead of SSE messages. Update all code that is it.
+- Show more context when running git diff. See server/services/gitService.ts
 
 - helper text about annotations
 
