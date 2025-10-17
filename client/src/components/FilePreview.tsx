@@ -139,7 +139,7 @@ const FilePreview = ({
     highlighted?.language ?? selectedFile?.language ?? null;
 
   const currentPath = displayedFilePath
-    ? `/${displayedFilePath}`
+    ? (displayedFilePath.split("/").pop() ?? displayedFilePath)
     : "Loading file";
 
   const selectedLineDetails = useMemo(
@@ -293,7 +293,7 @@ const FilePreview = ({
         filename={annotationFilename}
       />
       <Toolbar
-        currentPath={currentPath}
+        statusText={currentPath}
         onBack={onBackToBrowser}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}

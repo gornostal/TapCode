@@ -99,7 +99,7 @@ const AnnotationModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-20"
       onClick={handleBackdropClick}
     >
       <div className="w-full max-w-2xl rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
@@ -107,7 +107,7 @@ const AnnotationModal = ({
           Create Annotation
         </h2>
 
-        {selectedLines.length > 0 && (
+        {selectedLines.length > 0 ? (
           <div className="mb-4 rounded border border-slate-700 bg-slate-950/50 p-3">
             <p className="mb-2 text-sm font-medium text-slate-300 break-all">
               Selected code from {filename}:
@@ -119,6 +119,13 @@ const AnnotationModal = ({
                 </div>
               ))}
             </pre>
+          </div>
+        ) : (
+          <div className="mb-4 rounded border border-slate-600 bg-slate-800/30 p-3">
+            <p className="text-sm text-slate-400">
+              Tip: Tap on line numbers to select code context for your
+              annotation
+            </p>
           </div>
         )}
 

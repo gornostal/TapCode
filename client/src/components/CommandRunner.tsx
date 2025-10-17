@@ -444,7 +444,7 @@ const CommandRunner = ({
             </div>
           ))}
       </div>
-      <Toolbar currentPath="Commands" onBack={onBackToBrowser} />
+      <Toolbar statusText="Commands" onBack={onBackToBrowser} />
     </>
   );
 };

@@ -262,7 +262,7 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
         filename={annotationFilename}
       />
       <Toolbar
-        currentPath="Git Changes"
+        statusText="Git Changes"
         onBack={onBackToBrowser}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}

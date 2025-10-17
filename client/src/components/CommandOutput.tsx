@@ -18,7 +18,6 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   const [exitCode, setExitCode] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isStopping, setIsStopping] = useState(false);
-  const [stopError, setStopError] = useState<string | null>(null);
   const [exitMessage, setExitMessage] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(10);
   const [command, setCommand] = useState<string>("");
@@ -140,12 +139,10 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
 
   useEffect(() => {
     setIsStopping(false);
-    setStopError(null);
     setExitMessage(null);
   }, [sessionId]);
 
   const handleStop = async () => {
-    setStopError(null);
     setIsStopping(true);
 
     try {
@@ -171,9 +168,6 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
       }
     } catch (err) {
       console.error("Error stopping command:", err);
-      setStopError(
-        err instanceof Error ? err.message : "Failed to stop command",
-      );
       setIsStopping(false);
     }
   };
@@ -203,54 +197,17 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
       : `Process exited with code ${exitCode}`;
   })();
 
-  const statusClassName = (() => {
-    if (!isComplete) {
-      return isStopping ? "text-orange-400" : "text-blue-400";
-    }
-
-    if (exitMessage && exitMessage.toLowerCase().includes("stopped")) {
-      return "text-orange-400";
-    }
-
-    if (exitCode === 0) {
-      return "text-green-500";
-    }
-
-    return "text-red-500";
-  })();
-
   return (
     <>
       <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-          Command Output
-        </p>
         {command && (
-          <div className="mt-2 rounded bg-slate-900/50 px-3 py-2">
+          <div className="mb-2 rounded bg-slate-900/50 px-3 py-2">
             <code className="text-sm text-slate-300">{command}</code>
           </div>
         )}
-        <div className="mt-2 flex items-center gap-3">
-          <span className={`text-sm ${statusClassName}`}>{statusText}</span>
-          <button
-            type="button"
-            onClick={() => {
-              void handleStop();
-            }}
-            disabled={isComplete || isStopping}
-            className="flex items-center gap-2 rounded border border-red-800 px-3 py-1 text-xs font-medium uppercase tracking-wider text-red-400 transition hover:border-red-600 hover:bg-red-900/40 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500 disabled:hover:bg-transparent"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <rect x="5" y="5" width="10" height="10" rx="1" />
-            </svg>
-            <span>Stop</span>
-          </button>
-        </div>
-        {stopError && <p className="mt-1 text-xs text-red-400">{stopError}</p>}
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
+          Command Output
+        </p>
       </header>
 
       <div className="flex flex-col gap-4">
@@ -286,10 +243,12 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
       </div>
 
       <Toolbar
-        currentPath="Command Output"
+        statusText={statusText}
         onBack={onBackToBrowser}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}
+        onStop={handleStop}
+        stopDisabled={isComplete || isStopping}
       />
     </>
   );

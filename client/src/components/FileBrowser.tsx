@@ -115,7 +115,7 @@ const FileBrowser = ({
       File list updates on page refresh to reflect the current file system.
     </footer>
     <Toolbar
-      currentPath={currentDirectoryLabel}
+      statusText={currentDirectoryLabel}
       onBack={onNavigateUp}
       disabled={!canNavigateUp}
     />

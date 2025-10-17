@@ -269,7 +269,7 @@ const GitStatus = ({
           </>
         ) : null}
       </div>
-      <Toolbar currentPath="Git Status" onBack={onBackToBrowser} />
+      <Toolbar statusText="Git Status" onBack={onBackToBrowser} />
     </>
   );
 };

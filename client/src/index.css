@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+html,
+body {
+  min-height: 100%;
+  background-color: #020617;
+}
+
 .line-number {
   display: inline-block;
   min-width: 3ch;

@@ -8,6 +8,9 @@ import type {
 } from "@shared/tasks";
 import EditTaskModal from "@/components/EditTaskModal";
 import MultilineTaskModal from "@/components/MultilineTaskModal";
+import AgentSelectionModal, {
+  type AgentSettings,
+} from "@/components/AgentSelectionModal";
 import Toolbar from "@/components/Toolbar";
 
 type TaskListProps = {
@@ -32,6 +35,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isMultilineModalOpen, setIsMultilineModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<AgentName>(() => {
@@ -270,65 +274,70 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     }
   };
 
-  const handleRunSelectedTask = useCallback(async () => {
-    if (selectedIndex === null) {
-      setRunError("Select a task to run before starting it.");
-      return;
-    }
+  const handleRunSelectedTask = useCallback(
+    async (agentOverride?: AgentName) => {
+      if (selectedIndex === null) {
+        setRunError("Select a task to run before starting it.");
+        return;
+      }
 
-    const selectedTask = tasks[selectedIndex];
-    const task = selectedTask?.trim();
+      const selectedTask = tasks[selectedIndex];
+      const task = selectedTask?.trim();
 
-    if (!task) {
-      setRunError("Selected task is empty.");
-      return;
-    }
+      if (!task) {
+        setRunError("Selected task is empty.");
+        return;
+      }
 
-    setRunError(null);
+      setRunError(null);
 
-    try {
-      const requestBody: RunTaskRequest = {
-        description: task,
-        agent: selectedAgent,
-      };
+      try {
+        const requestBody: RunTaskRequest = {
+          description: task,
+          agent: agentOverride ?? selectedAgent,
+        };
 
-      const response = await fetch("/api/tasks/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+        const response = await fetch("/api/tasks/run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
 
-      if (!response.ok) {
-        let message = `Request failed with status ${response.status}`;
+        if (!response.ok) {
+          let message = `Request failed with status ${response.status}`;
 
-        try {
-          const data = (await response.json()) as { error?: string };
-          if (data.error) {
-            message = data.error;
+          try {
+            const data = (await response.json()) as { error?: string };
+            if (data.error) {
+              message = data.error;
+            }
+          } catch {
+            // Ignore JSON parse errors as we'll surface default message.
           }
-        } catch {
-          // Ignore JSON parse errors as we'll surface default message.
+
+          throw new Error(message);
         }
 
-        throw new Error(message);
-      }
+        const sessionIdFromHeader = response.headers.get(
+          COMMAND_SESSION_HEADER,
+        );
+        if (!sessionIdFromHeader) {
+          throw new Error(
+            "Task run started but session information was missing.",
+          );
+        }
 
-      const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);
-      if (!sessionIdFromHeader) {
-        throw new Error(
-          "Task run started but session information was missing.",
+        onOpenCommandOutput(sessionIdFromHeader);
+      } catch (err) {
+        setRunError(
+          err instanceof Error ? err.message : "Failed to start task run.",
         );
       }
-
-      onOpenCommandOutput(sessionIdFromHeader);
-    } catch (err) {
-      setRunError(
-        err instanceof Error ? err.message : "Failed to start task run.",
-      );
-    }
-  }, [selectedIndex, tasks, onOpenCommandOutput, selectedAgent]);
+    },
+    [selectedIndex, tasks, onOpenCommandOutput, selectedAgent],
+  );
 
   const deleteTask = async () => {
     if (selectedIndex === null) return;
@@ -357,6 +366,17 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     }
 
     await updateTask(selectedIndex, text);
+  };
+
+  const handleAgentSettingsSubmit = (settings: AgentSettings) => {
+    setSelectedAgent(settings.agent);
+    // Sandbox and thinking settings will be wired to API later
+  };
+
+  const handleAgentSettingsRunTask = (settings: AgentSettings) => {
+    setSelectedAgent(settings.agent);
+    // Sandbox and thinking settings will be wired to API later
+    void handleRunSelectedTask(settings.agent);
   };
 
   const selectedTask =
@@ -431,31 +451,6 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {tasks.length > 1 ? (
-              <div className="flex items-center gap-3">
-                <label
-                  htmlFor="agent-select"
-                  className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400"
-                >
-                  Agent
-                </label>
-                <select
-                  id="agent-select"
-                  name="agent"
-                  value={selectedAgent}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    if (isAgentName(value)) {
-                      setSelectedAgent(value);
-                    }
-                  }}
-                  className="w-full max-w-xs rounded border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-100 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"
-                >
-                  <option value="codex">Codex</option>
-                  <option value="claude">Claude</option>
-                </select>
-              </div>
-            ) : null}
             <ul className="space-y-3">
               {tasks.map((item, index) => (
                 <li
@@ -500,9 +495,15 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
               ))}
             </ul>
             {tasks.length > 1 && (
-              <p className="text-xs text-slate-500">
-                Items can be reordered by dragging
-              </p>
+              <>
+                <p className="text-xs text-slate-500">
+                  Items can be reordered by dragging
+                </p>
+                <p className="text-xs text-slate-500">
+                  Run tasks using coding agents. Press the button on the
+                  taskbar. Long press to select an agent.
+                </p>
+              </>
             )}
           </div>
         )}
@@ -518,11 +519,17 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
       />
+      <AgentSelectionModal
+        isOpen={isAgentModalOpen}
+        onClose={() => setIsAgentModalOpen(false)}
+        onSubmit={handleAgentSettingsSubmit}
+        onRunTask={handleAgentSettingsRunTask}
+      />
       {runError ? (
         <p className="mt-2 text-sm text-rose-400">{runError}</p>
       ) : null}
       <Toolbar
-        currentPath="Tasks"
+        statusText="Tasks"
         onBack={onBackToBrowser}
         onEdit={() => {
           if (selectedIndex !== null) {
@@ -538,6 +545,9 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
           void handleRunSelectedTask();
         }}
         runDisabled={selectedIndex === null}
+        onRunLongPress={() => {
+          setIsAgentModalOpen(true);
+        }}
       />
     </>
   );
