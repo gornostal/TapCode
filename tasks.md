@@ -6,11 +6,6 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Make this container in selectable using cursor or touch because there is a long press feature on some buttons, edits now causes text selection on touch devices
-
-  client/src/components/Toolbar.tsx:
-  86:         <div className="flex items-center gap-2">
-
 - I don't need project name or label here. But I want a relative path to be displayed here with an icon to copy it.
 
   client/src/components/FilePreview.tsx:

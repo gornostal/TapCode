@@ -83,7 +83,7 @@ const Toolbar = ({
             {statusText}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 select-none">
           {onStop && (
             <button
               type="button"
