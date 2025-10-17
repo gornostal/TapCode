@@ -191,6 +191,9 @@ const FilePreview = ({
     if (!data.text) {
       throw new Error("Unexpected server response.");
     }
+
+    // Reset line selection after successful submission
+    setSelectedLineNumbers([]);
   };
 
   const showAnnotateButton =
@@ -275,10 +278,6 @@ const FilePreview = ({
         )}
       </div>
 
-      <footer className="text-xs text-slate-500">
-        Use Back to files or your browser history to return to the project
-        listing.
-      </footer>
       <AnnotationModal
         isOpen={isAnnotationModalOpen}
         onClose={handleCloseAnnotationModal}

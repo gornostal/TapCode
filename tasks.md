@@ -6,18 +6,12 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Line number selection should reset when submitting an annotation. An update in highlight module will probably be required too. And also in GitDiff.tsx
+- Make this container in selectable using cursor or touch because there is a long press feature on some buttons, edits now causes text selection on touch devices
 
-  client/src/components/FilePreview.tsx:
-  55: const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
+  client/src/components/Toolbar.tsx:
+  86:         <div className="flex items-center gap-2">
 
-- Remove this line
-
-  client/src/components/FilePreview.tsx:
-  284: <footer className="text-xs text-slate-500">
-  285: Use Back to files or your browser history to return to the project
-
-- I don’t need project name or label here. But I want a relative path to be displayed here with an icon to copy it.
+- I don't need project name or label here. But I want a relative path to be displayed here with an icon to copy it.
 
   client/src/components/FilePreview.tsx:
   210: <p className="text-xs uppercase tracking-wider text-slate-500">

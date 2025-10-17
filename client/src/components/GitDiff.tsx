@@ -153,6 +153,9 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
     if (!data.text) {
       throw new Error("Unexpected server response.");
     }
+
+    // Reset line selection after successful submission
+    setSelectedLineNumbers([]);
   };
 
   const showAnnotateButton = Boolean(diff?.diff);
