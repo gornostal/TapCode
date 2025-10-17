@@ -6,16 +6,9 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Truncate text on a list of commands to 150 character
-  
-  client/src/components/CommandRunner.tsx:
-  23: const CommandRunner = ({
-
 - Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
 
-- move PID file from ~/.tapcode.pid to `$HOME/.local/state/tapcode/pid` or `~/Library/Logs/tapcode/pid` for mac.
-
-- Put session id in response headers
+- In commandRunnerService, Put session id in response headers instead of SSE messages. Update all code that is it.
 
 - Command output view should also have + - toolbar buttons like GitDiff.tsx
 

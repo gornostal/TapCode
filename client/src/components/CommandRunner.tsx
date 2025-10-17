@@ -342,7 +342,7 @@ const CommandRunner = ({
                       className="flex w-full flex-1 items-center justify-between gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-left text-sm transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
                     >
                       <div className="flex-1 space-y-1">
-                        <div className="font-mono text-slate-100">
+                        <div className="font-mono text-slate-100 overflow-hidden text-ellipsis break-all line-clamp-2">
                           {cmd.command}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
