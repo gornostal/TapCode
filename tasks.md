@@ -23,7 +23,3 @@ Note: This file may change while work is being done - new items may be added.
   extract everything from message.ts to files by type (e.g. tasks.ts) and remove messages.ts
 
 - move killExistingInstance from server/index.ts to utils
-
-- In addition to stdout logs, log to file: `$HOME/.local/state/tapcode/tapcode.log` or `~/Library/Logs/tapcode/tapcode.log` for mac.
-  Delete log file on startup so it alwsys contains logs from last run.
-  Update AGENTS.md with info where app logs are stored.

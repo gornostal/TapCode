@@ -1,10 +1,69 @@
 import { inspect } from "node:util";
 import type { TransformableInfo } from "logform";
 import { createLogger, format, transports } from "winston";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 
 const { combine, colorize, errors, printf, splat, timestamp } = format;
 
+// Determine platform-specific log file path
+function getLogFilePath(): string {
+  const platform = os.platform();
+  const homeDir = os.homedir();
+
+  if (platform === "darwin") {
+    // macOS: ~/Library/Logs/tapcode/tapcode.log
+    return path.join(homeDir, "Library", "Logs", "tapcode", "tapcode.log");
+  } else {
+    // Linux and others: $HOME/.local/state/tapcode/tapcode.log
+    return path.join(homeDir, ".local", "state", "tapcode", "tapcode.log");
+  }
+}
+
+// Ensure log directory exists and delete old log file
+function prepareLogFile(): string {
+  const logFilePath = getLogFilePath();
+  const logDir = path.dirname(logFilePath);
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
+  // Delete existing log file if it exists
+  if (fs.existsSync(logFilePath)) {
+    fs.unlinkSync(logFilePath);
+  }
+
+  return logFilePath;
+}
+
+const logFilePath = prepareLogFile();
+
 const consoleFormat = printf(
+  (info: TransformableInfo & { stack?: unknown; timestamp?: unknown }) => {
+    const { level, message, stack, timestamp: ts, ...meta } = info;
+
+    const timestampValue =
+      typeof ts === "string" || typeof ts === "number"
+        ? String(ts)
+        : new Date().toISOString();
+    const messageValue =
+      typeof message === "string" ? message : inspect(message, { depth: null });
+    const stackValue = typeof stack === "string" ? stack : undefined;
+    const metaContent =
+      Object.keys(meta).length > 0 ? ` ${inspect(meta, { depth: null })}` : "";
+
+    if (stackValue) {
+      return `${timestampValue} ${level}: ${messageValue} — ${stackValue}${metaContent}`;
+    }
+
+    return `${timestampValue} ${level}: ${messageValue}${metaContent}`;
+  },
+);
+
+const fileFormat = printf(
   (info: TransformableInfo & { stack?: unknown; timestamp?: unknown }) => {
     const { level, message, stack, timestamp: ts, ...meta } = info;
 
@@ -32,6 +91,10 @@ export const logger = createLogger({
   transports: [
     new transports.Console({
       format: combine(colorize(), timestamp(), consoleFormat),
+    }),
+    new transports.File({
+      filename: logFilePath,
+      format: combine(timestamp(), fileFormat),
     }),
   ],
 });

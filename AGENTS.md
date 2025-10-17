@@ -36,6 +36,15 @@ Install dependencies with `npm install` on Node.js ≥ 18.17.
 - `npm run lint` applies ESLint rules to `.ts/.tsx` files.
 - `npm run test` executes `check`, formats the tree with Prettier (`--write`), then lints—review and stage formatting changes.
 
+## Application Logs
+
+TapCode logs to both stdout and a file. The log file is recreated on each startup and contains logs from the current run only.
+
+Log file locations:
+
+- **Linux**: `$HOME/.local/state/tapcode/tapcode.log`
+- **macOS**: `~/Library/Logs/tapcode/tapcode.log`
+
 ## Coding Style & Naming Conventions
 
 The codebase uses strict TypeScript and functional React components. Favor PascalCase for components (`App.tsx`), camelCase for variables, and kebab-case for CSS classes. Keep indentation at two spaces; Prettier (default config) governs whitespace and quote style, while ESLint enforces TypeScript and React Hooks best practices. Prefer configured aliases (`@/...`, `@shared/...`) over long relative paths, and avoid disabling linters unless a rule is demonstrably incorrect.
