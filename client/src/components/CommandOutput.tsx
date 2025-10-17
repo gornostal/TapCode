@@ -179,9 +179,19 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   };
 
   const highlighted = highlightCode(output, "markdown", false);
-  const statusText = (() => {
+
+  // Simple status text for toolbar
+  const toolbarStatus = (() => {
     if (!isComplete) {
       return isStopping ? "Stopping..." : "Running...";
+    }
+    return "Stopped";
+  })();
+
+  // Detailed status text to display after output
+  const detailedStatus = (() => {
+    if (!isComplete) {
+      return null;
     }
 
     if (exitMessage) {
@@ -190,9 +200,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         : `${exitMessage} (code ${exitCode})`;
     }
 
-    return exitCode === 0
-      ? "Exited: OK"
-      : `Error: ${exitCode}`;
+    return exitCode === 0 ? "Exited: OK" : `Error: ${exitCode}`;
   })();
 
   return (
@@ -214,34 +222,39 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
             Error: {error}
           </div>
         ) : (
-          <div
-            className="overflow-x-auto"
-            style={{
-              width: "100vw",
-              position: "relative",
-              left: "50%",
-              right: "50%",
-              marginLeft: "-50vw",
-              marginRight: "-50vw",
-            }}
-          >
-            <div ref={outputRef} className="max-h-[70vh] overflow-auto">
-              <pre
-                className="min-w-full rounded-lg bg-slate-950/60 font-mono leading-relaxed"
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                <code
-                  className="hljs"
-                  dangerouslySetInnerHTML={{ __html: highlighted.html }}
-                />
-              </pre>
+          <>
+            <div
+              className="overflow-x-auto"
+              style={{
+                width: "100vw",
+                position: "relative",
+                left: "50%",
+                right: "50%",
+                marginLeft: "-50vw",
+                marginRight: "-50vw",
+              }}
+            >
+              <div ref={outputRef} className="max-h-[70vh] overflow-auto">
+                <pre
+                  className="min-w-full rounded-lg bg-slate-950/60 font-mono leading-relaxed"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  <code
+                    className="hljs"
+                    dangerouslySetInnerHTML={{ __html: highlighted.html }}
+                  />
+                </pre>
+              </div>
             </div>
-          </div>
+            {detailedStatus && (
+              <div className="text-sm text-slate-400">{detailedStatus}</div>
+            )}
+          </>
         )}
       </div>
 
       <Toolbar
-        statusText={statusText}
+        statusText={toolbarStatus}
         onBack={onBackToBrowser}
         onIncreaseFontSize={increaseFontSize}
         onDecreaseFontSize={decreaseFontSize}
