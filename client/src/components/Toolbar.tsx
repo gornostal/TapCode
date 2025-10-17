@@ -43,7 +43,11 @@ const Toolbar = ({
             type="button"
             onClick={onRun}
             disabled={runDisabled}
-            className="flex-shrink-0 cursor-pointer rounded p-2 text-slate-400 transition hover:bg-emerald-900/30 hover:text-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+            className={`flex-shrink-0 cursor-pointer rounded p-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
+              runDisabled
+                ? "text-slate-400 disabled:hover:text-slate-400"
+                : "text-orange-400 hover:bg-orange-900/30 hover:text-orange-300 focus-visible:outline-orange-400"
+            }`}
             aria-label="Run selected task"
             title="Run selected task"
           >

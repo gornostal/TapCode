@@ -6,7 +6,10 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Shell suggestions are mixed with command history in CommandRunner component. Fix that problem and also make the suggestion list items more compact
+- Truncate text on a list of commands to 150 character
+  
+  client/src/components/CommandRunner.tsx:
+  23: const CommandRunner = ({
 
 - Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
 

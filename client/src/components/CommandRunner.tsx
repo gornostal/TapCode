@@ -35,6 +35,8 @@ const CommandRunner = ({
   const [runningCommands, setRunningCommands] = useState<CommandRunSummary[]>(
     [],
   );
+  const trimmedQuery = useMemo(() => query.trim(), [query]);
+  const showSuggestions = trimmedQuery.length > 0;
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -47,8 +49,6 @@ const CommandRunner = ({
   }, []);
 
   useEffect(() => {
-    const trimmedQuery = query.trim();
-
     if (!trimmedQuery) {
       if (requestRef.current) {
         requestRef.current.abort();
@@ -117,7 +117,7 @@ const CommandRunner = ({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [query]);
+  }, [trimmedQuery]);
 
   const handleResultClick = useCallback((command: string) => {
     setQuery(command);
@@ -156,7 +156,7 @@ const CommandRunner = ({
   }, [fetchRunningCommands]);
 
   const startCommand = useCallback(async () => {
-    const commandToRun = query.trim() || results[0]?.command;
+    const commandToRun = trimmedQuery || results[0]?.command;
     if (!commandToRun) {
       return;
     }
@@ -220,7 +220,7 @@ const CommandRunner = ({
     } catch (err) {
       console.error("Error starting command:", err);
     }
-  }, [query, results, fetchRunningCommands, onOpenCommandOutput]);
+  }, [trimmedQuery, results, fetchRunningCommands, onOpenCommandOutput]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -256,7 +256,7 @@ const CommandRunner = ({
   );
 
   const emptyStateMessage = useMemo(() => {
-    if (!query.trim()) {
+    if (!trimmedQuery) {
       return null;
     }
 
@@ -271,7 +271,7 @@ const CommandRunner = ({
     }
 
     return null;
-  }, [error, isSearching, query, results.length]);
+  }, [error, isSearching, trimmedQuery, results.length]);
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -327,7 +327,7 @@ const CommandRunner = ({
           </div>
         </form>
 
-        {runningCommands.length > 0 && (
+        {!showSuggestions && runningCommands.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-400">
               Running & Recent Commands
@@ -417,41 +417,47 @@ const CommandRunner = ({
           </div>
         )}
 
-        {emptyStateMessage ? (
-          <p className="py-4 font-mono text-sm text-slate-400">
-            {emptyStateMessage}
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {results.map((result, index) => (
-              <li key={`${result.command}-${index}`}>
-                <button
-                  type="button"
-                  onClick={() => handleResultClick(result.command)}
-                  className="flex w-full items-center justify-between gap-3 rounded border border-slate-800 bg-slate-900/60 px-4 py-3 text-left text-sm text-slate-100 transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
-                >
-                  <span className="flex-1 break-all font-mono">
-                    {result.command}
-                  </span>
-                  <span aria-hidden className="text-slate-500">
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+        {showSuggestions &&
+          (emptyStateMessage ? (
+            <p className="py-4 font-mono text-sm text-slate-400">
+              {emptyStateMessage}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-slate-400">
+                Suggested Commands
+              </h3>
+              <ul className="space-y-1">
+                {results.map((result, index) => (
+                  <li key={`${result.command}-${index}`}>
+                    <button
+                      type="button"
+                      onClick={() => handleResultClick(result.command)}
+                      className="flex w-full items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900/60 px-3 py-2 text-left text-sm leading-tight text-slate-100 transition hover:border-slate-700 hover:bg-slate-900/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
                     >
-                      <path d="M17 17L7 7" />
-                      <path d="M7 15V7h8" />
-                    </svg>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                      <span className="flex-1 break-all font-mono">
+                        {result.command}
+                      </span>
+                      <span aria-hidden className="text-slate-500">
+                        <svg
+                          className="h-3 w-3"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M17 17L7 7" />
+                          <path d="M7 15V7h8" />
+                        </svg>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
       </div>
       <Toolbar currentPath="Commands" onBack={onBackToBrowser} />
     </>
