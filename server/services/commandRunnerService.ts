@@ -102,11 +102,39 @@ export function runCommand(
   if (sessionId && runningCommands.has(sessionId)) {
     runningCommand = runningCommands.get(sessionId)!;
     log(`Client reconnected to session: ${sessionId}`);
+
+    // Set up SSE headers for reconnection
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      // Disable any buffering
+      "X-Accel-Buffering": "no",
+      // Expose session metadata via headers for easier access in fetch handlers.
+      [COMMAND_SESSION_HEADER]: sessionId,
+      [COMMAND_TEXT_HEADER]: encodeURIComponent(runningCommand.command),
+    });
+    // Flush immediately so the reconnecting client sees headers even if no body chunks arrive yet.
+    res.flushHeaders();
   } else {
     // Generate new session ID
     currentSessionId = randomBytes(16).toString("hex");
 
     log(`Running command: ${command} in directory: ${projectRoot}`);
+
+    // Set up SSE headers immediately before spawning process
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      // Disable any buffering
+      "X-Accel-Buffering": "no",
+      // Expose session metadata via headers for easier access in fetch handlers.
+      [COMMAND_SESSION_HEADER]: currentSessionId,
+      [COMMAND_TEXT_HEADER]: encodeURIComponent(command),
+    });
+    // Flush immediately so the client can read headers and transition before command output begins.
+    res.flushHeaders();
 
     // Spawn the command using shell
     const childProcess = spawn(command, {
@@ -211,18 +239,6 @@ export function runCommand(
       }, CLEANUP_DELAY);
     });
   }
-
-  // Set up SSE headers
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache, no-transform",
-    Connection: "keep-alive",
-    // Disable any buffering
-    "X-Accel-Buffering": "no",
-    // Expose session metadata via headers for easier access in fetch handlers.
-    [COMMAND_SESSION_HEADER]: currentSessionId!,
-    [COMMAND_TEXT_HEADER]: encodeURIComponent(runningCommand.command),
-  });
 
   // Send all buffered output
   let outputIndex = 0;

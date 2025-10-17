@@ -106,7 +106,7 @@ logger.info("Logger initialized successfully", {
  * Gracefully close all logger transports and flush any pending writes
  */
 export function closeLogger(): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     logger.end(() => {
       logger.close();
       resolve();
