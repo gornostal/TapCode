@@ -6,11 +6,7 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
-- Truncate long command lines in command history list. Make sure commands don't overflow the box boundaries
-
 - In commandRunnerService, Put session id in response headers instead of SSE messages. Update all code that is it.
-
-- Command output view should also have + - toolbar buttons like GitDiff.tsx
 
 - helper text about annotations
 

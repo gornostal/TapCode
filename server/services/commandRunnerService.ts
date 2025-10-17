@@ -219,9 +219,9 @@ export function runCommand(
     "X-Accel-Buffering": "no",
   });
 
-  // Send session ID to client
+  // Send session ID and command to client
   res.write(
-    `data: ${JSON.stringify({ type: "session", data: currentSessionId })}\n\n`,
+    `data: ${JSON.stringify({ type: "session", data: currentSessionId, command: runningCommand.command })}\n\n`,
   );
 
   // Send all buffered output

@@ -7,6 +7,7 @@ type SSEEvent =
   | {
       type: "session";
       data: string;
+      command: string;
     }
   | CommandOutput;
 
@@ -23,6 +24,8 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   const [isStopping, setIsStopping] = useState(false);
   const [stopError, setStopError] = useState<string | null>(null);
   const [exitMessage, setExitMessage] = useState<string | null>(null);
+  const [fontSize, setFontSize] = useState(10);
+  const [command, setCommand] = useState<string>("");
   const outputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +79,8 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
 
                 switch (data.type) {
                   case "session":
-                    // Session ID received
+                    // Session ID and command received
+                    setCommand(data.command);
                     break;
 
                   case "stdout":
@@ -178,6 +182,14 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
     }
   };
 
+  const handleIncreaseFontSize = () => {
+    setFontSize((prev) => Math.min(prev + 2, 32));
+  };
+
+  const handleDecreaseFontSize = () => {
+    setFontSize((prev) => Math.max(prev - 2, 6));
+  };
+
   const highlighted = highlightCode(output, "markdown", false);
   const statusText = (() => {
     if (!isComplete) {
@@ -217,6 +229,11 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
           Command Output
         </p>
+        {command && (
+          <div className="mt-2 rounded bg-slate-900/50 px-3 py-2">
+            <code className="text-sm text-slate-300">{command}</code>
+          </div>
+        )}
         <div className="mt-2 flex items-center gap-3">
           <span className={`text-sm ${statusClassName}`}>{statusText}</span>
           <button
@@ -258,7 +275,10 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
             }}
           >
             <div ref={outputRef} className="max-h-[70vh] overflow-auto">
-              <pre className="min-w-full rounded-lg bg-slate-950/60 font-mono text-sm leading-relaxed">
+              <pre
+                className="min-w-full rounded-lg bg-slate-950/60 font-mono leading-relaxed"
+                style={{ fontSize: `${fontSize}px` }}
+              >
                 <code
                   className="hljs"
                   dangerouslySetInnerHTML={{ __html: highlighted.html }}
@@ -269,7 +289,12 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         )}
       </div>
 
-      <Toolbar currentPath={`Command: ${sessionId}`} onBack={onBackToBrowser} />
+      <Toolbar
+        currentPath="Command Output"
+        onBack={onBackToBrowser}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
+      />
     </>
   );
 };
