@@ -18,7 +18,7 @@ const AGENT_SETTINGS_STORAGE_KEY = "agent-settings";
 
 const loadSettings = (): AgentSettings => {
   const defaults: AgentSettings = {
-    agent: "codex",
+    agent: "claude",
     sandbox: "project",
   };
 
@@ -112,22 +112,6 @@ const AgentSelectionModal = ({
                 <input
                   type="radio"
                   name="agent"
-                  value="codex"
-                  checked={settings.agent === "codex"}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    if (isAgentName(value)) {
-                      setSettings({ ...settings, agent: value });
-                    }
-                  }}
-                  className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
-                />
-                <span className="text-sm text-slate-100">Codex</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="agent"
                   value="claude"
                   checked={settings.agent === "claude"}
                   onChange={(event) => {
@@ -139,6 +123,22 @@ const AgentSelectionModal = ({
                   className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
                 />
                 <span className="text-sm text-slate-100">Claude</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="agent"
+                  value="codex"
+                  checked={settings.agent === "codex"}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    if (isAgentName(value)) {
+                      setSettings({ ...settings, agent: value });
+                    }
+                  }}
+                  className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
+                />
+                <span className="text-sm text-slate-100">Codex</span>
               </label>
             </div>
           </div>
