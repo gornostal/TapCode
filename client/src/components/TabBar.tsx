@@ -1,3 +1,11 @@
+import {
+  ClipboardCheckIcon,
+  FolderIcon,
+  GitBranchIcon,
+  SearchIcon,
+  TerminalIcon,
+} from "@/components/icons";
+
 type TabBarButton = {
   label: string;
   ariaLabel?: string;
@@ -19,108 +27,23 @@ type TabBarProps = {
 const TABBAR_BUTTONS: TabBarButton[] = [
   {
     label: "Files",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="block h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M3.5 7.5h5l2 2H20a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 20 18.5H5A1.5 1.5 0 0 1 3.5 17v-9.5Z" />
-        <path d="M3.5 7.5V6A2 2 0 0 1 5.5 4h3a2 2 0 0 1 1.6.8l1.2 1.7" />
-      </svg>
-    ),
+    icon: <FolderIcon className="block h-5 w-5" focusable={false} />,
   },
   {
     label: "Go to file",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="block h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle cx="11" cy="11" r="6" />
-        <line x1="16.5" y1="16.5" x2="21" y2="21" />
-      </svg>
-    ),
+    icon: <SearchIcon className="block h-5 w-5" focusable={false} />,
   },
   {
     label: "Command",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="block h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <rect x="3" y="5" width="18" height="14" rx="2" />
-        <polyline points="7,9 10,12 7,15" />
-        <line x1="12" y1="15" x2="17" y2="15" />
-      </svg>
-    ),
+    icon: <TerminalIcon className="block h-5 w-5" focusable={false} />,
   },
   {
     label: "Git",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="block h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle cx="6" cy="6" r="2" />
-        <circle cx="18" cy="6" r="2" />
-        <circle cx="12" cy="18" r="2" />
-        <path d="M6 8v4a4 4 0 0 0 4 4h2" />
-        <path d="M18 8v4a4 4 0 0 1-4 4h-2" />
-      </svg>
-    ),
+    icon: <GitBranchIcon className="block h-5 w-5" focusable={false} />,
   },
   {
     label: "Tasks",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        className="block h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <rect x="8" y="3" width="8" height="3" rx="1" />
-        <path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" />
-        <path d="M9 13l2 2 4-4" />
-      </svg>
-    ),
+    icon: <ClipboardCheckIcon className="block h-5 w-5" focusable={false} />,
   },
 ];
 

@@ -14,6 +14,11 @@ import {
   type CommandRunSummary,
 } from "@shared/commandRunner";
 import Toolbar from "@/components/Toolbar";
+import {
+  ArrowUpLeftIcon,
+  ChevronRightIcon,
+  StopSquareOutlineIcon,
+} from "@/components/icons";
 
 type CommandRunnerProps = {
   onBackToBrowser: () => void;
@@ -356,17 +361,7 @@ const CommandRunner = ({
                         </div>
                       </div>
                       <span aria-hidden className="text-slate-500">
-                        <svg
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
+                        <ChevronRightIcon className="h-4 w-4" />
                       </span>
                     </button>
                     {!cmd.isComplete && (
@@ -382,17 +377,7 @@ const CommandRunner = ({
                           cmd.stopRequested ? "Stopping..." : "Stop command"
                         }
                       >
-                        <svg
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <rect x="6" y="6" width="12" height="12" />
-                        </svg>
+                        <StopSquareOutlineIcon className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -424,18 +409,7 @@ const CommandRunner = ({
                         {result.command}
                       </span>
                       <span aria-hidden className="text-slate-500">
-                        <svg
-                          className="h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M17 17L7 7" />
-                          <path d="M7 15V7h8" />
-                        </svg>
+                        <ArrowUpLeftIcon className="h-3 w-3" />
                       </span>
                     </button>
                   </li>
