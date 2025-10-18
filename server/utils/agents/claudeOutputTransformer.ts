@@ -90,11 +90,15 @@ export const createClaudeStdoutTransformer = (): StdoutTransformer => {
     if (texts.length === 0) {
       return;
     }
-    const combined = texts.map((t) => `> ${t.trim()}`).join("\n");
+    const combined = texts.map((t) => t.trim()).join("\n");
+    const quoted = combined
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
     const prefix = "\n\n## Assistant";
     push({
       type: "stdout",
-      data: `${prefix}\n${combined}`,
+      data: `${prefix}\n${quoted}`,
     });
     texts.length = 0;
   };
@@ -120,7 +124,7 @@ export const createClaudeStdoutTransformer = (): StdoutTransformer => {
     const lines: string[] = [`\n\n## ${name}`];
     if (input && typeof input === "object") {
       for (const [key, value] of Object.entries(input)) {
-        lines.push(`- ${key}: \`${formatToolValue(value)}\``);
+        lines.push(`- \`${key}\`: \`${formatToolValue(value)}\``);
       }
     }
     push({

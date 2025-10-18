@@ -13,16 +13,16 @@ exports[`createClaudeStdoutTransformer > transforms a recorded Claude stream int
     "data": "
 
 ## Read
-- file_path: \`/home/olek/projects/TapCode/tasks.md\`",
+- \`file_path\`: \`/home/olek/projects/TapCode/tasks.md\`",
     "type": "stdout",
   },
   {
     "data": "
 
 ## Edit
-- file_path: \`/home/olek/projects/TapCode/tasks.md\`
-- old_string: \`# Tasks␤␤- say hi␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`
-- new_string: \`# Tasks␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`",
+- \`file_path\`: \`/home/olek/projects/TapCode/tasks.md\`
+- \`old_string\`: \`# Tasks␤␤- say hi␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`
+- \`new_string\`: \`# Tasks␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`",
     "type": "stdout",
   },
   {

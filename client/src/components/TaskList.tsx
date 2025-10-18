@@ -17,6 +17,7 @@ import AgentSelectionModal, {
 import Toolbar from "@/components/Toolbar";
 import type { ErrorResponse } from "@shared/http";
 import { isSandboxMode } from "@shared/sandbox";
+import { RunTaskIcon } from "./icons";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
@@ -565,11 +566,12 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
             {tasks.length > 1 && (
               <>
                 <p className="text-xs text-slate-500">
-                  Items can be reordered by dragging
+                  Items can be reordered by dragging.
                 </p>
                 <p className="text-xs text-slate-500">
-                  Run tasks using coding agents. Press the button on the
-                  taskbar. Long press to select an agent.
+                  Run tasks using coding agents. Press{" "}
+                  <RunTaskIcon className="inline text-xs" /> button on the
+                  toolbar. Long press to select an agent.
                 </p>
               </>
             )}
