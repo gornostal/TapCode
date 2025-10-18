@@ -124,27 +124,33 @@ const Toolbar = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <circle cx="12" cy="4" r="1.2" />
-                <path d="M12 5.2V7" />
-                <rect x="5" y="8" width="14" height="10" rx="2" />
-                <path d="M4 11v4" />
-                <path d="M20 11v4" />
+                <circle cx="12.162" cy="3.276" r="1.516" />
+                <path d="M 12.162 4.791 L 12.162 7.064" />
+                <rect
+                  x="3.321"
+                  y="8.328"
+                  width="17.682"
+                  height="12.63"
+                  rx="2"
+                />
+                <path d="M 2.058 12.117 L 2.058 17.169" />
+                <path d="M 22.267 12.117 L 22.267 17.169" />
                 <circle
-                  cx="9"
-                  cy="12"
-                  r="1"
+                  cx="8.373"
+                  cy="13.379"
+                  r="1.263"
                   fill="currentColor"
                   stroke="none"
                 />
                 <circle
-                  cx="15"
-                  cy="12"
-                  r="1"
+                  cx="15.952"
+                  cy="13.379"
+                  r="1.263"
                   fill="currentColor"
                   stroke="none"
                 />
-                <path d="M9 15.5h6" />
-                <path d="M10.5 18h3" />
+                <path d="M 8.373 17.8 L 15.952 17.8" />
+                <path d="M 10.267 20.958 L 14.056 20.958" />
               </svg>
             </button>
           )}
@@ -166,8 +172,8 @@ const Toolbar = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M15.728 2.272a2.5 2.5 0 00-3.536 0L4 10.464V14h3.536l8.192-8.192a2.5 2.5 0 000-3.536z" />
-                <path d="M11.5 3.5L14.5 6.5" />
+                <path d="M 16.169 3.18 C 15.625 2.635 14.887 2.33 14.117 2.33 C 13.347 2.33 12.609 2.635 12.065 3.18 L 2.555 12.689 L 2.555 16.794 L 6.66 16.794 L 16.169 7.284 C 16.714 6.74 17.019 6.002 17.019 5.232 C 17.019 4.462 16.714 3.724 16.169 3.18 Z" />
+                <path d="M 11.261 4.605 L 14.744 8.088" />
               </svg>
             </button>
           )}
