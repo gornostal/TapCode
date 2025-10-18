@@ -75,7 +75,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [agentSettings, setAgentSettings] = useState<AgentSettings>(() =>
-    loadStoredAgentSettings(),
+    loadStoredAgentSettings()
   );
 
   useEffect(() => {
@@ -136,7 +136,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     try {
       window.localStorage.setItem(
         AGENT_SETTINGS_STORAGE_KEY,
-        JSON.stringify(agentSettings),
+        JSON.stringify(agentSettings)
       );
     } catch {
       // Ignore storage persistence issues to avoid surfacing errors in UI.
@@ -375,22 +375,22 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         }
 
         const sessionIdFromHeader = response.headers.get(
-          COMMAND_SESSION_HEADER,
+          COMMAND_SESSION_HEADER
         );
         if (!sessionIdFromHeader) {
           throw new Error(
-            "Task run started but session information was missing.",
+            "Task run started but session information was missing."
           );
         }
 
         onOpenCommandOutput(sessionIdFromHeader);
       } catch (err) {
         setRunError(
-          err instanceof Error ? err.message : "Failed to start task run.",
+          err instanceof Error ? err.message : "Failed to start task run."
         );
       }
     },
-    [agentSettings, selectedIndex, tasks, onOpenCommandOutput],
+    [agentSettings, selectedIndex, tasks, onOpenCommandOutput]
   );
 
   const deleteTask = async () => {
@@ -569,9 +569,9 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
                   Items can be reordered by dragging.
                 </p>
                 <p className="text-xs text-slate-500">
-                  Run tasks using coding agents. Press{" "}
-                  <RunTaskIcon className="inline text-xs" /> button on the
-                  toolbar. Long press to select an agent.
+                  Run tasks using coding agents by pressing{" "}
+                  <RunTaskIcon className="inline w-3 h-3" /> on the toolbar.
+                  Long press to select an agent.
                 </p>
               </>
             )}
