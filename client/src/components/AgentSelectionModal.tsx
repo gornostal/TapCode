@@ -60,7 +60,7 @@ const AgentSelectionModal = ({
     try {
       window.localStorage.setItem(
         AGENT_SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings)
+        JSON.stringify(settings),
       );
     } catch {
       // Ignore storage persistence issues
@@ -82,7 +82,7 @@ const AgentSelectionModal = ({
   };
 
   const handleBackdropClick = (
-    event: React.MouseEvent<HTMLDivElement>
+    event: React.MouseEvent<HTMLDivElement>,
   ): void => {
     if (event.target === event.currentTarget) {
       onClose();
