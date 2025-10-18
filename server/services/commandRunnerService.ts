@@ -135,6 +135,8 @@ export function runCommand(
     });
     // Flush immediately so the client can read headers and transition before command output begins.
     res.flushHeaders();
+    // Send an initial event to ensure fetch() resolves immediately
+    res.write(": connected\n\n");
 
     // Spawn the command using shell
     const childProcess = spawn(command, {
