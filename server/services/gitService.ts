@@ -85,8 +85,7 @@ export const getGitDiff = async (): Promise<GitDiffResponse> => {
 
   try {
     // Get diff for unstaged changes only (excludes staged files)
-    // -U10 shows 10 lines of context (default is 3)
-    const { stdout: unstagedDiff } = await execAsync("git diff -U10", {
+    const { stdout: unstagedDiff } = await execAsync("git diff -U15", {
       cwd: projectRoot,
     });
 
