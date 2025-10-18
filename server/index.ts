@@ -4,6 +4,8 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
+import { basicAuthMiddleware } from "./middleware/basicAuth";
+import { resolveServerConfig } from "./utils/config";
 import { log, logError, closeLogger } from "./utils/logger";
 import { setProjectRoot } from "./utils/paths";
 import { killExistingInstance, PID_FILE } from "./utils/processManagement";
@@ -55,14 +57,19 @@ async function bootstrap() {
   // Set the project root for the application
   setProjectRoot(resolvedPath);
   log(`Project root set to: ${resolvedPath}`);
+
+  const { host, port, basicAuth } = resolveServerConfig();
   const app = express();
   app.use(express.json());
+
+  if (basicAuth) {
+    app.use(basicAuthMiddleware(basicAuth));
+    log(`Basic authentication enabled for user: ${basicAuth.username}`);
+  }
 
   registerRoutes(app);
 
   const server = createServer(app);
-  const port = 2025;
-  const host = "0.0.0.0";
   const isDevelopment = process.env.NODE_ENV !== "production";
 
   if (isDevelopment) {
@@ -84,9 +91,8 @@ async function bootstrap() {
   }
 
   server.listen(port, host, () => {
-    log(
-      `TapCode server listening on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`,
-    );
+    const displayHost = host === "0.0.0.0" ? "localhost" : host;
+    log(`TapCode server listening on http://${displayHost}:${port}`);
   });
 
   const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
