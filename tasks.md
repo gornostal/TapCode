@@ -6,6 +6,8 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- List all API paths and request body params
+
 - Review claude output transformer
 
 - Review API paths

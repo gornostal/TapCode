@@ -254,7 +254,7 @@ const AgentSelectionModal = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 select-none">
             <button
               type="button"
               onClick={onClose}
