@@ -9,12 +9,10 @@ type AgentSelectionModalProps = {
 };
 
 export type SandboxMode = "project" | "yolo";
-export type ThinkingLevel = "low" | "medium" | "high";
 
 export type AgentSettings = {
   agent: AgentName;
   sandbox: SandboxMode;
-  thinking: ThinkingLevel;
 };
 
 const AGENT_SETTINGS_STORAGE_KEY = "agent-settings";
@@ -23,15 +21,10 @@ const isSandboxMode = (value: unknown): value is SandboxMode => {
   return value === "project" || value === "yolo";
 };
 
-const isThinkingLevel = (value: unknown): value is ThinkingLevel => {
-  return value === "low" || value === "medium" || value === "high";
-};
-
 const loadSettings = (): AgentSettings => {
   const defaults: AgentSettings = {
     agent: "codex",
     sandbox: "project",
-    thinking: "medium",
   };
 
   if (typeof window === "undefined") {
@@ -50,9 +43,6 @@ const loadSettings = (): AgentSettings => {
       sandbox: isSandboxMode(parsed.sandbox)
         ? parsed.sandbox
         : defaults.sandbox,
-      thinking: isThinkingLevel(parsed.thinking)
-        ? parsed.thinking
-        : defaults.thinking,
     };
   } catch {
     return defaults;
@@ -194,62 +184,6 @@ const AgentSelectionModal = ({
                   className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
                 />
                 <span className="text-sm text-slate-100">YOLO</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-3 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Thinking
-            </label>
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="thinking"
-                  value="low"
-                  checked={settings.thinking === "low"}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    if (isThinkingLevel(value)) {
-                      setSettings({ ...settings, thinking: value });
-                    }
-                  }}
-                  className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
-                />
-                <span className="text-sm text-slate-100">Low</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="thinking"
-                  value="medium"
-                  checked={settings.thinking === "medium"}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    if (isThinkingLevel(value)) {
-                      setSettings({ ...settings, thinking: value });
-                    }
-                  }}
-                  className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
-                />
-                <span className="text-sm text-slate-100">Medium</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="thinking"
-                  value="high"
-                  checked={settings.thinking === "high"}
-                  onChange={(event) => {
-                    const { value } = event.target;
-                    if (isThinkingLevel(value)) {
-                      setSettings({ ...settings, thinking: value });
-                    }
-                  }}
-                  className="h-4 w-4 border-slate-700 bg-slate-950/70 text-orange-400 focus:ring-2 focus:ring-orange-400 focus:ring-offset-0"
-                />
-                <span className="text-sm text-slate-100">High</span>
               </label>
             </div>
           </div>
