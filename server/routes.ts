@@ -4,7 +4,10 @@ import {
   type NextFunction,
   type Request,
   type Response,
+  type RequestHandler,
 } from "express";
+import type { ParamsDictionary } from "express-serve-static-core";
+import type { ParsedQs } from "qs";
 import { resolveFromRoot } from "./utils/paths";
 import {
   normalizeQueryParam,
@@ -43,72 +46,106 @@ import { isAgentName } from "../shared/agents";
 import { createHttpErrorLogger } from "./middleware/httpErrorLogger";
 import { logError } from "./utils/logger";
 
+type AsyncHandler<
+  P = ParamsDictionary,
+  ResBody = unknown,
+  ReqBody = unknown,
+  ReqQuery = ParsedQs,
+  Locals extends Record<string, unknown> = Record<string, unknown>,
+> = (
+  req: Request<P, ResBody, ReqBody, ReqQuery, Locals>,
+  res: Response<ResBody, Locals>,
+  next: NextFunction,
+) => Promise<void>;
+
+const asyncRoute = <
+  P = Record<string, unknown>,
+  ResBody = unknown,
+  ReqBody = unknown,
+  ReqQuery = Record<string, unknown>,
+  Locals extends Record<string, unknown> = Record<string, unknown>,
+>(
+  handler: AsyncHandler<P, ResBody, ReqBody, ReqQuery, Locals>,
+): RequestHandler<P, ResBody, ReqBody, ReqQuery, Locals> => {
+  return (req, res, next) => {
+    void handler(req, res, next).catch(next);
+  };
+};
+
 export function registerRoutes(app: Express) {
   const router = Router();
   const taskPath = resolveFromRoot("tasks.md");
 
   app.use("/api", createHttpErrorLogger());
 
-  router.get("/files", (req, res, next) => {
-    const query = normalizeQueryParam(req.query.q).trim();
-    const directoryParam = normalizeQueryParam(req.query.dir);
+  router.get(
+    "/files",
+    asyncRoute(async (req, res, next) => {
+      const query = normalizeQueryParam(req.query.q).trim();
+      const directoryParam = normalizeQueryParam(req.query.dir);
 
-    let directory = "";
-    try {
-      directory = normalizeDirectoryQueryParam(directoryParam);
-    } catch (error) {
-      res.status(400).json({ error: (error as Error).message });
-      return;
-    }
+      let directory = "";
+      try {
+        directory = normalizeDirectoryQueryParam(directoryParam);
+      } catch (error) {
+        res.status(400).json({ error: (error as Error).message });
+        return;
+      }
 
-    getFiles(query, directory)
-      .then((response) => {
+      try {
+        const response = await getFiles(query, directory);
         res.json(response);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleFileError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.get("/file", (req, res, next) => {
-    const pathParam = normalizeQueryParam(req.query.path);
+  router.get(
+    "/file",
+    asyncRoute(async (req, res, next) => {
+      const pathParam = normalizeQueryParam(req.query.path);
 
-    getFileContent(pathParam)
-      .then((response) => {
+      try {
+        const response = await getFileContent(pathParam);
         res.json(response);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleFileContentError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.get("/tasks", (_req, res, next) => {
-    getTasks(taskPath)
-      .then((response) => {
+  router.get(
+    "/tasks",
+    asyncRoute(async (_req, res, next) => {
+      try {
+        const response = await getTasks(taskPath);
         res.json(response);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleTaskError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.post("/tasks", (req, res, next) => {
-    const body = req.body as unknown;
-    const validationResult = extractTextFromBody(body);
+  router.post(
+    "/tasks",
+    asyncRoute(async (req, res, next) => {
+      const body = req.body;
+      const validationResult = extractTextFromBody(body);
 
-    if ("error" in validationResult) {
-      res.status(400).json({ error: validationResult.error });
-      return;
-    }
+      if ("error" in validationResult) {
+        res.status(400).json({ error: validationResult.error });
+        return;
+      }
 
-    addTask(taskPath, validationResult.text)
-      .then((result) => {
+      try {
+        const result = await addTask(taskPath, validationResult.text);
         res.status(201).json(result);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleTaskError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
   router.post("/tasks/run", (req, res) => {
     const body = req.body as unknown;
@@ -155,130 +192,144 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  router.put("/tasks/reorder", (req, res, next) => {
-    const body = req.body as unknown;
+  router.put(
+    "/tasks/reorder",
+    asyncRoute(async (req, res, next) => {
+      const body = req.body;
 
-    if (typeof body !== "object" || body === null) {
-      res.status(400).json({ error: "Request body must be an object" });
-      return;
-    }
+      if (typeof body !== "object" || body === null) {
+        res.status(400).json({ error: "Request body must be an object" });
+        return;
+      }
 
-    const { fromIndex, toIndex } = body as Record<string, unknown>;
+      const { fromIndex, toIndex } = body as Record<string, unknown>;
 
-    if (typeof fromIndex !== "number") {
-      res
-        .status(400)
-        .json({ error: "fromIndex is required and must be a number" });
-      return;
-    }
+      if (typeof fromIndex !== "number") {
+        res
+          .status(400)
+          .json({ error: "fromIndex is required and must be a number" });
+        return;
+      }
 
-    if (typeof toIndex !== "number") {
-      res
-        .status(400)
-        .json({ error: "toIndex is required and must be a number" });
-      return;
-    }
+      if (typeof toIndex !== "number") {
+        res
+          .status(400)
+          .json({ error: "toIndex is required and must be a number" });
+        return;
+      }
 
-    reorderTask(taskPath, fromIndex, toIndex)
-      .then((result) => {
+      try {
+        const result = await reorderTask(taskPath, fromIndex, toIndex);
         res.json(result);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleTaskError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.put("/tasks/:index(\\d+)", (req, res, next) => {
-    const indexParam = req.params.index;
-    const index = Number.parseInt(indexParam, 10);
+  router.put(
+    "/tasks/:index(\\d+)",
+    asyncRoute<{ index: string }>(async (req, res, next) => {
+      const indexParam = req.params.index;
+      const index = Number.parseInt(indexParam, 10);
 
-    if (Number.isNaN(index)) {
-      res.status(400).json({ error: "index must be a valid number" });
-      return;
-    }
+      if (Number.isNaN(index)) {
+        res.status(400).json({ error: "index must be a valid number" });
+        return;
+      }
 
-    const body = req.body as unknown;
-    const validationResult = extractTextFromBody(body);
+      const body = req.body;
+      const validationResult = extractTextFromBody(body);
 
-    if ("error" in validationResult) {
-      res.status(400).json({ error: validationResult.error });
-      return;
-    }
+      if ("error" in validationResult) {
+        res.status(400).json({ error: validationResult.error });
+        return;
+      }
 
-    updateTask(taskPath, index, validationResult.text)
-      .then((result) => {
+      try {
+        const result = await updateTask(taskPath, index, validationResult.text);
         res.json(result);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleTaskError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.delete("/tasks/:index", (req, res, next) => {
-    const indexParam = req.params.index;
-    const index = Number.parseInt(indexParam, 10);
+  router.delete(
+    "/tasks/:index",
+    asyncRoute<{ index: string }>(async (req, res, next) => {
+      const indexParam = req.params.index;
+      const index = Number.parseInt(indexParam, 10);
 
-    if (Number.isNaN(index)) {
-      res.status(400).json({ error: "index must be a valid number" });
-      return;
-    }
+      if (Number.isNaN(index)) {
+        res.status(400).json({ error: "index must be a valid number" });
+        return;
+      }
 
-    removeTask(taskPath, index)
-      .then((result) => {
+      try {
+        const result = await removeTask(taskPath, index);
         res.json(result);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleTaskError(error, res, next);
-      });
-  });
+      }
+    }),
+  );
 
-  router.get("/git/status", (_req, res) => {
-    getGitStatus()
-      .then((response) => {
+  router.get(
+    "/git/status",
+    asyncRoute(async (_req, res) => {
+      try {
+        const response = await getGitStatus();
         res.json(response);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleGitError(error, res);
-      });
-  });
+      }
+    }),
+  );
 
-  router.get("/git/diff", (_req, res) => {
-    getGitDiff()
-      .then((response) => {
+  router.get(
+    "/git/diff",
+    asyncRoute(async (_req, res) => {
+      try {
+        const response = await getGitDiff();
         res.json(response);
-      })
-      .catch((error) => {
+      } catch (error) {
         handleGitError(error, res);
-      });
-  });
+      }
+    }),
+  );
 
-  router.post("/git/stage-all", (_req, res) => {
-    stageAll()
-      .then(() => {
+  router.post(
+    "/git/stage-all",
+    asyncRoute(async (_req, res) => {
+      try {
+        await stageAll();
         res.status(200).json({ success: true });
-      })
-      .catch((error) => {
+      } catch (error) {
         handleGitError(error, res);
-      });
-  });
+      }
+    }),
+  );
 
-  router.post("/git/commit", (req, res) => {
-    const body = req.body as unknown;
-    const validationResult = extractTextFromBody(body);
+  router.post(
+    "/git/commit",
+    asyncRoute(async (req, res) => {
+      const body = req.body;
+      const validationResult = extractTextFromBody(body);
 
-    if ("error" in validationResult) {
-      res.status(400).json({ error: validationResult.error });
-      return;
-    }
+      if ("error" in validationResult) {
+        res.status(400).json({ error: validationResult.error });
+        return;
+      }
 
-    commitStaged(validationResult.text)
-      .then(() => {
+      try {
+        await commitStaged(validationResult.text);
         res.status(200).json({ success: true });
-      })
-      .catch((error) => {
+      } catch (error) {
         handleGitError(error, res);
-      });
-  });
+      }
+    }),
+  );
 
   router.get("/shell/suggestions", (req, res) => {
     const query = normalizeQueryParam(req.query.q).trim();
