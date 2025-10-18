@@ -7,6 +7,7 @@ import {
   updateTaskItem,
   removeTaskItem,
 } from "../utils/tasks";
+import { TASKS_FILE_TEMPLATE } from "../utils/taskFileTemplate";
 
 /**
  * Gets all task items from the tasks.md file
@@ -18,6 +19,19 @@ export const getTasks = async (taskPath: string): Promise<TasksResponse> => {
   return { items };
 };
 
+const readTaskFileOrCreate = async (taskPath: string): Promise<string> => {
+  try {
+    return await fs.readFile(taskPath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+
+    await fs.writeFile(taskPath, TASKS_FILE_TEMPLATE, "utf8");
+    return TASKS_FILE_TEMPLATE;
+  }
+};
+
 /**
  * Appends a new task item to the tasks.md file
  */
@@ -25,7 +39,7 @@ export const addTask = async (
   taskPath: string,
   text: string,
 ): Promise<AddTaskResponse> => {
-  const taskContents = await fs.readFile(taskPath, "utf8");
+  const taskContents = await readTaskFileOrCreate(taskPath);
   const updated = addTaskItem(taskContents, text);
   await fs.writeFile(taskPath, updated, "utf8");
 
