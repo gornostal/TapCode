@@ -388,7 +388,6 @@ function App() {
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pt-20 pb-12 sm:px-6 lg:px-8">
         {isFileRoute ? (
           <FilePreview
-            projectName={projectName}
             displayedFilePath={displayedFilePath}
             selectedFile={selectedFile}
             isFileLoading={isFileLoading}

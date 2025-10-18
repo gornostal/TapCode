@@ -36,7 +36,6 @@ const formatBytes = (bytes: number): string => {
 };
 
 type FilePreviewProps = {
-  projectName: string;
   displayedFilePath: string | null;
   selectedFile: FileContentResponse | null;
   isFileLoading: boolean;
@@ -45,7 +44,6 @@ type FilePreviewProps = {
 };
 
 const FilePreview = ({
-  projectName,
   displayedFilePath,
   selectedFile,
   isFileLoading,
@@ -197,18 +195,20 @@ const FilePreview = ({
     setSelectedLineNumbers([]);
   };
 
-  const handleCopyPath = async () => {
+  const handleCopyPath = () => {
     if (!displayedFilePath) {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(displayedFilePath);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy path:", error);
-    }
+    navigator.clipboard
+      .writeText(displayedFilePath)
+      .then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      })
+      .catch((error) => {
+        console.error("Failed to copy path:", error);
+      });
   };
 
   const showAnnotateButton =

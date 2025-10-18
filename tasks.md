@@ -6,6 +6,8 @@ Note: This file may change while work is being done - new items may be added.
 
 # Tasks
 
+- Extract all svgs on the client side to separate files that export jsx components
+
 - Review claude output transformer
 
 - Review API paths
