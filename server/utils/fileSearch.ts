@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import path from "node:path";
 
-import type { FileListItem } from "@shared/files";
+import type { FileListItem } from "../../shared/files";
 import { resolveFromRoot } from "./paths";
 
 const IGNORED_DIRECTORIES = new Set([".git", "node_modules", "dist"]);

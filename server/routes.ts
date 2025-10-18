@@ -39,7 +39,7 @@ import {
   handleShellError,
 } from "./utils/errorHandling";
 import { runTask } from "./services/taskRunnerService";
-import { isAgentName } from "@shared/agents";
+import { isAgentName } from "../shared/agents";
 import { createHttpErrorLogger } from "./middleware/httpErrorLogger";
 import { logError } from "./utils/logger";
 

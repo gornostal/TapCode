@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AgentName } from "@shared/agents";
+import { AgentName } from "../../shared/agents";
 import { runCommand } from "./commandRunnerService";
 import { createClaudeStdoutTransformer } from "../utils/agents/claudeOutputTransformer";
 

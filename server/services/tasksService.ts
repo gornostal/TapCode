@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import type { TasksResponse } from "@shared/tasks";
+import type { TasksResponse } from "../../shared/tasks";
 import {
   parseTaskItems,
   addTaskItem,

@@ -1,4 +1,4 @@
-import type { FilesResponse, FileContentResponse } from "@shared/files";
+import type { FilesResponse, FileContentResponse } from "../../shared/files";
 import { listDirectoryContents, searchFiles } from "../utils/fileSearch";
 import {
   inferHighlightLanguage,
