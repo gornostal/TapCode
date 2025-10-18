@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AgentName, isAgentName } from "@shared/agents";
+import { isAgentName } from "@shared/agents";
 import { COMMAND_SESSION_HEADER } from "@shared/commandRunner";
 import type {
   AddTaskResponse,
@@ -16,6 +16,7 @@ import AgentSelectionModal, {
 } from "@/components/AgentSelectionModal";
 import Toolbar from "@/components/Toolbar";
 import type { ErrorResponse } from "@shared/http";
+import { isSandboxMode } from "@shared/sandbox";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
@@ -23,7 +24,37 @@ type TaskListProps = {
 };
 
 const DRAFT_STORAGE_KEY = "taskList-draft";
-const AGENT_STORAGE_KEY = "taskList-selectedAgent";
+const AGENT_SETTINGS_STORAGE_KEY = "agent-settings";
+
+const DEFAULT_AGENT_SETTINGS: AgentSettings = {
+  agent: "codex",
+  sandbox: "project",
+};
+
+const loadStoredAgentSettings = (): AgentSettings => {
+  if (typeof window === "undefined") {
+    return DEFAULT_AGENT_SETTINGS;
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(AGENT_SETTINGS_STORAGE_KEY);
+    if (!storedValue) {
+      return DEFAULT_AGENT_SETTINGS;
+    }
+
+    const parsed = JSON.parse(storedValue) as Partial<AgentSettings>;
+    const agent = isAgentName(parsed.agent)
+      ? parsed.agent
+      : DEFAULT_AGENT_SETTINGS.agent;
+    const sandbox = isSandboxMode(parsed.sandbox)
+      ? parsed.sandbox
+      : DEFAULT_AGENT_SETTINGS.sandbox;
+
+    return { agent, sandbox };
+  } catch {
+    return DEFAULT_AGENT_SETTINGS;
+  }
+};
 
 const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
@@ -42,22 +73,9 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState<AgentName>(() => {
-    if (typeof window === "undefined") {
-      return "codex";
-    }
-
-    try {
-      const storedValue = window.localStorage.getItem(AGENT_STORAGE_KEY);
-      if (isAgentName(storedValue)) {
-        return storedValue;
-      }
-    } catch {
-      // Ignore storage access issues and fall back to default.
-    }
-
-    return "codex";
-  });
+  const [agentSettings, setAgentSettings] = useState<AgentSettings>(() =>
+    loadStoredAgentSettings(),
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -115,11 +133,14 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     }
 
     try {
-      window.localStorage.setItem(AGENT_STORAGE_KEY, selectedAgent);
+      window.localStorage.setItem(
+        AGENT_SETTINGS_STORAGE_KEY,
+        JSON.stringify(agentSettings),
+      );
     } catch {
       // Ignore storage persistence issues to avoid surfacing errors in UI.
     }
-  }, [selectedAgent]);
+  }, [agentSettings]);
 
   const addTask = async (trimmed: string) => {
     setIsSubmitting(true);
@@ -305,7 +326,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   };
 
   const handleRunSelectedTask = useCallback(
-    async (agentOverride?: AgentName) => {
+    async (settingsOverride?: AgentSettings) => {
       if (selectedIndex === null) {
         setRunError("Select a task to run before starting it.");
         return;
@@ -322,9 +343,11 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       setRunError(null);
 
       try {
+        const effectiveSettings = settingsOverride ?? agentSettings;
         const requestBody: RunTaskRequest = {
           description: task,
-          agent: agentOverride ?? selectedAgent,
+          agent: effectiveSettings.agent,
+          sandbox: effectiveSettings.sandbox,
         };
 
         const response = await fetch("/api/tasks/run", {
@@ -366,7 +389,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         );
       }
     },
-    [selectedIndex, tasks, onOpenCommandOutput, selectedAgent],
+    [agentSettings, selectedIndex, tasks, onOpenCommandOutput],
   );
 
   const deleteTask = async () => {
@@ -416,14 +439,12 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   };
 
   const handleAgentSettingsSubmit = (settings: AgentSettings) => {
-    setSelectedAgent(settings.agent);
-    // Sandbox and thinking settings will be wired to API later
+    setAgentSettings(settings);
   };
 
   const handleAgentSettingsRunTask = (settings: AgentSettings) => {
-    setSelectedAgent(settings.agent);
-    // Sandbox and thinking settings will be wired to API later
-    void handleRunSelectedTask(settings.agent);
+    setAgentSettings(settings);
+    void handleRunSelectedTask(settings);
   };
 
   const selectedTask =

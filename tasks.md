@@ -9,3 +9,4 @@ Note: This file may change while work is being done - new items may be added.
 - Review claude output transformer
 - Review API paths
 - Autocreate tasks.md on first addition of a task
+- diff -U

@@ -1,4 +1,5 @@
 import type { AgentName } from "./agents";
+import type { SandboxMode } from "./sandbox";
 import type { TextRequest } from "./http";
 
 export interface TasksResponse {
@@ -31,6 +32,10 @@ export interface RunTaskRequest {
    */
   sessionId?: string;
   agent: AgentName;
+  /**
+   * Sandbox policy that determines how the agent is allowed to interact with the filesystem.
+   */
+  sandbox: SandboxMode;
 }
 
 export interface TaskIndexParams {

@@ -1,5 +1,6 @@
 import { FormEvent, useState, useEffect } from "react";
 import { AgentName, isAgentName } from "@shared/agents";
+import { SandboxMode, isSandboxMode } from "@shared/sandbox";
 
 type AgentSelectionModalProps = {
   isOpen: boolean;
@@ -8,18 +9,12 @@ type AgentSelectionModalProps = {
   onRunTask?: (settings: AgentSettings) => void;
 };
 
-export type SandboxMode = "project" | "yolo";
-
 export type AgentSettings = {
   agent: AgentName;
   sandbox: SandboxMode;
 };
 
 const AGENT_SETTINGS_STORAGE_KEY = "agent-settings";
-
-const isSandboxMode = (value: unknown): value is SandboxMode => {
-  return value === "project" || value === "yolo";
-};
 
 const loadSettings = (): AgentSettings => {
   const defaults: AgentSettings = {
@@ -65,7 +60,7 @@ const AgentSelectionModal = ({
     try {
       window.localStorage.setItem(
         AGENT_SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings),
+        JSON.stringify(settings)
       );
     } catch {
       // Ignore storage persistence issues
@@ -87,7 +82,7 @@ const AgentSelectionModal = ({
   };
 
   const handleBackdropClick = (
-    event: React.MouseEvent<HTMLDivElement>,
+    event: React.MouseEvent<HTMLDivElement>
   ): void => {
     if (event.target === event.currentTarget) {
       onClose();
@@ -110,7 +105,7 @@ const AgentSelectionModal = ({
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div>
             <label className="mb-3 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Agent Name
+              Agent
             </label>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-3 cursor-pointer">

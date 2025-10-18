@@ -41,6 +41,7 @@ import {
 } from "./utils/errorHandling";
 import { runTask } from "./services/taskRunnerService";
 import { isAgentName } from "../shared/agents";
+import { isSandboxMode } from "../shared/sandbox";
 import type {
   FileContentResponse,
   FileRequestQuery,
@@ -220,6 +221,7 @@ export function registerRoutes(app: Express) {
       const sessionId =
         typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
       const agentValue = bodyObj.agent;
+      const sandboxValue = bodyObj.sandbox;
 
       if (!isAgentName(agentValue)) {
         res.status(400).json({ error: "Agent must be one of: codex, claude" });
@@ -227,6 +229,14 @@ export function registerRoutes(app: Express) {
       }
 
       const agent = agentValue;
+      if (!isSandboxMode(sandboxValue)) {
+        res
+          .status(400)
+          .json({ error: "Sandbox must be one of: project, yolo" });
+        return;
+      }
+
+      const sandbox = sandboxValue;
       const trimmedDescription =
         description !== undefined ? description.trim() : undefined;
 
@@ -243,7 +253,7 @@ export function registerRoutes(app: Express) {
       }
 
       try {
-        runTask(trimmedDescription, agent, res, sessionId);
+        runTask(trimmedDescription, agent, sandbox, res, sessionId);
       } catch (error) {
         res
           .status(500)

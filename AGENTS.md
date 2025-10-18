@@ -47,7 +47,11 @@ Log file locations:
 
 ## Coding Style & Naming Conventions
 
-The codebase uses strict TypeScript and functional React components. Favor PascalCase for components (`App.tsx`), camelCase for variables, and kebab-case for CSS classes. Keep indentation at two spaces; Prettier (default config) governs whitespace and quote style, while ESLint enforces TypeScript and React Hooks best practices. Prefer configured aliases (`@/...`, `@shared/...`) over long relative paths, and avoid disabling linters unless a rule is demonstrably incorrect.
+The codebase uses strict TypeScript and functional React components.
+Always use types from `./shared` when implementing client-server API.
+
+Favor PascalCase for components (`App.tsx`), camelCase for variables, and kebab-case for CSS classes.
+Keep indentation at two spaces; Prettier (default config) governs whitespace and quote style, while ESLint enforces TypeScript and React Hooks best practices.
 
 ## Coding & Testing Guidelines
 
