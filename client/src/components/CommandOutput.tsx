@@ -210,7 +210,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
       <header>
         {command && (
           <div className="mb-2 rounded bg-slate-900/50 px-3 py-2">
-            <code className="text-sm text-slate-300">{command}</code>
+            <code className="text-xs text-slate-300">{command}</code>
           </div>
         )}
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
