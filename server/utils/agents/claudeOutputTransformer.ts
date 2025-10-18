@@ -1,106 +1,87 @@
 import type { StdoutTransformer } from "../../services/commandRunnerService";
 import type { CommandOutput } from "../../../shared/commandRunner";
 
-type ClaudeStreamEvent =
-  | {
-      type: "assistant";
-      message?: {
-        content?: unknown;
-      };
-    }
-  | {
-      type: "user";
-      message?: {
-        content?: unknown;
-      };
-    }
-  | {
-      type: "result";
-      is_error?: boolean;
-      result?: unknown;
-    }
-  | {
-      type: "system";
-    };
+interface ClaudeBaseEvent {
+  type?: unknown;
+  [key: string]: unknown;
+}
 
-type PendingTool = {
+interface ClaudeTextContent {
+  type: "text";
+  text: string;
+  [key: string]: unknown;
+}
+
+interface ClaudeToolUseContent {
+  type: "tool_use";
   name: string;
-};
+  input?: Record<string, unknown>;
+  [key: string]: unknown;
+}
 
-const MAX_PREVIEW_LENGTH = 200;
+type ClaudeContent = ClaudeTextContent | ClaudeToolUseContent;
 
-const formatSection = (title: string, body: string): string => {
-  const sanitizedBody = normalizeLineEndings(body).trimEnd();
-  return `${title}:\n${sanitizedBody}\n\n`;
-};
+interface ClaudeAssistantPayload {
+  content?: ClaudeContent | ClaudeContent[];
+  [key: string]: unknown;
+}
 
-const normalizeLineEndings = (value: string): string =>
-  value.replace(/\r\n/g, "\n");
+interface ClaudeAssistantEvent extends ClaudeBaseEvent {
+  type: "assistant";
+  message?: ClaudeAssistantPayload;
+}
 
-const extractToolResultContent = (content: unknown): string => {
-  if (typeof content === "string") {
-    return content;
-  }
-
-  if (Array.isArray(content)) {
-    return content
-      .map((item) => {
-        if (typeof item === "string") {
-          return item;
-        }
-        if (
-          item &&
-          typeof item === "object" &&
-          typeof (item as { text?: unknown }).text === "string"
-        ) {
-          return (item as { text: string }).text;
-        }
-        return "";
-      })
-      .join("");
-  }
-
-  return "";
-};
-
-const truncatePreview = (value: string): string => {
-  const collapsed = value.replace(/\s+/g, " ").trim();
-  if (!collapsed) {
-    return "(no output)";
-  }
-  if (collapsed.length <= MAX_PREVIEW_LENGTH) {
-    return collapsed;
-  }
-  return `${collapsed.slice(0, MAX_PREVIEW_LENGTH).trimEnd()}...`;
-};
-
-const toStringResult = (value: unknown): string => {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (value === null || value === undefined) {
-    return "";
-  }
-  if (
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    typeof value === "bigint"
-  ) {
-    return String(value);
-  }
-  if (value instanceof Error) {
-    return value.message || value.toString();
-  }
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return Object.prototype.toString.call(value);
-  }
-};
+interface ClaudeResultEvent extends ClaudeBaseEvent {
+  type: "result";
+  is_error?: boolean;
+  duration_ms?: number;
+}
 
 export const createClaudeStdoutTransformer = (): StdoutTransformer => {
   let buffer = "";
-  const pendingTools = new Map<string, PendingTool>();
+  const textBuffer: string[] = [];
+
+  const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === "object" && value !== null;
+  };
+
+  const isAssistantEvent = (event: unknown): event is ClaudeAssistantEvent => {
+    return isRecord(event) && event.type === "assistant";
+  };
+
+  const isResultEvent = (event: unknown): event is ClaudeResultEvent => {
+    return isRecord(event) && event.type === "result";
+  };
+
+  const isTextContent = (value: unknown): value is ClaudeTextContent => {
+    return (
+      isRecord(value) && value.type === "text" && typeof value.text === "string"
+    );
+  };
+
+  const isToolUseContent = (value: unknown): value is ClaudeToolUseContent => {
+    return (
+      isRecord(value) &&
+      value.type === "tool_use" &&
+      typeof value.name === "string"
+    );
+  };
+
+  const isKnownContent = (value: unknown): value is ClaudeContent => {
+    return isTextContent(value) || isToolUseContent(value);
+  };
+
+  const collectAssistantContent = (
+    payload: ClaudeAssistantPayload["content"],
+  ): ClaudeContent[] => {
+    if (!payload) {
+      return [];
+    }
+    if (Array.isArray(payload)) {
+      return payload.filter(isKnownContent);
+    }
+    return isKnownContent(payload) ? [payload] : [];
+  };
 
   const flushAssistantTexts = (
     texts: string[],
@@ -109,130 +90,103 @@ export const createClaudeStdoutTransformer = (): StdoutTransformer => {
     if (texts.length === 0) {
       return;
     }
-    const combined = texts.join("\n\n");
+    const combined = texts.map((t) => `> ${t.trim()}`).join("\n");
+    const prefix = "\n\n## Assistant";
     push({
       type: "stdout",
-      data: formatSection("Assistant", combined),
+      data: `${prefix}\n${combined}`,
     });
     texts.length = 0;
   };
 
-  const handleEvent = (
-    event: ClaudeStreamEvent,
+  const formatToolValue = (value: unknown): string => {
+    if (value === null) {
+      return "null";
+    }
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    const str = String(value).replace(/\n/g, "␤");
+    const maxLength = 200;
+    if (str.length > maxLength) {
+      return str.slice(0, maxLength) + "...";
+    }
+    return str;
+  };
+
+  const pushToolUse = (
+    name: string,
+    input: Record<string, unknown> | undefined,
     push: (output: CommandOutput) => void,
   ) => {
-    switch (event.type) {
-      case "assistant": {
-        const content = event.message?.content;
-        if (!content) {
-          return;
-        }
-        if (typeof content === "string") {
-          const trimmed = content.trim();
-          if (trimmed) {
-            push({
-              type: "stdout",
-              data: formatSection("Assistant", trimmed),
-            });
-          }
-          return;
-        }
-
-        if (!Array.isArray(content)) {
-          return;
-        }
-
-        const textBuffer: string[] = [];
-
-        for (const rawItem of content) {
-          if (!rawItem || typeof rawItem !== "object") {
-            continue;
-          }
-          const item = rawItem as Record<string, unknown>;
-          const type = (() => {
-            const value = (item as { type?: unknown }).type;
-            return typeof value === "string" ? value : undefined;
-          })();
-
-          if (type === "text") {
-            const textValue = (item as { text?: unknown }).text;
-            if (typeof textValue === "string") {
-              textBuffer.push(textValue);
-            }
-            continue;
-          }
-
-          if (type === "tool_use") {
-            flushAssistantTexts(textBuffer, push);
-            const id = (item as { id?: unknown }).id;
-            const name = (item as { name?: unknown }).name;
-            if (typeof id === "string" && typeof name === "string") {
-              pendingTools.set(id, { name });
-            }
-          }
-        }
-
-        flushAssistantTexts(textBuffer, push);
-        return;
+    const lines: string[] = [`\n\n## ${name}`];
+    if (input && typeof input === "object") {
+      for (const [key, value] of Object.entries(input)) {
+        lines.push(`- ${key}: \`${formatToolValue(value)}\``);
       }
+    }
+    push({
+      type: "stdout",
+      data: `${lines.join("\n")}`,
+    });
+  };
 
-      case "user": {
-        const content = event.message?.content;
-        if (!content) {
-          return;
+  const formatDurationMinutes = (durationMs: number): number => {
+    if (!Number.isFinite(durationMs) || durationMs <= 0) {
+      return 0;
+    }
+    const wholeSeconds = Math.floor(durationMs / 1000);
+    const minutes = wholeSeconds / 60;
+    return Math.floor(minutes * 100) / 100;
+  };
+
+  const handleEvent = (
+    event: unknown,
+    push: (output: CommandOutput) => void,
+  ) => {
+    if (isAssistantEvent(event)) {
+      const contentItems = collectAssistantContent(event.message?.content);
+      for (const item of contentItems) {
+        if (isTextContent(item)) {
+          textBuffer.push(item.text);
+          continue;
         }
-        if (typeof content === "string") {
-          return;
+        if (isToolUseContent(item)) {
+          flushAssistantTexts(textBuffer, push);
+          pushToolUse(item.name, item.input ?? {}, push);
         }
-        if (!Array.isArray(content)) {
-          return;
-        }
-
-        for (const rawItem of content) {
-          if (!rawItem || typeof rawItem !== "object") {
-            continue;
-          }
-          const item = rawItem as Record<string, unknown>;
-          const typeValue = (item as { type?: unknown }).type;
-          if (typeValue !== "tool_result") {
-            continue;
-          }
-          const toolUseId = (item as { tool_use_id?: unknown }).tool_use_id;
-          if (typeof toolUseId !== "string") {
-            continue;
-          }
-
-          const tool = pendingTools.get(toolUseId);
-          const toolName = tool?.name ?? "Tool";
-          const toolContent = extractToolResultContent(
-            (item as { content?: unknown }).content,
-          );
-          const preview = truncatePreview(toolContent);
-
-          const toolSection = formatSection("Tool", `${toolName} — ${preview}`);
-          const resultSection = formatSection("Tool Result", toolContent);
-
-          push({
-            type: "stdout",
-            data: toolSection + resultSection,
-          });
-          pendingTools.delete(toolUseId);
-        }
-        return;
       }
+      return;
+    }
 
-      case "result": {
-        const icon = event.is_error ? "❌" : "✅";
-        const resultText = toStringResult(event.result);
-        push({
-          type: "stdout",
-          data: formatSection(`${icon} Result`, resultText),
-        });
-        return;
-      }
+    if (isResultEvent(event)) {
+      flushAssistantTexts(textBuffer, push);
+      const status = event.is_error ? "❌ Failed" : "✅ Done";
+      const minutes = formatDurationMinutes(event.duration_ms ?? 0);
+      const durationSuffix =
+        minutes > 0 ? ` It took ${minutes.toFixed(2)} min.` : "";
+      push({
+        type: "stdout",
+        data: `\n\n${status}.${durationSuffix}\n`,
+      });
+    }
+  };
 
-      default:
-        return;
+  const flushRemaining = (push: (output: CommandOutput) => void) => {
+    if (textBuffer.length > 0) {
+      flushAssistantTexts(textBuffer, push);
+    }
+  };
+
+  const processLine = (line: string, push: (output: CommandOutput) => void) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    try {
+      const event: unknown = JSON.parse(trimmed);
+      handleEvent(event, push);
+    } catch {
+      // Ignore parse errors for individual lines; they may be partial or irrelevant.
     }
   };
 
@@ -243,31 +197,15 @@ export const createClaudeStdoutTransformer = (): StdoutTransformer => {
       buffer = lines.pop() ?? "";
 
       for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) {
-          continue;
-        }
-
-        try {
-          const event = JSON.parse(line) as ClaudeStreamEvent;
-          handleEvent(event, push);
-        } catch {
-          // Ignore parse errors for individual lines; they may be partial or irrelevant.
-        }
+        processLine(rawLine, push);
       }
     },
 
     finalize: (push) => {
-      const remaining = buffer.trim();
-      if (!remaining) {
-        return;
+      if (buffer.length > 0) {
+        processLine(buffer, push);
       }
-      try {
-        const event = JSON.parse(remaining) as ClaudeStreamEvent;
-        handleEvent(event, push);
-      } catch {
-        // Ignore final partial line if it cannot be parsed.
-      }
+      flushRemaining(push);
     },
   };
 };

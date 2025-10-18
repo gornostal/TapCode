@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`createClaudeStdoutTransformer > transforms a recorded Claude stream into snapshot-stable output 1`] = `
+[
+  {
+    "data": "
+
+## Assistant
+> Hi! I'll remove that task from the tasks file for you.",
+    "type": "stdout",
+  },
+  {
+    "data": "
+
+## Read
+- file_path: \`/home/olek/projects/TapCode/tasks.md\`",
+    "type": "stdout",
+  },
+  {
+    "data": "
+
+## Edit
+- file_path: \`/home/olek/projects/TapCode/tasks.md\`
+- old_string: \`# Tasks␤␤- say hi␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`
+- new_string: \`# Tasks␤␤- Review claude output transformer␤- Review API paths␤- Autocreate tasks.md on first addition of a task\`",
+    "type": "stdout",
+  },
+  {
+    "data": "
+
+## Assistant
+> Done! I've removed the "say hi" task from ./tasks.md.",
+    "type": "stdout",
+  },
+  {
+    "data": "
+
+✅ Done. It took 0.16 min.
+",
+    "type": "stdout",
+  },
+]
+`;
