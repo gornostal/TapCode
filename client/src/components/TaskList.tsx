@@ -2,7 +2,10 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AgentName, isAgentName } from "@shared/agents";
 import { COMMAND_SESSION_HEADER } from "@shared/commandRunner";
 import type {
+  AddTaskResponse,
+  CreateTaskRequest,
   RunTaskRequest,
+  ReorderTasksRequest,
   TasksResponse,
   UpdateTaskRequest,
 } from "@shared/tasks";
@@ -12,6 +15,7 @@ import AgentSelectionModal, {
   type AgentSettings,
 } from "@/components/AgentSelectionModal";
 import Toolbar from "@/components/Toolbar";
+import type { ErrorResponse } from "@shared/http";
 
 type TaskListProps = {
   onBackToBrowser: () => void;
@@ -121,36 +125,38 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
     setIsSubmitting(true);
 
     try {
+      const requestBody: CreateTaskRequest = { text: trimmed };
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: trimmed }),
+        body: JSON.stringify(requestBody),
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | AddTaskResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        let message = `Request failed with status ${response.status}`;
-
-        try {
-          const data = (await response.json()) as { error?: string };
-          if (data.error) {
-            message = data.error;
-          }
-        } catch {
-          // Ignore JSON parse errors and fall back to default message.
-        }
-
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
         throw new Error(message);
       }
 
-      const data = (await response.json()) as { text?: string };
-
-      if (!data.text) {
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("text" in payload) ||
+        typeof payload.text !== "string"
+      ) {
         throw new Error("Unexpected server response.");
       }
 
-      setTasks((current) => [data.text as string, ...current]);
+      setTasks((current) => [payload.text, ...current]);
       setNewTaskText("");
       sessionStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch (err) {
@@ -175,20 +181,38 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
 
   const reorderTask = async (fromIndex: number, toIndex: number) => {
     try {
+      const requestBody: ReorderTasksRequest = { fromIndex, toIndex };
       const response = await fetch("/api/tasks/reorder", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ fromIndex, toIndex }),
+        body: JSON.stringify(requestBody),
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | TasksResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
+        throw new Error(message);
       }
 
-      const data = (await response.json()) as TasksResponse;
-      setTasks(data.items);
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("items" in payload) ||
+        !Array.isArray(payload.items)
+      ) {
+        throw new Error("Unexpected server response.");
+      }
+
+      setTasks(payload.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reorder tasks");
     }
@@ -234,23 +258,29 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         body: JSON.stringify(requestBody),
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | TasksResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        let message = `Request failed with status ${response.status}`;
-
-        try {
-          const data = (await response.json()) as { error?: string };
-          if (data.error) {
-            message = data.error;
-          }
-        } catch {
-          // Ignore JSON parse errors and fall back to default message.
-        }
-
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
         throw new Error(message);
       }
 
-      const data = (await response.json()) as TasksResponse;
-      const updatedItems = data.items;
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("items" in payload) ||
+        !Array.isArray(payload.items)
+      ) {
+        throw new Error("Unexpected server response.");
+      }
+
+      const updatedItems = payload.items;
 
       setTasks(updatedItems);
       if (updatedItems.length === 0) {
@@ -309,7 +339,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
           let message = `Request failed with status ${response.status}`;
 
           try {
-            const data = (await response.json()) as { error?: string };
+            const data = (await response.json()) as ErrorResponse;
             if (data.error) {
               message = data.error;
             }
@@ -347,12 +377,29 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         method: "DELETE",
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | TasksResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
+        throw new Error(message);
       }
 
-      const data = (await response.json()) as TasksResponse;
-      setTasks(data.items);
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("items" in payload) ||
+        !Array.isArray(payload.items)
+      ) {
+        throw new Error("Unexpected server response.");
+      }
+
+      setTasks(payload.items);
       setSelectedIndex(null);
       setRunError(null);
     } catch (err) {

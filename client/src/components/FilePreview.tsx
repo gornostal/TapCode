@@ -6,6 +6,8 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import type { FileContentResponse } from "@shared/files";
+import type { AddTaskResponse, CreateTaskRequest } from "@shared/tasks";
+import type { ErrorResponse } from "@shared/http";
 import Toolbar from "@/components/Toolbar";
 import AnnotationModal from "@/components/AnnotationModal";
 import { CheckIcon, ClipboardIcon } from "@/components/icons";
@@ -163,32 +165,34 @@ const FilePreview = ({
   };
 
   const handleAnnotationSubmit = async (text: string): Promise<void> => {
+    const requestBody: CreateTaskRequest = { text };
     const response = await fetch("/api/tasks", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(requestBody),
     });
 
+    const payload = (await response.json().catch(() => null)) as
+      | AddTaskResponse
+      | ErrorResponse
+      | null;
+
     if (!response.ok) {
-      let message = `Request failed with status ${response.status}`;
-
-      try {
-        const data = (await response.json()) as { error?: string };
-        if (data.error) {
-          message = data.error;
-        }
-      } catch {
-        // Ignore JSON parse errors and fall back to default message.
-      }
-
+      const message =
+        payload && typeof payload === "object" && "error" in payload
+          ? payload.error
+          : `Request failed with status ${response.status}`;
       throw new Error(message);
     }
 
-    const data = (await response.json()) as { text?: string };
-
-    if (!data.text) {
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("text" in payload) ||
+      typeof payload.text !== "string"
+    ) {
       throw new Error("Unexpected server response.");
     }
 

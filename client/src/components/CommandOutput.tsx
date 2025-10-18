@@ -5,6 +5,7 @@ import {
   COMMAND_TEXT_HEADER,
   type CommandOutput,
   type CommandStopResponse,
+  type RunCommandRequest,
 } from "@shared/commandRunner";
 import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
@@ -31,12 +32,13 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
 
     const connectToStream = async () => {
       try {
+        const requestBody: RunCommandRequest = { sessionId };
         const response = await fetch("/api/command/run", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify(requestBody),
           signal: abortController.signal,
         });
 

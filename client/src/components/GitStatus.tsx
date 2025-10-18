@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import type { GitStatusResponse } from "@shared/git";
+import type {
+  CommitRequest,
+  CommitResponse,
+  GitStatusResponse,
+  StageAllResponse,
+} from "@shared/git";
+import type { ErrorResponse } from "@shared/http";
 import Toolbar from "@/components/Toolbar";
 
 type GitStatusProps = {
@@ -69,8 +75,26 @@ const GitStatus = ({
         method: "POST",
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | StageAllResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
+        throw new Error(message);
+      }
+
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("success" in payload) ||
+        payload.success !== true
+      ) {
+        throw new Error("Failed to stage changes.");
       }
 
       // Reload git status after staging
@@ -92,19 +116,35 @@ const GitStatus = ({
     setError(null);
 
     try {
+      const requestBody: CommitRequest = { text: commitMessage };
       const response = await fetch("/api/git/commit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: commitMessage }),
+        body: JSON.stringify(requestBody),
       });
 
+      const payload = (await response.json().catch(() => null)) as
+        | CommitResponse
+        | ErrorResponse
+        | null;
+
       if (!response.ok) {
-        const errorData = (await response.json()) as { error?: string };
-        throw new Error(
-          errorData.error || `Request failed with status ${response.status}`,
-        );
+        const message =
+          payload && typeof payload === "object" && "error" in payload
+            ? payload.error
+            : `Request failed with status ${response.status}`;
+        throw new Error(message);
+      }
+
+      if (
+        !payload ||
+        typeof payload !== "object" ||
+        !("success" in payload) ||
+        payload.success !== true
+      ) {
+        throw new Error("Commit did not complete successfully.");
       }
 
       // Clear commit message and reload status after successful commit

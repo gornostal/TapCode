@@ -8,11 +8,18 @@ import {
   useState,
 } from "react";
 
-import type { HistoryEntry, ShellSuggestionsResponse } from "@shared/shell";
+import type {
+  HistoryEntry,
+  ShellSuggestionsQuery,
+  ShellSuggestionsResponse,
+} from "@shared/shell";
 import {
   COMMAND_SESSION_HEADER,
   type CommandRunSummary,
+  type CommandRunsResponse,
+  type RunCommandRequest,
 } from "@shared/commandRunner";
+import type { ErrorResponse } from "@shared/http";
 import Toolbar from "@/components/Toolbar";
 import {
   ArrowUpLeftIcon,
@@ -80,8 +87,13 @@ const CommandRunner = ({
 
     const executeSearch = async () => {
       try {
+        const query: ShellSuggestionsQuery = { q: trimmedQuery };
         const params = new URLSearchParams();
-        params.set("q", trimmedQuery);
+        for (const [key, value] of Object.entries(query)) {
+          if (typeof value === "string") {
+            params.set(key, value);
+          }
+        }
 
         const response = await fetch(
           `/api/shell/suggestions?${params.toString()}`,
@@ -144,7 +156,7 @@ const CommandRunner = ({
       if (!response.ok) {
         throw new Error(`Failed to fetch running commands`);
       }
-      const data = (await response.json()) as CommandRunSummary[];
+      const data = (await response.json()) as CommandRunsResponse;
       setRunningCommands(data);
     } catch (err) {
       console.error("Error fetching running commands:", err);
@@ -171,16 +183,28 @@ const CommandRunner = ({
 
     try {
       // Start the command by making a POST request
+      const requestBody: RunCommandRequest = { text: commandToRun };
       const response = await fetch("/api/command/run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: commandToRun }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to start command");
+        let message = "Failed to start command";
+
+        try {
+          const data = (await response.json()) as ErrorResponse;
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // Ignore JSON parsing errors and fall back to default message.
+        }
+
+        throw new Error(message);
       }
 
       const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);

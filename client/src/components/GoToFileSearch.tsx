@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 
-import type { FileListItem, FilesResponse } from "@shared/files";
+import type {
+  FileListItem,
+  FilesRequestQuery,
+  FilesResponse,
+} from "@shared/files";
 
 type GoToFileSearchProps = {
   isOpen: boolean;
@@ -86,8 +90,13 @@ const GoToFileSearch = ({
 
     const executeSearch = async () => {
       try {
+        const query: FilesRequestQuery = { q: trimmedQuery };
         const params = new URLSearchParams();
-        params.set("q", trimmedQuery);
+        for (const [key, value] of Object.entries(query)) {
+          if (typeof value === "string") {
+            params.set(key, value);
+          }
+        }
 
         const response = await fetch(`/api/files?${params.toString()}`, {
           signal: controller.signal,

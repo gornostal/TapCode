@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   FileContentResponse,
   FileListItem,
+  FileRequestQuery,
+  FilesRequestQuery,
   FilesResponse,
 } from "@shared/files";
 
@@ -130,9 +132,16 @@ function App() {
     const loadFiles = async () => {
       setIsLoading(true);
 
-      const params = new URLSearchParams();
+      const query: FilesRequestQuery = {};
       if (currentDirectory) {
-        params.set("dir", currentDirectory);
+        query.dir = currentDirectory;
+      }
+
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(query)) {
+        if (typeof value === "string") {
+          params.set(key, value);
+        }
       }
 
       try {
@@ -198,8 +207,12 @@ function App() {
     setSelectedFile(null);
     setActiveFilePath(path);
 
+    const query: FileRequestQuery = { path };
+
     const params = new URLSearchParams();
-    params.set("path", path);
+    if (typeof query.path === "string") {
+      params.set("path", query.path);
+    }
 
     try {
       const response = await fetch(`/api/file?${params.toString()}`, {
@@ -244,8 +257,11 @@ function App() {
 
   const openFilePage = useCallback(
     (path: string) => {
+      const query: FileRequestQuery = { path };
       const params = new URLSearchParams();
-      params.set("path", path);
+      if (typeof query.path === "string") {
+        params.set("path", query.path);
+      }
 
       window.history.pushState(
         { page: "file", path },

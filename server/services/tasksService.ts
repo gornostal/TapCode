@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import type { TasksResponse } from "../../shared/tasks";
+import type { AddTaskResponse, TasksResponse } from "../../shared/tasks";
 import {
   parseTaskItems,
   addTaskItem,
@@ -24,7 +24,7 @@ export const getTasks = async (taskPath: string): Promise<TasksResponse> => {
 export const addTask = async (
   taskPath: string,
   text: string,
-): Promise<{ text: string }> => {
+): Promise<AddTaskResponse> => {
   const taskContents = await fs.readFile(taskPath, "utf8");
   const updated = addTaskItem(taskContents, text);
   await fs.writeFile(taskPath, updated, "utf8");
