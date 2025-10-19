@@ -3,7 +3,10 @@ type HeaderProps = {
 };
 
 const Header = ({ projectName }: HeaderProps) => (
-  <header className="fixed left-0 right-0 top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+  <header
+    className="fixed left-0 right-0 top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur"
+    style={{ paddingTop: "var(--safe-area-inset-top)" }}
+  >
     <div
       className="mx-auto flex items-center justify-center px-4 sm:px-6 lg:px-8"
       style={{ height: "30px" }}

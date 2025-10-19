@@ -61,7 +61,10 @@ const TabBar = ({
   const buttons = TABBAR_BUTTONS;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/95">
+    <nav
+      className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/95"
+      style={{ paddingBottom: "var(--safe-area-inset-bottom)" }}
+    >
       <div className="relative flex w-full flex-wrap items-center justify-center overflow-hidden isolate">
         <div className="pointer-events-none absolute inset-0 z-0 bg-slate-900/60" />
         <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-r from-sky-500/20 via-purple-500/10 to-emerald-500/20 opacity-80" />

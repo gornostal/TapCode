@@ -84,7 +84,10 @@ const Toolbar = ({
   };
 
   return (
-    <div className="fixed bottom-[3.25rem] left-0 right-0 z-20 border-t border-b border-slate-800 bg-slate-950">
+    <div
+      className="fixed left-0 right-0 z-20 border-t border-b border-slate-800 bg-slate-950"
+      style={{ bottom: "calc(3.25rem + var(--safe-area-inset-bottom))" }}
+    >
       <div
         className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
         style={{ height: "30px" }}

@@ -45,6 +45,7 @@ npx tapcode
 ```
 
 **Requirements:**
+
 - Node.js >= 18.17.0
 
 ---
@@ -63,11 +64,11 @@ The server will start on `http://127.0.0.1:2025` by default.
 
 Configure TapCode using environment variables:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TAPCODE_HOST` | Network interface the server binds to | `127.0.0.1` |
-| `TAPCODE_PORT` | Port the server listens on | `2025` |
-| `TAPCODE_BASIC_AUTH` | Enable HTTP Basic Auth (format: `username:password`) | disabled |
+| Variable             | Description                                          | Default     |
+| -------------------- | ---------------------------------------------------- | ----------- |
+| `TAPCODE_HOST`       | Network interface the server binds to                | `127.0.0.1` |
+| `TAPCODE_PORT`       | Port the server listens on                           | `2025`      |
+| `TAPCODE_BASIC_AUTH` | Enable HTTP Basic Auth (format: `username:password`) | disabled    |
 
 **Example:**
 
@@ -121,9 +122,11 @@ We welcome contributions from the community!
 ### Code Contributions
 
 **Bug Fixes:**
+
 - Feel free to submit pull requests for bug fixes directly
 
 **Features & Improvements:**
+
 - Please start a discussion first before implementing new features
 - This helps ensure alignment with project goals and prevents duplicate work
 
