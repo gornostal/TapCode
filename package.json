@@ -12,7 +12,8 @@
     "check": "tsc --noEmit",
     "test:unit": "vitest run --pool=vmThreads",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "npm run check && npm run test:unit && prettier --write . && npm run lint"
+    "test": "npm run check && npm run test:unit && prettier --write . && npm run lint",
+    "tests": "npm run test"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
   "engines": {
     "node": ">=18.17.0"
   },
+  "packageManager": "npm@10.9.3",
   "dependencies": {
     "express": "^4.21.2",
     "highlight.js": "^11.11.1",
