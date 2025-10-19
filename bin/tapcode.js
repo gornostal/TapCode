@@ -54,10 +54,7 @@ if (hasFlag("--version") || hasFlag("-v")) {
 
 const projectPath = args[0] ?? ".";
 const serverEntry =
-  [
-    "../dist/server/index.js",
-    "../dist/server/server/index.js",
-  ]
+  ["../dist/server/index.js", "../dist/server/server/index.js"]
     .map((relativePath) => resolve(__dirname, relativePath))
     .find((candidate) => fs.existsSync(candidate)) ?? null;
 
