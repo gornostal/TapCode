@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "TapCode prototype with typed Express server and Vite React client.",
   "type": "module",
+  "bin": {
+    "tapcode": "./bin/tapcode.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts .",
     "build": "npm run build:client && npm run build:server",
@@ -13,7 +22,8 @@
     "test:unit": "vitest run --pool=vmThreads",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "npm run check && npm run test:unit && prettier --write . && npm run lint",
-    "tests": "npm run test"
+    "tests": "npm run test",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",

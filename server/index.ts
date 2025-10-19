@@ -42,16 +42,11 @@ async function bootstrap() {
 
   // Parse command-line arguments
   const args = process.argv.slice(2);
-
-  if (args.length === 0) {
-    console.error("Error: Project path is required");
-    console.error("Usage: tapcode <path>");
-    console.error("Example: tapcode . (for current directory)");
-    await cleanupPidFile();
-    process.exit(1);
+  if (!args[0]) {
+    log("No project path provided; defaulting to current working directory.");
   }
 
-  const projectPath = args[0];
+  const projectPath = args[0] ?? ".";
   const resolvedPath = path.resolve(process.cwd(), projectPath);
 
   // Set the project root for the application
