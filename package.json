@@ -17,7 +17,7 @@
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc --project tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/server/index.js .",
+    "start": "NODE_ENV=production node ./bin/tapcode.js .",
     "check": "tsc --noEmit",
     "test:unit": "vitest run --pool=vmThreads",
     "lint": "eslint . --ext .ts,.tsx",

@@ -53,9 +53,15 @@ if (hasFlag("--version") || hasFlag("-v")) {
 }
 
 const projectPath = args[0] ?? ".";
-const serverEntry = resolve(__dirname, "../dist/server/index.js");
+const serverEntry =
+  [
+    "../dist/server/index.js",
+    "../dist/server/server/index.js",
+  ]
+    .map((relativePath) => resolve(__dirname, relativePath))
+    .find((candidate) => fs.existsSync(candidate)) ?? null;
 
-if (!fs.existsSync(serverEntry)) {
+if (!serverEntry) {
   console.error(
     "TapCode has not been built. Run `npm run build` before executing the CLI.",
   );
