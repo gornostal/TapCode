@@ -23,4 +23,3 @@ export async function setupVite(app: Express): Promise<ViteDevServer> {
   app.use(vite.middlewares);
   return vite;
 }
-

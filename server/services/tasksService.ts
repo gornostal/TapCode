@@ -13,7 +13,17 @@ import { TASKS_FILE_TEMPLATE } from "../utils/taskFileTemplate";
  * Gets all task items from the tasks.md file
  */
 export const getTasks = async (taskPath: string): Promise<TasksResponse> => {
-  const taskContents = await fs.readFile(taskPath, "utf8");
+  let taskContents: string;
+
+  try {
+    taskContents = await fs.readFile(taskPath, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { items: [] };
+    }
+
+    throw error;
+  }
   const items = parseTaskItems(taskContents);
 
   return { items };
