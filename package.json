@@ -4,7 +4,7 @@
   "description": "TapCode prototype with typed Express server and Vite React client.",
   "type": "module",
   "bin": {
-    "tapcode": "./bin/tapcode.js"
+    "tapcode": "bin/tapcode.js"
   },
   "files": [
     "bin",
