@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic } from "./vite";
+import { serveStatic } from "./staticServer";
 import { basicAuthMiddleware } from "./middleware/basicAuth";
 import { resolveServerConfig } from "./utils/config";
 import { log, logError, closeLogger } from "./utils/logger";
@@ -68,6 +68,8 @@ async function bootstrap() {
   const isDevelopment = process.env.NODE_ENV !== "production";
 
   if (isDevelopment) {
+    // Dynamically import setupVite only in development to avoid loading vite in production
+    const { setupVite } = await import("./vite");
     const vite = await setupVite(app);
     log("Vite development middleware enabled");
 
