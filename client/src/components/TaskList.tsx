@@ -458,13 +458,17 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
           Outstanding items
         </p>
         <p className="mt-2 text-base text-slate-400">
-          Review the remaining tasks pulled from{" "}
+          Tasks are pulled from and saved to{" "}
           <span className="font-mono">tasks.md</span>
         </p>
-        <p className="mt-2 text-sm text-slate-500">
-          Add new tasks below and prompt your agent to follow instructions in
-          ./tasks.md
-        </p>
+        {tasks.length === 0 && (
+          <p className="mt-2 text-sm text-slate-500">
+            Add new tasks below and prompt your agent to follow instructions in
+            <span className="font-mono">./tasks.md</span>. Or run them
+            non-interactively from here by pressing{" "}
+            <RunTaskIcon className="inline w-3 h-3" /> on the toolbar.
+          </p>
+        )}
       </header>
 
       <div className="flex flex-col gap-4">
@@ -564,16 +568,16 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
               ))}
             </ul>
             {tasks.length > 1 && (
-              <>
-                <p className="text-xs text-slate-500">
-                  Items can be reordered by dragging.
-                </p>
-                <p className="text-xs text-slate-500">
-                  Run tasks using coding agents by pressing{" "}
-                  <RunTaskIcon className="inline w-3 h-3" /> on the toolbar.
-                  Long press to select an agent.
-                </p>
-              </>
+              <p className="text-xs text-slate-500">
+                Items can be reordered by dragging.
+              </p>
+            )}
+            {tasks.length > 0 && (
+              <p className="text-xs text-slate-500">
+                Select a task and run it using coding agents by pressing{" "}
+                <RunTaskIcon className="inline w-3 h-3" /> on the toolbar. Long
+                press to select an agent.
+              </p>
             )}
           </div>
         )}
