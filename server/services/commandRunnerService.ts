@@ -99,8 +99,15 @@ export function runCommand(
   let currentSessionId = sessionId;
 
   // Check if this is a reconnection to existing command
-  if (sessionId && runningCommands.has(sessionId)) {
-    runningCommand = runningCommands.get(sessionId)!;
+  if (sessionId) {
+    const existingCommand = runningCommands.get(sessionId);
+
+    if (!existingCommand) {
+      res.status(404).json({ error: "Command session not found" });
+      return;
+    }
+
+    runningCommand = existingCommand;
     log(`Client reconnected to session: ${sessionId}`);
 
     // Set up SSE headers for reconnection

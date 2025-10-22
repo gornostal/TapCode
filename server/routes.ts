@@ -488,8 +488,10 @@ export function registerRoutes(app: Express) {
         return;
       }
 
+      const sessionIdForRequest = text !== undefined ? undefined : sessionId;
+
       // Run command with SSE streaming (text may be undefined for reconnection)
-      runCommand(text || "", res, sessionId);
+      runCommand(text || "", res, sessionIdForRequest);
     },
   );
 

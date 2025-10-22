@@ -7,6 +7,7 @@ import {
   type CommandStopResponse,
   type RunCommandRequest,
 } from "@shared/commandRunner";
+import type { ErrorResponse } from "@shared/http";
 import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
 type CommandOutputProps = {
@@ -41,6 +42,25 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
           body: JSON.stringify(requestBody),
           signal: abortController.signal,
         });
+
+        if (response.status === 404) {
+          let message = "Command session not found.";
+          try {
+            const data = (await response.json()) as ErrorResponse;
+            if (data?.error) {
+              message = data.error;
+            }
+          } catch {
+            // Ignore body parsing failures; fall back to default message.
+          }
+
+          setError(message);
+          setIsComplete(true);
+          setExitCode(null);
+          setExitMessage(null);
+          setIsStopping(false);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Failed to connect: ${response.status}`);
