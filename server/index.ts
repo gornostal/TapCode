@@ -34,8 +34,12 @@ async function cleanupPidFile() {
 }
 
 async function bootstrap() {
-  // Kill any existing instance first
-  await killExistingInstance();
+  // Kill any existing instance first (ask user before terminating)
+  const canProceed = await killExistingInstance();
+  if (!canProceed) {
+    await closeLogger();
+    process.exit(0);
+  }
 
   // Write our PID file
   await writePidFile();

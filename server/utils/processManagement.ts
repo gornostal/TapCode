@@ -1,11 +1,32 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { createInterface } from "node:readline/promises";
 import { log } from "./logger";
 
 export const PID_FILE = path.join(os.homedir(), ".tapcode.pid");
 
-export async function killExistingInstance() {
+async function confirmTermination(pid: number): Promise<boolean> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    log(
+      `Found existing instance (PID: ${pid}), but terminal is not interactive; continuing without confirmation`,
+    );
+    return true;
+  }
+
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const answer = await rl.question(
+      `Found existing TapCode instance running (PID: ${pid}). Stop it? [y/N] `,
+    );
+    const normalized = answer.trim().toLowerCase();
+    return normalized === "y" || normalized === "yes";
+  } finally {
+    rl.close();
+  }
+}
+
+export async function killExistingInstance(): Promise<boolean> {
   try {
     // Check if PID file exists
     const pidContent = await fs.readFile(PID_FILE, "utf-8");
@@ -16,13 +37,21 @@ export async function killExistingInstance() {
       await fs.unlink(PID_FILE).catch(() => {
         /* ignore cleanup errors */
       });
-      return;
+      return true;
     }
 
     // Check if process is still running
     try {
       // Sending signal 0 checks if process exists without killing it
       process.kill(oldPid, 0);
+
+      const shouldTerminate = await confirmTermination(oldPid);
+      if (!shouldTerminate) {
+        log(
+          `Existing TapCode instance ${oldPid} left running; aborting startup of new instance`,
+        );
+        return false;
+      }
 
       // Process exists, try to kill it
       log(`Found existing instance (PID: ${oldPid}), killing...`);
@@ -46,7 +75,7 @@ export async function killExistingInstance() {
         await fs.unlink(PID_FILE).catch(() => {
           /* ignore cleanup errors */
         });
-        return;
+        return true;
       }
 
       // Give it time to shut down gracefully
@@ -88,16 +117,18 @@ export async function killExistingInstance() {
     await fs.unlink(PID_FILE).catch(() => {
       /* ignore cleanup errors */
     });
+    return true;
   } catch (error) {
     const errorCode = (error as NodeJS.ErrnoException).code;
     if (errorCode === "ENOENT") {
       // PID file doesn't exist, this is fine
-      return;
+      return true;
     }
     // Log but don't crash - we can continue even if cleanup failed
     const errorMessage = error instanceof Error ? error.message : String(error);
     log(
       `Warning: Could not process PID file (${errorCode || "unknown error"}): ${errorMessage}`,
     );
+    return true;
   }
 }
