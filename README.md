@@ -21,9 +21,9 @@ _Waste no time, code anytime_
 ## What is TapCode?
 
 ✔ A mobile-first programming interface that focuses on AI-assisted coding. <br />
+✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
 ✔ A web-based interface that allows creating tasks for AI agents, running CLI commands, browsing code, and doing basic GIT operations. <br />
 ✔ A client-server NodeJS application written with TypeScript, Express, Vite, React, and TailwindCSS. <br />
-✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
 
 **What it is NOT:**
 
@@ -36,11 +36,17 @@ _Waste no time, code anytime_
 TapCode helps developers code effectively from smartphones by pairing them with coding agents.
 
 **Mobile-First Development**: Programming workflow optimized for smartphone screens. SSH terminal might be required for more complex tasks <br />
+
 **Project File Browsing**: Navigate and view project files in a mobile-friendly way with code syntax highlighting <br />
+
 **Task-Oriented Approach**: Easily annotate code and create coding tasks for AI agents <br />
+
 **Task Execution With Coding Agents**: Currently only `Claude Code` and `OpenAI Codex` agents are supported in _non-interactive_ mode. <br />
+
 **Basic GIT Operations**: View git status, diff, stage & commit changes <br />
+
 **Web-Based Interface**: Review generated code from your mobile web browser, execute CLI command tasks using agents <br />
+
 **Runs Locally Or In The Cloud**: Run it on your home machine -> at night -- when you dreamed of a new feature -- pick up a phone and start TapCoding. You can also program on the go if you run TapCode on a cloud VM. <br />
 
 ---
@@ -129,7 +135,7 @@ We welcome contributions from the community!
 
 **Bug Fixes:**
 
-- Feel free to submit pull requests for bug fixes directly
+Feel free to submit pull requests for bug fixes directly
 
 **Features & Improvements:**
 
