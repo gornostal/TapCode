@@ -1,16 +1,12 @@
 import fs from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 import type { FileListItem } from "../../shared/files";
 import { resolveFromRoot } from "./paths";
 
-const IGNORED_DIRECTORIES = new Set([".git", "node_modules", "dist"]);
-const GITIGNORE_FILENAME = ".gitignore";
-
 const toPosixPath = (value: string) => value.split(path.sep).join("/");
-
-const isIgnoredDirectory = (name: string) => IGNORED_DIRECTORIES.has(name);
 
 const normalizeDirectoryPath = (value: string) => {
   const trimmed = value.trim();
@@ -74,45 +70,13 @@ export async function listDirectoryContents(
     throw error;
   }
 
-  // Load gitignore rules from root down to current directory
-  const pathSegments = normalizedDirectory
-    ? normalizedDirectory.split("/")
-    : [];
-  let currentRules: IgnoreRule[] = await loadIgnoreRulesForDirectory(
-    [],
-    root,
-    "",
-  );
-
-  // Load rules for each parent directory leading to the target
-  let currentPath = "";
-  let currentAbsolute = root;
-  for (const segment of pathSegments) {
-    currentPath = currentPath ? `${currentPath}/${segment}` : segment;
-    currentAbsolute = path.join(currentAbsolute, segment);
-    currentRules = await loadIgnoreRulesForDirectory(
-      currentRules,
-      currentAbsolute,
-      currentPath,
-    );
-  }
-
   const items: FileListItem[] = [];
 
   for (const entry of dirEntries) {
     if (entry.isDirectory()) {
-      if (isIgnoredDirectory(entry.name)) {
-        continue;
-      }
-
       const relativePath = normalizedDirectory
         ? `${normalizedDirectory}/${entry.name}`
         : entry.name;
-
-      // Check if directory should be ignored
-      if (shouldIgnorePath(toPosixPath(relativePath), true, currentRules)) {
-        continue;
-      }
 
       items.push({ path: toPosixPath(relativePath), kind: "directory" });
       continue;
@@ -125,11 +89,6 @@ export async function listDirectoryContents(
     const relativePath = normalizedDirectory
       ? `${normalizedDirectory}/${entry.name}`
       : entry.name;
-
-    // Check if file should be ignored
-    if (shouldIgnorePath(toPosixPath(relativePath), false, currentRules)) {
-      continue;
-    }
 
     items.push({ path: toPosixPath(relativePath), kind: "file" });
   }
@@ -145,318 +104,67 @@ export async function listDirectoryContents(
   return items;
 }
 
-interface IgnoreRule {
-  negate: boolean;
-  directoryOnly: boolean;
-  matches(pathRelativeToRoot: string, isDirectory: boolean): boolean;
-}
-
-const segmentMatches = (pattern: string, value: string): boolean => {
-  let patternIndex = 0;
-  let valueIndex = 0;
-  let starIndex = -1;
-  let matchIndex = 0;
-
-  while (valueIndex < value.length) {
-    const patternChar = pattern[patternIndex];
-    if (
-      patternChar !== undefined &&
-      (patternChar === "?" || patternChar === value[valueIndex])
-    ) {
-      patternIndex += 1;
-      valueIndex += 1;
-      continue;
-    }
-
-    if (patternChar === "*") {
-      starIndex = patternIndex;
-      matchIndex = valueIndex;
-      patternIndex += 1;
-      continue;
-    }
-
-    if (starIndex !== -1) {
-      patternIndex = starIndex + 1;
-      matchIndex += 1;
-      valueIndex = matchIndex;
-      continue;
-    }
-
-    return false;
-  }
-
-  while (patternIndex < pattern.length && pattern[patternIndex] === "*") {
-    patternIndex += 1;
-  }
-
-  return patternIndex === pattern.length;
-};
-
-const matchSegments = (
-  patternSegments: string[],
-  targetSegments: string[],
-  anchored: boolean,
-): boolean => {
-  const matchFrom = (patternIndex: number, targetIndex: number): boolean => {
-    let pIndex = patternIndex;
-    let tIndex = targetIndex;
-
-    while (pIndex < patternSegments.length) {
-      const segment = patternSegments[pIndex];
-
-      if (segment === "**") {
-        while (
-          pIndex + 1 < patternSegments.length &&
-          patternSegments[pIndex + 1] === "**"
-        ) {
-          pIndex += 1;
-        }
-
-        if (pIndex + 1 === patternSegments.length) {
-          return true;
-        }
-
-        pIndex += 1;
-
-        for (
-          let nextIndex = tIndex;
-          nextIndex <= targetSegments.length;
-          nextIndex += 1
-        ) {
-          if (matchFrom(pIndex, nextIndex)) {
-            return true;
-          }
-        }
-
-        return false;
-      }
-
-      if (tIndex >= targetSegments.length) {
-        return false;
-      }
-
-      if (!segmentMatches(segment, targetSegments[tIndex])) {
-        return false;
-      }
-
-      pIndex += 1;
-      tIndex += 1;
-    }
-
-    return tIndex === targetSegments.length;
-  };
-
-  if (anchored) {
-    return matchFrom(0, 0);
-  }
-
-  for (let offset = 0; offset <= targetSegments.length; offset += 1) {
-    if (matchFrom(0, offset)) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
-const createRule = ({
-  pattern,
-  negate,
-  directoryOnly,
-  basePath,
-}: {
-  pattern: string;
-  negate: boolean;
-  directoryOnly: boolean;
-  basePath: string;
-}): IgnoreRule | null => {
-  const anchored = pattern.startsWith("/");
-  const patternBody = anchored ? pattern.slice(1) : pattern;
-  const hasSlash = patternBody.includes("/");
-  const matchAnywhere = !anchored && !hasSlash;
-  const effectiveAnchored = anchored || hasSlash;
-
-  const basePrefix = basePath ? `${basePath}/` : "";
-  const withinBase = (target: string): string | null => {
-    if (!basePath) {
-      return target;
-    }
-
-    if (target === basePath) {
-      return "";
-    }
-
-    if (target.startsWith(basePrefix)) {
-      return target.slice(basePrefix.length);
-    }
-
-    return null;
-  };
-
-  if (matchAnywhere) {
-    const matcher = (value: string) => segmentMatches(patternBody, value);
-
-    return {
-      negate,
-      directoryOnly,
-      matches(pathRelativeToRoot, isDirectory) {
-        if (directoryOnly && !isDirectory) {
-          return false;
-        }
-
-        const relativeToBase = withinBase(pathRelativeToRoot);
-        if (relativeToBase === null) {
-          return false;
-        }
-
-        if (!relativeToBase) {
-          return matcher("");
-        }
-
-        const segments = relativeToBase.split("/");
-        for (const segment of segments) {
-          if (matcher(segment)) {
-            return true;
-          }
-        }
-        return false;
-      },
-    };
-  }
-
-  const patternSegments = patternBody
-    .split("/")
-    .filter((segment) => segment.length > 0)
-    .map((segment) => (segment === "" ? "**" : segment));
-
-  if (patternSegments.length === 0) {
-    return null;
-  }
-
-  return {
-    negate,
-    directoryOnly,
-    matches(pathRelativeToRoot, isDirectory) {
-      if (directoryOnly && !isDirectory) {
-        return false;
-      }
-
-      const relativeToBase = withinBase(pathRelativeToRoot);
-      if (relativeToBase === null) {
-        return false;
-      }
-
-      if (!relativeToBase && patternSegments.length > 0) {
-        return matchSegments(
-          patternSegments,
-          relativeToBase ? relativeToBase.split("/") : [],
-          effectiveAnchored,
-        );
-      }
-
-      const targetSegments = relativeToBase ? relativeToBase.split("/") : [];
-      return matchSegments(patternSegments, targetSegments, effectiveAnchored);
-    },
-  };
-};
-
-const parseGitignore = (contents: string, basePath: string): IgnoreRule[] => {
-  const rules: IgnoreRule[] = [];
-  const lines = contents.split(/\n/);
-
-  for (const rawLine of lines) {
-    const trimmedLine = rawLine.trim();
-
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      continue;
-    }
-
-    let negate = false;
-    let pattern = trimmedLine;
-
-    if (pattern.startsWith("!")) {
-      negate = true;
-      pattern = pattern.slice(1);
-    }
-
-    const directoryOnly = pattern.endsWith("/");
-    const normalizedPattern = directoryOnly ? pattern.slice(0, -1) : pattern;
-
-    if (!normalizedPattern) {
-      continue;
-    }
-
-    const rule = createRule({
-      pattern: normalizedPattern,
-      negate,
-      directoryOnly,
-      basePath,
-    });
-
-    if (rule) {
-      rules.push(rule);
-    }
-  }
-
-  return rules;
-};
-
-const loadIgnoreRulesForDirectory = async (
-  currentRules: IgnoreRule[],
-  absolutePath: string,
-  relativePath: string,
-): Promise<IgnoreRule[]> => {
-  const gitignorePath = path.join(absolutePath, GITIGNORE_FILENAME);
-
-  let contents: string;
-  try {
-    contents = await fs.readFile(gitignorePath, "utf8");
-  } catch (error) {
-    const { code } = error as NodeJS.ErrnoException;
-    if (code === "ENOENT") {
-      return currentRules;
-    }
-    throw error;
-  }
-
-  const rules = parseGitignore(contents, toPosixPath(relativePath));
-  if (rules.length === 0) {
-    return currentRules;
-  }
-
-  return [...currentRules, ...rules];
-};
-
-const shouldIgnorePath = (
-  relativePath: string,
-  isDirectory: boolean,
-  rules: IgnoreRule[],
-): boolean => {
-  let ignored = false;
-
-  for (const rule of rules) {
-    if (!rule.matches(relativePath, isDirectory)) {
-      continue;
-    }
-
-    ignored = !rule.negate;
-  }
-
-  return ignored;
-};
-
 async function collectFilesFromRoot(): Promise<string[]> {
   const root = resolveFromRoot();
-  const initialRules = await loadIgnoreRulesForDirectory([], root, "");
+
+  // Check if .git directory exists
+  const gitPath = path.join(root, ".git");
+  let hasGit = false;
+
+  try {
+    const stat = await fs.stat(gitPath);
+    hasGit = stat.isDirectory();
+  } catch {
+    hasGit = false;
+  }
+
+  if (hasGit) {
+    // Use git commands to get files
+    try {
+      // Get tracked files
+      const trackedOutput = execSync("git ls-files --full-name", {
+        cwd: root,
+        encoding: "utf8",
+      });
+
+      // Get untracked files
+      const untrackedOutput = execSync(
+        "git ls-files --full-name --others --exclude-standard",
+        { cwd: root, encoding: "utf8" },
+      );
+
+      // Combine and deduplicate
+      const allFiles = new Set<string>();
+      trackedOutput
+        .split("\n")
+        .filter((line) => line.trim().length > 0)
+        .forEach((file) => allFiles.add(file));
+
+      untrackedOutput
+        .split("\n")
+        .filter((line) => line.trim().length > 0)
+        .forEach((file) => allFiles.add(file));
+
+      return Array.from(allFiles).sort();
+    } catch {
+      // Fall back to filesystem traversal if git commands fail
+      return traverseFilesystem(root);
+    }
+  } else {
+    // Traverse filesystem if no .git directory
+    return traverseFilesystem(root);
+  }
+}
+
+async function traverseFilesystem(root: string): Promise<string[]> {
   const stack: Array<{
     absolute: string;
     relative: string;
-    rules: IgnoreRule[];
-  }> = [{ absolute: root, relative: "", rules: initialRules }];
+  }> = [{ absolute: root, relative: "" }];
   const files: string[] = [];
 
   while (stack.length > 0) {
-    const { absolute, relative, rules } = stack.pop()!;
+    const { absolute, relative } = stack.pop()!;
     const entries = await fs.readdir(absolute, { withFileTypes: true });
 
     for (const entry of entries) {
@@ -464,33 +172,15 @@ async function collectFilesFromRoot(): Promise<string[]> {
       const posixRelative = toPosixPath(relativePath);
 
       if (entry.isDirectory()) {
-        if (isIgnoredDirectory(entry.name)) {
-          continue;
-        }
-
-        if (shouldIgnorePath(posixRelative, true, rules)) {
-          continue;
-        }
-
         const childAbsolute = path.join(absolute, entry.name);
-        const nextRules = await loadIgnoreRulesForDirectory(
-          rules,
-          childAbsolute,
-          posixRelative,
-        );
         stack.push({
           absolute: childAbsolute,
           relative: posixRelative,
-          rules: nextRules,
         });
         continue;
       }
 
       if (!entry.isFile()) {
-        continue;
-      }
-
-      if (shouldIgnorePath(posixRelative, false, rules)) {
         continue;
       }
 

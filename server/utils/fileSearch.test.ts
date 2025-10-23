@@ -35,17 +35,18 @@ describe("searchFiles", () => {
     expect(results).toEqual([]);
   });
 
-  it("skips ignored directories such as node_modules, dist, and .git", async () => {
+  it("returns all files when no .git repository exists", async () => {
     await writeFile("node_modules/library/index.js");
     await writeFile("dist/assets/bundle.js");
-    await writeFile(".git/config");
     await writeFile("src/main.ts");
 
-    const ignoredMatchResults = await searchFiles("index");
-    const includedResults = await searchFiles("main");
+    const indexResults = await searchFiles("index");
+    const mainResults = await searchFiles("main.ts");
 
-    expect(ignoredMatchResults).toEqual([]);
-    expect(includedResults).toEqual([{ path: "src/main.ts", kind: "file" }]);
+    expect(indexResults).toEqual([
+      { path: "node_modules/library/index.js", kind: "file" },
+    ]);
+    expect(mainResults).toEqual([{ path: "src/main.ts", kind: "file" }]);
   });
 
   it("prioritizes tighter matches and enforces the result limit", async () => {
@@ -66,63 +67,5 @@ describe("searchFiles", () => {
     const [match] = await searchFiles("file");
 
     expect(match?.path).toBe("nested/deep/file.txt");
-  });
-
-  it("respects .gitignore files within directories", async () => {
-    await writeFile(".gitignore", "ignored-root.txt\n");
-    await writeFile("ignored-root.txt");
-    await writeFile("src/.gitignore", "*.snap\n");
-    await writeFile("src/test.snap");
-    await writeFile("src/nested/test.snap");
-    await writeFile("src/nested/keep.ts");
-
-    const rootIgnored = await searchFiles("ignored-root.txt");
-    const snapIgnored = await searchFiles("test.snap");
-    const keepResults = await searchFiles("keep.ts");
-
-    expect(rootIgnored).toEqual([]);
-    expect(snapIgnored).toEqual([]);
-    expect(keepResults).toEqual([{ path: "src/nested/keep.ts", kind: "file" }]);
-  });
-
-  it("allows negated patterns to re-include files within ignored directories", async () => {
-    await writeFile(".gitignore", "logs/*\n!logs/.keep\n");
-    await writeFile("logs/output.log");
-    await writeFile("logs/.keep");
-
-    const keepResults = await searchFiles("keep");
-    const outputResults = await searchFiles("output");
-
-    expect(keepResults).toEqual([{ path: "logs/.keep", kind: "file" }]);
-    expect(outputResults).toEqual([]);
-  });
-
-  it("treats root-anchored patterns as relative to the .gitignore location", async () => {
-    await writeFile(".gitignore", "/build/\n");
-    await writeFile("build/output.js");
-    await writeFile("src/build/keep.ts");
-
-    const rootResults = await searchFiles("output");
-    const nestedResults = await searchFiles("keep");
-
-    expect(rootResults).toEqual([]);
-    expect(nestedResults).toEqual([
-      { path: "src/build/keep.ts", kind: "file" },
-    ]);
-  });
-
-  it("respects wildcard patterns like *.log in .gitignore", async () => {
-    await writeFile(".gitignore", "*.log\n");
-    await writeFile("test.log");
-    await writeFile("src/debug.log");
-    await writeFile("src/code.ts");
-
-    const logResults = await searchFiles("test.log");
-    const debugResults = await searchFiles("debug.log");
-    const tsResults = await searchFiles("code.ts");
-
-    expect(logResults).toEqual([]);
-    expect(debugResults).toEqual([]);
-    expect(tsResults).toEqual([{ path: "src/code.ts", kind: "file" }]);
   });
 });
