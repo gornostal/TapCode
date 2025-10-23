@@ -1,10 +1,12 @@
+<div align="center">
+
 # TapCode
 
-**Code from your phone**
+_Waste no time, code anytime_
 
-![TapCode Hero](./assets/hero.png)
+</div>
 
----
+![TapCode Hero](./docs/hero.png)
 
 ## Table of Contents
 
@@ -16,32 +18,30 @@
 - [Contributing](#contributing)
 - [License](#license)
 
----
-
 ## What is TapCode?
 
-- It is a mobile-first programming UI that focuses on AI-assisted coding.
-- It is a web-based interface that allows creating tasks for AI agents, running CLI commands, browsing code, and doing basic GIT operations.
-- It is a client-server NodeJS application written with TypeScript, Express, Vite, React, and TailwindCSS.
-- It is a task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result.
+✔ A mobile-first programming interface that focuses on AI-assisted coding. <br />
+✔ A web-based interface that allows creating tasks for AI agents, running CLI commands, browsing code, and doing basic GIT operations. <br />
+✔ A client-server NodeJS application written with TypeScript, Express, Vite, React, and TailwindCSS. <br />
+✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
 
 **What it is NOT:**
 
-- A code editor or IDE replacement: TapCode doesn't provide file editing capabilities at all.
-- A full-featured AI coding assistant: TapCode focuses on task-based coding. It currently does not support interactive chat with AI agents (it might be added in the future).
-- A cloud service: TapCode runs locally on your machine, ensuring your code and data remain private.
+❌ A code editor or IDE replacement: TapCode doesn't provide file editing capabilities at all. <br />
+❌ A full-featured AI coding assistant: TapCode focuses on task-based coding. It currently does not support interactive chat with AI agents (it might be added in the future). <br />
+❌ A cloud service: TapCode runs locally on your machine, ensuring your code and data remain private. <br />
 
 ## Features
 
 TapCode helps developers code effectively from smartphones by pairing them with coding agents.
 
-- **Mobile-First Development** - Programming workflow optimized for smartphone screens. SSH terminal might be required for more complex tasks
-- **Project File Browsing** - Navigate and view project files in a mobile-friendly way with code syntax highlighting
-- **Task-Oriented Approach** - Easily annotate code and create coding tasks for AI agents
-- **Task Execution With Coding Agents** - Currently only `Claude Code` and `OpenAI Codex` agents are supported in _non-interactive_ mode.
-- **Basic GIT Operations** - View git status, diff, stage & commit changes
-- **Web-Based Interface** - Review generated code from your mobile web browser, execute CLI command tasks using agents
-- **Runs Locally Or In The Cloud** - Run it on your home machine -> at night -- when you dreamed of a new feature -- pick up a phone and start TapCoding. You can also program on the go if you run TapCode on a cloud VM.
+**Mobile-First Development**: Programming workflow optimized for smartphone screens. SSH terminal might be required for more complex tasks <br />
+**Project File Browsing**: Navigate and view project files in a mobile-friendly way with code syntax highlighting <br />
+**Task-Oriented Approach**: Easily annotate code and create coding tasks for AI agents <br />
+**Task Execution With Coding Agents**: Currently only `Claude Code` and `OpenAI Codex` agents are supported in _non-interactive_ mode. <br />
+**Basic GIT Operations**: View git status, diff, stage & commit changes <br />
+**Web-Based Interface**: Review generated code from your mobile web browser, execute CLI command tasks using agents <br />
+**Runs Locally Or In The Cloud**: Run it on your home machine -> at night -- when you dreamed of a new feature -- pick up a phone and start TapCoding. You can also program on the go if you run TapCode on a cloud VM. <br />
 
 ---
 
