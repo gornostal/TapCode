@@ -13,12 +13,13 @@ _Waste no time, code anytime_
 - [What is TapCode?](#what-is-tapcode)
 - [Features](#features)
 - [Install](#install)
+- [Workflow](#workflow)
 - [Configure](#configure)
 - [Support](#support)
 - [Contributing](#contributing)
 - [License](#license)
 
-## What is TapCode?
+## What is TapCode
 
 ✔ A mobile-first programming interface that focuses on AI-assisted coding. <br />
 ✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
@@ -74,16 +75,16 @@ npx tapcode .
 
 ## Workflow
 
-| Step                            | Screenshot                                                         | Description                                                                                                                                                                                                                                |
-| ------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Search project files            | <img src="./docs/01-search-file.jpg" height="200">                 | Use the file browser or the global search to quickly locate files in your repository.                                                                                                                                                      |
-| Preview code                    | <img src="./docs/02-preview-file.jpg" height="200">                | Open the file viewer to inspect syntax-highlighted code before creating edits.                                                                                                                                                             |
-| Annotate lines and create tasks | <img src="./docs/03-annotate.jpg" height="200">                    | Click on the line numbers in the gutter to add them to the annotation context and then on the annotation button on the toolbar.                                                                                                            |
-| Review and run tasks with agent | <img src="./docs/04-run-task-with-agent.jpg" height="200">         | From the task list, select a task and tap the 🤖 icon on the toolbar to hand off your request to a coding agent.                                                                                                                           |
-| Select an agent                 | <img src="./docs/05-select-agent.jpg" height="200">                | Long press the 🤖 icon to select between Claude Code or OpenAI Codex. They will run <b>non-interactively</b>. If you want to do a planning first, define a task to save the plan to a file and then create a new task to execute the plan. |
-| Watch live output               | <img src="./docs/06-live-stream-agent-output.jpg" height="200">    | Follow real-time terminal logs as the selected agent executes commands and edits your codebase.                                                                                                                                            |
-| Review generated code           | <img src="./docs/07-review-generated-code.jpg" height="200">       | Inspect the resulting diffs and code previews to confirm the agent's changes are correct. <br /> Create new annotations from here if you want to make changes.                                                                             |
-| Run additional commands         | <img src="./docs/08-run-any-additional-commands.jpg" height="200"> | Run any follow-up shell commands directly from the app to continue iterating on the task.                                                                                                                                                  |
+| Step | Description                                                                                                                                                                                                                                |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img src="./docs/01-search-file.jpg" height="200">                 | Use the file browser or the global search to quickly locate files in your repository.                                                                                                                                                      |
+| <img src="./docs/02-preview-file.jpg" height="200">                | Open the file viewer to inspect syntax-highlighted code before creating edits.                                                                                                                                                             |
+| <img src="./docs/03-annotate.jpg" height="200">                    | Click on the line numbers in the gutter to add them to the annotation context and then on the annotation button on the toolbar.                                                                                                            |
+| <img src="./docs/04-run-task-with-agent.jpg" height="200">         | From the task list, select a task and tap the 🤖 icon on the toolbar to hand off your request to a coding agent.                                                                                                                           |
+| <img src="./docs/05-select-agent.jpg" height="200">                | Long press the 🤖 icon to select between Claude Code or OpenAI Codex. They will run <b>non-interactively</b>. If you want to do a planning first, define a task to save the plan to a file and then create a new task to execute the plan. |
+| <img src="./docs/06-live-stream-agent-output.jpg" height="200">    | Follow real-time terminal logs as the selected agent executes commands and edits your codebase.                                                                                                                                            |
+| <img src="./docs/07-review-generated-code.jpg" height="200">       | Inspect the resulting diffs and code previews to confirm the agent's changes are correct. <br /> Create new annotations from here if you want to make changes.                                                                             |
+| <img src="./docs/08-run-any-additional-commands.jpg" height="200"> | Run any follow-up shell commands directly from the app to continue iterating on the task.                                                                                                                                                  |
 
 ---
 
