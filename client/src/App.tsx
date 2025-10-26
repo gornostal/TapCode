@@ -436,6 +436,12 @@ function App() {
             onBackToBrowser={handleBackToBrowser}
             onOpenGitDiff={openGitDiffPage}
             onOpenFile={openFilePage}
+            onNavigateToDirectory={(path) => {
+              window.history.pushState({ page: "list" }, "", "/");
+              setRoute({ page: "list" });
+              resetFileViewer();
+              setCurrentDirectory(path);
+            }}
           />
         ) : isGitDiffRoute ? (
           <GitDiff onBackToBrowser={handleBackToBrowser} />
