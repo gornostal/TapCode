@@ -6,18 +6,21 @@ import type {
   StageAllResponse,
 } from "@shared/git";
 import type { ErrorResponse } from "@shared/http";
+import type { FileListItem } from "@shared/files";
 import Toolbar from "@/components/Toolbar";
 
 type GitStatusProps = {
   onBackToBrowser: () => void;
   onOpenGitDiff: () => void;
   onOpenFile: (path: string) => void;
+  onNavigateToDirectory: (path: string) => void;
 };
 
 const GitStatus = ({
   onBackToBrowser,
   onOpenGitDiff,
   onOpenFile,
+  onNavigateToDirectory,
 }: GitStatusProps) => {
   const [status, setStatus] = useState<GitStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,8 +160,20 @@ const GitStatus = ({
     }
   };
 
-  const renderFileList = (files: string[], title: string, color: string) => {
+  const renderFileList = (
+    files: FileListItem[],
+    title: string,
+    color: string,
+  ) => {
     if (files.length === 0) return null;
+
+    const handleItemClick = (item: FileListItem) => {
+      if (item.kind === "directory") {
+        onNavigateToDirectory(item.path);
+      } else {
+        onOpenFile(item.path);
+      }
+    };
 
     return (
       <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
@@ -168,16 +183,16 @@ const GitStatus = ({
           {title} ({files.length})
         </h3>
         <ul className="space-y-1">
-          {files.map((file, index) => (
+          {files.map((item, index) => (
             <li
-              key={`${file}-${index}`}
+              key={`${item.path}-${index}`}
               className="font-mono text-sm text-slate-300"
             >
               <button
-                onClick={() => onOpenFile(file)}
+                onClick={() => handleItemClick(item)}
                 className="w-full cursor-pointer truncate text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
               >
-                {file}
+                {item.kind === "directory" ? `${item.path}` : item.path}
               </button>
             </li>
           ))}
@@ -265,16 +280,22 @@ const GitStatus = ({
                   Unstaged ({status.unstaged.length})
                 </h3>
                 <ul className="space-y-1">
-                  {status.unstaged.map((file, index) => (
+                  {status.unstaged.map((item, index) => (
                     <li
-                      key={`${file}-${index}`}
+                      key={`${item.path}-${index}`}
                       className="font-mono text-sm text-slate-300"
                     >
                       <button
-                        onClick={() => onOpenFile(file)}
+                        onClick={() =>
+                          item.kind === "directory"
+                            ? onNavigateToDirectory(item.path)
+                            : onOpenFile(item.path)
+                        }
                         className="w-full cursor-pointer truncate text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
                       >
-                        {file}
+                        {item.kind === "directory"
+                          ? `${item.path}/`
+                          : item.path}
                       </button>
                     </li>
                   ))}
