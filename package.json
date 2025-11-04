@@ -1,6 +1,6 @@
 {
   "name": "tapcode",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "TapCode prototype with typed Express server and Vite React client.",
   "type": "module",
   "bin": {
