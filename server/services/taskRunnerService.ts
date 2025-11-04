@@ -17,10 +17,11 @@ export function buildTaskRunCommand(
     case "codex":
       return [
         "codex",
+        "exec",
         ...(sandbox === "yolo"
           ? ["--dangerously-bypass-approvals-and-sandbox"]
           : []),
-        "exec",
+        ...(sandbox === "project" ? ["--sandbox", "workspace-write"] : []),
         quoteForShellArgument(description),
       ].join(" ");
     case "claude":

@@ -8,17 +8,23 @@ describe("buildTaskRunCommand", () => {
       "codex",
       "project",
     );
-    expect(result).toBe("codex exec 'review pull request'");
+    expect(result).toBe(
+      "codex exec --sandbox workspace-write 'review pull request'",
+    );
   });
 
   it("escapes existing single quotes in the description", () => {
     const result = buildTaskRunCommand("need Bob's input", "codex", "project");
-    expect(result).toBe("codex exec 'need Bob'\\''s input'");
+    expect(result).toBe(
+      "codex exec --sandbox workspace-write 'need Bob'\\''s input'",
+    );
   });
 
   it("preserves special shell characters as literals", () => {
     const result = buildTaskRunCommand("deploy $BRANCH", "codex", "project");
-    expect(result).toBe("codex exec 'deploy $BRANCH'");
+    expect(result).toBe(
+      "codex exec --sandbox workspace-write 'deploy $BRANCH'",
+    );
   });
 
   it("builds the claude command with the provided prompt", () => {
@@ -35,7 +41,7 @@ describe("buildTaskRunCommand", () => {
   it("disables sandbox for codex when sandbox mode is yolo", () => {
     const result = buildTaskRunCommand("plan migrations", "codex", "yolo");
     expect(result).toBe(
-      "codex --dangerously-bypass-approvals-and-sandbox exec 'plan migrations'",
+      "codex exec --dangerously-bypass-approvals-and-sandbox 'plan migrations'",
     );
   });
 
