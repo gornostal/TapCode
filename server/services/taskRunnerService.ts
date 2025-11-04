@@ -30,6 +30,9 @@ export function buildTaskRunCommand(
         "--output-format",
         "stream-json",
         ...(sandbox === "yolo" ? ["--dangerously-skip-permissions"] : []),
+        ...(sandbox === "project"
+          ? ["--allowedTools", '"Edit(./**)"', '"Bash(git:*)"']
+          : []),
         "-p",
         quoteForShellArgument(description),
       ].join(" ");

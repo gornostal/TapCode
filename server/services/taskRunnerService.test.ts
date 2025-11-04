@@ -28,7 +28,7 @@ describe("buildTaskRunCommand", () => {
       "project",
     );
     expect(result).toBe(
-      "claude --verbose --output-format stream-json -p 'summarize updates'",
+      'claude --verbose --output-format stream-json --allowedTools "Edit(./**)" "Bash(git:*)" -p \'summarize updates\'',
     );
   });
 

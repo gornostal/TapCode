@@ -75,8 +75,8 @@ npx tapcode .
 
 ## Workflow
 
-| Step | Description                                                                                                                                                                                                                                |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Step                                                               | Description                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | <img src="./docs/01-search-file.jpg" height="200">                 | Use the file browser or the global search to quickly locate files in your repository.                                                                                                                                                      |
 | <img src="./docs/02-preview-file.jpg" height="200">                | Open the file viewer to inspect syntax-highlighted code before creating edits.                                                                                                                                                             |
 | <img src="./docs/03-annotate.jpg" height="200">                    | Click on the line numbers in the gutter to add them to the annotation context and then on the annotation button on the toolbar.                                                                                                            |
