@@ -5,11 +5,12 @@ import {
   SearchIcon,
   TerminalIcon,
 } from "@/components/icons";
+import { ReactElement } from "react";
 
 type TabBarButton = {
   label: string;
   ariaLabel?: string;
-  icon: JSX.Element;
+  icon: ReactElement;
 };
 
 type TabBarProps = {

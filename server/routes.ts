@@ -303,7 +303,7 @@ export function registerRoutes(app: Express) {
   );
 
   router.put(
-    "/tasks/:index(\\d+)",
+    "/tasks/:index",
     asyncRoute<
       TaskIndexParams,
       TasksResponse | ErrorResponse,
@@ -312,7 +312,7 @@ export function registerRoutes(app: Express) {
       const indexParam = req.params.index;
       const index = Number.parseInt(indexParam, 10);
 
-      if (Number.isNaN(index)) {
+      if (Number.isNaN(index) || !/^\d+$/.test(indexParam)) {
         res.status(400).json({ error: "index must be a valid number" });
         return;
       }
