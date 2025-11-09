@@ -1,9 +1,35 @@
 import type { GitStatusResponse, GitDiffResponse } from "../../shared/git";
+import type { FileListItem } from "../../shared/files";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { resolveFromRoot } from "../utils/paths";
+import { stat } from "fs/promises";
+import { join } from "path";
 
 const execAsync = promisify(exec);
+
+/**
+ * Helper function to convert a file path to a FileListItem by checking if it's a file or directory
+ */
+const pathToFileListItem = async (
+  filePath: string,
+  projectRoot: string,
+): Promise<FileListItem> => {
+  try {
+    const fullPath = join(projectRoot, filePath);
+    const stats = await stat(fullPath);
+    return {
+      path: filePath,
+      kind: stats.isDirectory() ? "directory" : "file",
+    };
+  } catch {
+    // If we can't stat the file, assume it's a file
+    return {
+      path: filePath,
+      kind: "file",
+    };
+  }
+};
 
 /**
  * Gets the current git status including branch, ahead/behind, and file statuses
@@ -39,9 +65,9 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
       cwd: projectRoot,
     });
 
-    const staged: string[] = [];
-    const unstaged: string[] = [];
-    const untracked: string[] = [];
+    const stagedPaths: string[] = [];
+    const unstagedPaths: string[] = [];
+    const untrackedPaths: string[] = [];
 
     const lines = statusOutput.split("\n").filter((line) => line.length > 0);
     for (const line of lines) {
@@ -53,16 +79,27 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
       const unstagedStatus = status[1];
 
       if (stagedStatus === "?" && unstagedStatus === "?") {
-        untracked.push(filePath);
+        untrackedPaths.push(filePath);
       } else {
         if (stagedStatus !== " " && stagedStatus !== "?") {
-          staged.push(filePath);
+          stagedPaths.push(filePath);
         }
         if (unstagedStatus !== " " && unstagedStatus !== "?") {
-          unstaged.push(filePath);
+          unstagedPaths.push(filePath);
         }
       }
     }
+
+    // Convert paths to FileListItems with kind information
+    const staged = await Promise.all(
+      stagedPaths.map((path) => pathToFileListItem(path, projectRoot)),
+    );
+    const unstaged = await Promise.all(
+      unstagedPaths.map((path) => pathToFileListItem(path, projectRoot)),
+    );
+    const untracked = await Promise.all(
+      untrackedPaths.map((path) => pathToFileListItem(path, projectRoot)),
+    );
 
     return {
       branch,

@@ -1,12 +1,13 @@
 import type { SuccessResponse, TextRequest } from "./http";
+import type { FileListItem } from "./files";
 
 export interface GitStatusResponse {
   branch: string;
   ahead: number;
   behind: number;
-  staged: string[];
-  unstaged: string[];
-  untracked: string[];
+  staged: FileListItem[];
+  unstaged: FileListItem[];
+  untracked: FileListItem[];
 }
 
 export interface GitDiffResponse {
