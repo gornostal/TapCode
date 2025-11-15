@@ -24,7 +24,7 @@ _Waste no time, code anytime_
 ✔ A mobile-first programming interface that focuses on AI-assisted coding. <br />
 ✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
 ✔ A web-based interface that allows creating tasks for AI agents, running CLI commands, browsing code, and doing basic GIT operations. <br />
-✔ A client-server NodeJS application written with TypeScript, Express, Vite, React, and TailwindCSS. <br />
+✔ A lightweight client-server NodeJS application written with TypeScript, Express, Vite, React, and TailwindCSS. <br />
 
 **What it is NOT:**
 
