@@ -21,6 +21,7 @@ _Waste no time, code anytime_
 
 ## What is TapCode
 
+✔ A developer interface to a programming environment running on your laptop/Cloud server/RaspberryPI/etc. <br />
 ✔ A mobile-first programming interface that focuses on AI-assisted coding. <br />
 ✔ A task-oriented coding workflow where developers create tasks, run them using coding agents, review code, and continue iterating until the desired result. <br />
 ✔ A web-based interface that allows creating tasks for AI agents, running CLI commands, browsing code, and doing basic GIT operations. <br />
