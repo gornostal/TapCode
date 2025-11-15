@@ -1,3 +1,4 @@
+import Fuse, { type IFuseOptions } from "fuse.js";
 import fs from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import path from "node:path";
@@ -104,7 +105,61 @@ export async function listDirectoryContents(
   return items;
 }
 
-async function collectFilesFromRoot(): Promise<string[]> {
+interface FileMatch {
+  path: string;
+  mtimeMs: number;
+}
+
+const FUSE_OPTIONS: IFuseOptions<FileMatch> = {
+  includeScore: true,
+  keys: ["path"],
+  threshold: 0.4,
+  ignoreLocation: true,
+};
+
+const METADATA_TTL_MS = 10 * 60 * 1000;
+
+type CachedMetadata = {
+  mtimeMs: number;
+  fetchedAt: number;
+};
+
+const fileMetadataCache = new Map<string, CachedMetadata>();
+
+function shouldUseCache(entry: CachedMetadata, now: number): boolean {
+  return now - entry.fetchedAt < METADATA_TTL_MS;
+}
+
+async function getFileMatch(
+  relativePosixPath: string,
+  absolutePath: string,
+): Promise<FileMatch | null> {
+  const cached = fileMetadataCache.get(relativePosixPath);
+  const now = Date.now();
+
+  if (cached && shouldUseCache(cached, now)) {
+    return { path: relativePosixPath, mtimeMs: cached.mtimeMs };
+  }
+
+  try {
+    const stat = await fs.stat(absolutePath);
+    const match = { path: relativePosixPath, mtimeMs: stat.mtimeMs };
+    fileMetadataCache.set(relativePosixPath, {
+      mtimeMs: stat.mtimeMs,
+      fetchedAt: now,
+    });
+    return match;
+  } catch {
+    fileMetadataCache.delete(relativePosixPath);
+    return null;
+  }
+}
+
+export function __resetFileMetadataCacheForTesting(): void {
+  fileMetadataCache.clear();
+}
+
+async function collectFilesFromRoot(): Promise<FileMatch[]> {
   const root = resolveFromRoot();
 
   // Check if .git directory exists
@@ -145,7 +200,8 @@ async function collectFilesFromRoot(): Promise<string[]> {
         .filter((line) => line.trim().length > 0)
         .forEach((file) => allFiles.add(file));
 
-      return Array.from(allFiles).sort();
+      const sortedFiles = Array.from(allFiles).sort();
+      return buildMetadata(sortedFiles, root);
     } catch {
       // Fall back to filesystem traversal if git commands fail
       return traverseFilesystem(root);
@@ -156,12 +212,27 @@ async function collectFilesFromRoot(): Promise<string[]> {
   }
 }
 
-async function traverseFilesystem(root: string): Promise<string[]> {
+async function buildMetadata(
+  files: string[],
+  root: string,
+): Promise<FileMatch[]> {
+  const results = await Promise.all(
+    files.map(async (relativePath) => {
+      const posixRelative = toPosixPath(relativePath);
+      const absolutePath = path.join(root, relativePath);
+      return getFileMatch(posixRelative, absolutePath);
+    }),
+  );
+
+  return results.filter((item): item is FileMatch => item !== null);
+}
+
+async function traverseFilesystem(root: string): Promise<FileMatch[]> {
   const stack: Array<{
     absolute: string;
     relative: string;
   }> = [{ absolute: root, relative: "" }];
-  const files: string[] = [];
+  const files: FileMatch[] = [];
 
   while (stack.length > 0) {
     const { absolute, relative } = stack.pop()!;
@@ -184,55 +255,15 @@ async function traverseFilesystem(root: string): Promise<string[]> {
         continue;
       }
 
-      files.push(posixRelative);
+      const absoluteFilePath = path.join(absolute, entry.name);
+      const match = await getFileMatch(posixRelative, absoluteFilePath);
+      if (match) {
+        files.push(match);
+      }
     }
   }
 
   return files;
-}
-
-interface ScoredMatch {
-  path: string;
-  score: number;
-}
-
-const WORD_BOUNDARY_CHARS = new Set(["/", "-", "_", ".", " "]);
-
-function scoreMatch(query: string, candidate: string): number | null {
-  const normalizedQuery = query.toLowerCase();
-  const normalizedCandidate = candidate.toLowerCase();
-
-  let candidateIndex = 0;
-  let score = 0;
-  let streak = 0;
-
-  for (const queryChar of normalizedQuery) {
-    const foundIndex = normalizedCandidate.indexOf(queryChar, candidateIndex);
-
-    if (foundIndex === -1) {
-      return null;
-    }
-
-    if (foundIndex === candidateIndex) {
-      streak += 1;
-      score += 5 * streak;
-    } else {
-      streak = 1;
-      score += 1;
-      score -= foundIndex - candidateIndex;
-    }
-
-    const precedingChar = normalizedCandidate[foundIndex - 1];
-    if (foundIndex === 0 || WORD_BOUNDARY_CHARS.has(precedingChar ?? "")) {
-      score += 3;
-    }
-
-    candidateIndex = foundIndex + 1;
-  }
-
-  score -= normalizedCandidate.length - normalizedQuery.length;
-
-  return score;
 }
 
 export async function searchFiles(
@@ -246,20 +277,34 @@ export async function searchFiles(
   }
 
   const files = await collectFilesFromRoot();
-  const matches: ScoredMatch[] = [];
+  const queryLower = normalizedQuery.toLowerCase();
 
-  for (const file of files) {
-    const score = scoreMatch(normalizedQuery, file);
-    if (score === null) {
-      continue;
-    }
-    matches.push({ path: file, score });
+  const substringMatches = files.filter((file) =>
+    file.path.toLowerCase().includes(queryLower),
+  );
+
+  if (substringMatches.length > 0) {
+    return substringMatches
+      .sort((a, b) => b.mtimeMs - a.mtimeMs)
+      .slice(0, limit)
+      .map((file) => ({
+        path: file.path,
+        kind: "file" as const,
+      }));
   }
 
-  matches.sort((left, right) => right.score - left.score);
+  const fuse = new Fuse(files, FUSE_OPTIONS);
+  const fuzzyResults = fuse.search(normalizedQuery);
 
-  return matches.slice(0, limit).map((match) => ({
-    path: match.path,
-    kind: "file" as const,
-  }));
+  return fuzzyResults
+    .map((result) => ({
+      entry: result.item,
+      score: result.score === undefined ? 1 : 1 - result.score,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((match) => ({
+      path: match.entry.path,
+      kind: "file" as const,
+    }));
 }

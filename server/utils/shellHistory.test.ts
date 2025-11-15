@@ -376,48 +376,36 @@ docker ps`;
     expect(result[0].command).toBe("git status");
   });
 
-  it("should find fuzzy matches with characters in order", () => {
-    const historyContent = `git commit -m "test"
+  it("should order substring matches by most recent timestamp", () => {
+    const historyContent = `#1000
 npm run build
-docker compose up
-git push origin main`;
+#2000
+npm run test
+#1500
+npm run lint`;
 
     writeFileSync(join(testHome, ".bash_history"), historyContent);
 
-    const result = fuzzySearchHistory("gpm", 10);
+    const result = fuzzySearchHistory("npm run", 10);
 
-    expect(result.length).toBeGreaterThan(0);
-    // Should match "git push origin main" (g-p-m)
-    const matchedCommands = result.map((r) => r.command);
-    expect(matchedCommands).toContain("git push origin main");
+    expect(result).toHaveLength(3);
+    expect(result[0].command).toBe("npm run test");
+    expect(result[1].command).toBe("npm run lint");
+    expect(result[2].command).toBe("npm run build");
   });
 
-  it("should prioritize matches at start of command", () => {
+  it("should fall back to fuse search ordered by score when no substring matches", () => {
     const historyContent = `git status
-cd git
-ls git`;
+git stash
+git commit`;
 
     writeFileSync(join(testHome, ".bash_history"), historyContent);
 
-    const result = fuzzySearchHistory("git", 10);
+    const result = fuzzySearchHistory("gstat", 10);
 
     expect(result.length).toBeGreaterThan(0);
-    // "git status" should rank higher than "cd git" or "ls git"
     expect(result[0].command).toBe("git status");
-  });
-
-  it("should prioritize matches at word boundaries", () => {
-    const historyContent = `ls -la
-git status
-cd /home/git`;
-
-    writeFileSync(join(testHome, ".bash_history"), historyContent);
-
-    const result = fuzzySearchHistory("git", 10);
-
-    expect(result.length).toBeGreaterThan(0);
-    // "git status" (starts with git) should rank higher than "cd /home/git"
-    expect(result[0].command).toBe("git status");
+    expect(result[1].command).toBe("git stash");
   });
 
   it("should respect limit parameter", () => {
@@ -479,20 +467,6 @@ git status`;
     expect(result[0].command).toBe("git status");
     // Should keep the zsh entry with timestamp 2000000000
     expect(result[0].timestamp).toBe(2000000000);
-  });
-
-  it("should not match if query characters are not in order", () => {
-    const historyContent = `git status
-docker ps
-npm install`;
-
-    writeFileSync(join(testHome, ".bash_history"), historyContent);
-
-    const result = fuzzySearchHistory("tgi", 10); // 't' appears before 'g' in "git status"
-
-    // Should not match "git status" since we need g-t-i in order
-    const gitStatusMatches = result.filter((r) => r.command === "git status");
-    expect(gitStatusMatches).toHaveLength(0);
   });
 
   it("should handle special regex characters in query", () => {

@@ -40,6 +40,7 @@
   "packageManager": "npm@11.6.2",
   "dependencies": {
     "express": "^5.1.0",
+    "fuse.js": "^7.1.0",
     "highlight.js": "^11.11.1",
     "logform": "^2.7.0",
     "react": "^19.2.0",

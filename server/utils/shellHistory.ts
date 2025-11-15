@@ -1,3 +1,4 @@
+import Fuse, { type IFuseOptions } from "fuse.js";
 import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
@@ -169,63 +170,12 @@ function unescapeFish(str: string): string {
   return str.replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
 }
 
-/**
- * Calculate fuzzy match score for a command against a query
- * Returns a score where higher is better, or -1 if no match
- *
- * Scoring:
- * - Exact match: highest score
- * - Match at word boundaries: high score
- * - Sequential character matches: medium score
- * - Characters appear in order but not sequential: lower score
- */
-function fuzzyMatchScore(command: string, query: string): number {
-  const cmdLower = command.toLowerCase();
-  const queryLower = query.toLowerCase();
-
-  // Exact match
-  if (cmdLower === queryLower) {
-    return 10000;
-  }
-
-  // Contains as substring
-  const substringIndex = cmdLower.indexOf(queryLower);
-  if (substringIndex !== -1) {
-    // Bonus points for matching at start or word boundary
-    if (substringIndex === 0) {
-      return 5000;
-    }
-    if (cmdLower[substringIndex - 1] === " ") {
-      return 4000;
-    }
-    return 3000;
-  }
-
-  // Fuzzy match: check if all query characters appear in order
-  let cmdIndex = 0;
-  let queryIndex = 0;
-  let consecutiveMatches = 0;
-  let score = 1000;
-
-  while (cmdIndex < cmdLower.length && queryIndex < queryLower.length) {
-    if (cmdLower[cmdIndex] === queryLower[queryIndex]) {
-      queryIndex++;
-      consecutiveMatches++;
-      // Bonus for consecutive character matches
-      score += consecutiveMatches * 10;
-    } else {
-      consecutiveMatches = 0;
-    }
-    cmdIndex++;
-  }
-
-  // If we didn't match all query characters, no match
-  if (queryIndex < queryLower.length) {
-    return -1;
-  }
-
-  return score;
-}
+const FUSE_OPTIONS: IFuseOptions<HistoryEntry> = {
+  includeScore: true,
+  keys: ["command"],
+  threshold: 0.4,
+  ignoreLocation: true,
+};
 
 /**
  * Search shell history with fuzzy matching
@@ -237,7 +187,8 @@ export function fuzzySearchHistory(
   query: string,
   limit: number = 50,
 ): HistoryEntry[] {
-  if (!query || query.trim() === "") {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
     return [];
   }
 
@@ -263,18 +214,27 @@ export function fuzzySearchHistory(
     }
   }
 
-  // Score and filter entries
-  const scoredEntries: Array<{ entry: HistoryEntry; score: number }> = [];
+  const historyEntries = Array.from(uniqueCommands.values());
+  const queryLower = trimmedQuery.toLowerCase();
 
-  for (const entry of Array.from(uniqueCommands.values())) {
-    const score = fuzzyMatchScore(entry.command, query);
-    if (score >= 0) {
-      scoredEntries.push({ entry, score });
-    }
+  const substringMatches = historyEntries.filter((entry) =>
+    entry.command.toLowerCase().includes(queryLower),
+  );
+
+  if (substringMatches.length > 0) {
+    return substringMatches
+      .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
+      .slice(0, limit);
   }
 
-  // Sort by score (highest first) and return limited results
-  return scoredEntries
+  const fuse = new Fuse(historyEntries, FUSE_OPTIONS);
+  const fuzzyResults = fuse.search(trimmedQuery);
+
+  return fuzzyResults
+    .map((result) => ({
+      entry: result.item,
+      score: result.score === undefined ? 1 : 1 - result.score,
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((item) => item.entry);
