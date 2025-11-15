@@ -35,6 +35,14 @@ type CommandRunnerProps = {
 const SEARCH_DEBOUNCE_MS = 150;
 const REFRESH_INTERVAL_MS = 2000;
 
+const generateRequestId = (): string => {
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 const CommandRunner = ({
   onBackToBrowser,
   onOpenCommandOutput,
@@ -50,6 +58,7 @@ const CommandRunner = ({
   const [runningCommands, setRunningCommands] = useState<CommandRunSummary[]>(
     [],
   );
+  const [isStartingCommand, setIsStartingCommand] = useState(false);
   const trimmedQuery = useMemo(() => query.trim(), [query]);
   const showSuggestions = trimmedQuery.length > 0;
 
@@ -176,14 +185,24 @@ const CommandRunner = ({
   }, [fetchRunningCommands]);
 
   const startCommand = useCallback(async () => {
+    if (isStartingCommand) {
+      return;
+    }
+
     const commandToRun = trimmedQuery || results[0]?.command;
     if (!commandToRun) {
       return;
     }
 
+    setIsStartingCommand(true);
+
     try {
       // Start the command by making a POST request
-      const requestBody: RunCommandRequest = { text: commandToRun };
+      const requestId = generateRequestId();
+      const requestBody: RunCommandRequest = {
+        text: commandToRun,
+        requestId,
+      };
       const response = await fetch("/api/command/run", {
         method: "POST",
         headers: {
@@ -233,8 +252,16 @@ const CommandRunner = ({
       console.error("Error starting command:", err);
       void fetchRunningCommands();
       setQuery("");
+    } finally {
+      setIsStartingCommand(false);
     }
-  }, [trimmedQuery, results, onOpenCommandOutput, fetchRunningCommands]);
+  }, [
+    isStartingCommand,
+    trimmedQuery,
+    results,
+    onOpenCommandOutput,
+    fetchRunningCommands,
+  ]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {

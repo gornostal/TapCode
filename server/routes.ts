@@ -220,6 +220,8 @@ export function registerRoutes(app: Express) {
           : undefined;
       const sessionId =
         typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+      const requestId =
+        typeof bodyObj.requestId === "string" ? bodyObj.requestId : undefined;
       const agentValue = bodyObj.agent;
       const sandboxValue = bodyObj.sandbox;
 
@@ -253,7 +255,7 @@ export function registerRoutes(app: Express) {
       }
 
       try {
-        runTask(trimmedDescription, agent, sandbox, res, sessionId);
+        runTask(trimmedDescription, agent, sandbox, res, sessionId, requestId);
       } catch (error) {
         res
           .status(500)
@@ -468,11 +470,13 @@ export function registerRoutes(app: Express) {
       const bodyObj = body as Partial<CommandRunRequest> &
         Record<string, unknown>;
 
-      // Extract text and sessionId
+      // Extract text, sessionId, and requestId
       const text =
         typeof bodyObj.text === "string" ? bodyObj.text.trim() : undefined;
       const sessionId =
         typeof bodyObj.sessionId === "string" ? bodyObj.sessionId : undefined;
+      const requestId =
+        typeof bodyObj.requestId === "string" ? bodyObj.requestId : undefined;
 
       // Either text or sessionId must be provided
       if (!text && !sessionId) {
@@ -491,7 +495,7 @@ export function registerRoutes(app: Express) {
       const sessionIdForRequest = text !== undefined ? undefined : sessionId;
 
       // Run command with SSE streaming (text may be undefined for reconnection)
-      runCommand(text || "", res, sessionIdForRequest);
+      runCommand(text || "", res, sessionIdForRequest, requestId);
     },
   );
 

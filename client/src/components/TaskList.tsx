@@ -57,6 +57,14 @@ const loadStoredAgentSettings = (): AgentSettings => {
   }
 };
 
+const generateRequestId = (): string => {
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [tasks, setTasks] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +85,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
   const [agentSettings, setAgentSettings] = useState<AgentSettings>(() =>
     loadStoredAgentSettings(),
   );
+  const [isStartingTask, setIsStartingTask] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -328,6 +337,10 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
 
   const handleRunSelectedTask = useCallback(
     async (settingsOverride?: AgentSettings) => {
+      if (isStartingTask) {
+        return;
+      }
+
       if (selectedIndex === null) {
         setRunError("Select a task to run before starting it.");
         return;
@@ -342,13 +355,16 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
       }
 
       setRunError(null);
+      setIsStartingTask(true);
 
       try {
         const effectiveSettings = settingsOverride ?? agentSettings;
+        const requestId = generateRequestId();
         const requestBody: RunTaskRequest = {
           description: task,
           agent: effectiveSettings.agent,
           sandbox: effectiveSettings.sandbox,
+          requestId,
         };
 
         const response = await fetch("/api/tasks/run", {
@@ -388,9 +404,11 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         setRunError(
           err instanceof Error ? err.message : "Failed to start task run.",
         );
+      } finally {
+        setIsStartingTask(false);
       }
     },
-    [agentSettings, selectedIndex, tasks, onOpenCommandOutput],
+    [agentSettings, isStartingTask, selectedIndex, tasks, onOpenCommandOutput],
   );
 
   const deleteTask = async () => {
@@ -618,7 +636,7 @@ const TaskList = ({ onBackToBrowser, onOpenCommandOutput }: TaskListProps) => {
         onRun={() => {
           void handleRunSelectedTask();
         }}
-        runDisabled={selectedIndex === null}
+        runDisabled={selectedIndex === null || isStartingTask}
         onRunLongPress={() => {
           setIsAgentModalOpen(true);
         }}

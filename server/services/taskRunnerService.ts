@@ -48,9 +48,10 @@ export function runTask(
   sandbox: SandboxMode,
   res: Response,
   sessionId?: string,
+  requestId?: string,
 ): void {
   if (sessionId && (!description || !description.trim())) {
-    runCommand("", res, sessionId);
+    runCommand("", res, sessionId, requestId);
     return;
   }
 
@@ -74,5 +75,5 @@ export function runTask(
     agent === "claude"
       ? { stdoutTransformer: createClaudeStdoutTransformer() }
       : undefined;
-  runCommand(command, res, sessionId, options);
+  runCommand(command, res, sessionId, requestId, options);
 }

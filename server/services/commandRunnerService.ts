@@ -22,6 +22,7 @@ interface RunningCommand {
   startTime: number;
   stopRequested: boolean;
   forceKillTimer: NodeJS.Timeout | null;
+  requestId?: string;
 }
 
 type OutputPushFn = (output: CommandOutput) => void;
@@ -40,6 +41,9 @@ export interface RunCommandOptions {
 
 // Store running commands by session ID
 const runningCommands = new Map<string, RunningCommand>();
+
+// Store requestId -> sessionId mapping for deduplication
+const requestIdToSessionId = new Map<string, string>();
 
 // Clean up completed commands after 60 minutes
 const CLEANUP_DELAY = 60 * 60 * 1000;
@@ -92,13 +96,14 @@ export function runCommand(
   command: string,
   res: Response,
   sessionId?: string,
+  requestId?: string,
   options?: RunCommandOptions,
 ): void {
   const projectRoot = getProjectRoot();
-  let runningCommand: RunningCommand;
+  let runningCommand: RunningCommand | undefined;
   let currentSessionId = sessionId;
 
-  // Check if this is a reconnection to existing command
+  // Check if this is a reconnection to existing command via sessionId
   if (sessionId) {
     const existingCommand = runningCommands.get(sessionId);
 
@@ -124,129 +129,188 @@ export function runCommand(
     // Flush immediately so the reconnecting client sees headers even if no body chunks arrive yet.
     res.flushHeaders();
   } else {
-    // Generate new session ID
-    currentSessionId = randomBytes(16).toString("hex");
+    // Check for deduplication via requestId
+    if (requestId) {
+      const existingSessionId = requestIdToSessionId.get(requestId);
+      if (existingSessionId) {
+        const existingCommand = runningCommands.get(existingSessionId);
+        if (existingCommand) {
+          // Reuse existing session for this requestId
+          currentSessionId = existingSessionId;
+          runningCommand = existingCommand;
+          log(
+            `Reusing existing session ${existingSessionId} for requestId: ${requestId}`,
+          );
 
-    log(`Running command: ${command} in directory: ${projectRoot}`);
+          // Set up SSE headers for the reused session
+          res.writeHead(200, {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache, no-transform",
+            Connection: "keep-alive",
+            "X-Accel-Buffering": "no",
+            [COMMAND_SESSION_HEADER]: existingSessionId,
+            [COMMAND_TEXT_HEADER]: encodeURIComponent(runningCommand.command),
+          });
+          res.flushHeaders();
 
-    // Set up SSE headers immediately before spawning process
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      // Disable any buffering
-      "X-Accel-Buffering": "no",
-      // Expose session metadata via headers for easier access in fetch handlers.
-      [COMMAND_SESSION_HEADER]: currentSessionId,
-      [COMMAND_TEXT_HEADER]: encodeURIComponent(command),
-    });
-    // Flush immediately so the client can read headers and transition before command output begins.
-    res.flushHeaders();
-    // Send an initial event to ensure fetch() resolves immediately
-    res.write(": connected\n\n");
-
-    // Spawn the command using shell
-    const childProcess = spawn(command, {
-      cwd: projectRoot,
-      shell: true,
-      // Disable output buffering
-      env: { ...process.env, PYTHONUNBUFFERED: "1" },
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: true,
-    });
-
-    runningCommand = {
-      process: childProcess,
-      output: [],
-      isComplete: false,
-      command,
-      startTime: Date.now(),
-      stopRequested: false,
-      forceKillTimer: null,
-    };
-
-    runningCommands.set(currentSessionId, runningCommand);
-
-    const pushOutput: OutputPushFn = (output) => {
-      runningCommand.output.push(output);
-    };
-
-    const stdoutTransformer = options?.stdoutTransformer;
-
-    // Handle stdout
-    childProcess.stdout.on("data", (data: Buffer) => {
-      const chunk = data.toString();
-      if (stdoutTransformer) {
-        stdoutTransformer.handleChunk(chunk, pushOutput);
-      } else {
-        pushOutput({ type: "stdout", data: chunk });
-      }
-    });
-
-    // Handle stderr
-    childProcess.stderr.on("data", (data: Buffer) => {
-      const output: CommandOutput = { type: "stderr", data: data.toString() };
-      pushOutput(output);
-    });
-
-    // Handle process exit
-    childProcess.on("close", (code, signal) => {
-      if (runningCommand.forceKillTimer) {
-        clearTimeout(runningCommand.forceKillTimer);
-      }
-      runningCommand.forceKillTimer = null;
-
-      const exitMessage = (() => {
-        if (runningCommand.stopRequested) {
-          return signal
-            ? `Process stopped by user (signal ${signal})`
-            : "Process stopped by user";
+          // Continue to stream existing output below
+          // (fall through to the streaming logic)
+        } else {
+          // Session was cleaned up, remove stale requestId mapping
+          requestIdToSessionId.delete(requestId);
         }
-        if (signal) {
-          return `Process terminated by signal ${signal}`;
+      }
+    }
+
+    if (!currentSessionId) {
+      // Generate new session ID
+      currentSessionId = randomBytes(16).toString("hex");
+
+      // Store requestId mapping if provided
+      if (requestId) {
+        requestIdToSessionId.set(requestId, currentSessionId);
+        log(`Stored requestId mapping: ${requestId} -> ${currentSessionId}`);
+      }
+
+      log(`Running command: ${command} in directory: ${projectRoot}`);
+
+      // Set up SSE headers immediately before spawning process
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        // Disable any buffering
+        "X-Accel-Buffering": "no",
+        // Expose session metadata via headers for easier access in fetch handlers.
+        [COMMAND_SESSION_HEADER]: currentSessionId,
+        [COMMAND_TEXT_HEADER]: encodeURIComponent(command),
+      });
+      // Flush immediately so the client can read headers and transition before command output begins.
+      res.flushHeaders();
+      // Send an initial event to ensure fetch() resolves immediately
+      res.write(": connected\n\n");
+
+      // Spawn the command using shell
+      const childProcess = spawn(command, {
+        cwd: projectRoot,
+        shell: true,
+        // Disable output buffering
+        env: { ...process.env, PYTHONUNBUFFERED: "1" },
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: true,
+      });
+
+      runningCommand = {
+        process: childProcess,
+        output: [],
+        isComplete: false,
+        command,
+        startTime: Date.now(),
+        stopRequested: false,
+        forceKillTimer: null,
+        requestId,
+      };
+
+      runningCommands.set(currentSessionId, runningCommand);
+
+      const pushOutput: OutputPushFn = (output) => {
+        runningCommand!.output.push(output);
+      };
+
+      const stdoutTransformer = options?.stdoutTransformer;
+
+      // Handle stdout
+      childProcess.stdout.on("data", (data: Buffer) => {
+        const chunk = data.toString();
+        if (stdoutTransformer) {
+          stdoutTransformer.handleChunk(chunk, pushOutput);
+        } else {
+          pushOutput({ type: "stdout", data: chunk });
         }
-        return "Process exited";
-      })();
+      });
 
-      if (stdoutTransformer?.finalize) {
-        stdoutTransformer.finalize(pushOutput);
-      }
+      // Handle stderr
+      childProcess.stderr.on("data", (data: Buffer) => {
+        const output: CommandOutput = {
+          type: "stderr",
+          data: data.toString(),
+        };
+        pushOutput(output);
+      });
 
-      const output: CommandOutput = {
-        type: "exit",
-        data: exitMessage,
-        code: code ?? undefined,
-      };
-      pushOutput(output);
-      runningCommand.isComplete = true;
-      runningCommand.exitCode = code ?? undefined;
+      // Handle process exit
+      childProcess.on("close", (code, signal) => {
+        if (runningCommand!.forceKillTimer) {
+          clearTimeout(runningCommand!.forceKillTimer);
+        }
+        runningCommand!.forceKillTimer = null;
 
-      // Clean up after delay
-      setTimeout(() => {
-        runningCommands.delete(currentSessionId!);
-        log(`Cleaned up session: ${currentSessionId}`);
-      }, CLEANUP_DELAY);
-    });
+        const exitMessage = (() => {
+          if (runningCommand!.stopRequested) {
+            return signal
+              ? `Process stopped by user (signal ${signal})`
+              : "Process stopped by user";
+          }
+          if (signal) {
+            return `Process terminated by signal ${signal}`;
+          }
+          return "Process exited";
+        })();
 
-    // Handle errors
-    childProcess.on("error", (error) => {
-      const output: CommandOutput = {
-        type: "error",
-        data: `Failed to start command: ${error.message}`,
-      };
-      pushOutput(output);
-      if (runningCommand.forceKillTimer) {
-        clearTimeout(runningCommand.forceKillTimer);
-        runningCommand.forceKillTimer = null;
-      }
-      runningCommand.isComplete = true;
+        if (stdoutTransformer?.finalize) {
+          stdoutTransformer.finalize(pushOutput);
+        }
 
-      // Clean up after delay
-      setTimeout(() => {
-        runningCommands.delete(currentSessionId!);
-        log(`Cleaned up session: ${currentSessionId}`);
-      }, CLEANUP_DELAY);
-    });
+        const output: CommandOutput = {
+          type: "exit",
+          data: exitMessage,
+          code: code ?? undefined,
+        };
+        pushOutput(output);
+        runningCommand!.isComplete = true;
+        runningCommand!.exitCode = code ?? undefined;
+
+        // Clean up after delay
+        setTimeout(() => {
+          runningCommands.delete(currentSessionId!);
+          if (runningCommand!.requestId) {
+            requestIdToSessionId.delete(runningCommand!.requestId);
+          }
+          log(`Cleaned up session: ${currentSessionId}`);
+        }, CLEANUP_DELAY);
+      });
+
+      // Handle errors
+      childProcess.on("error", (error) => {
+        const output: CommandOutput = {
+          type: "error",
+          data: `Failed to start command: ${error.message}`,
+        };
+        pushOutput(output);
+        if (runningCommand!.forceKillTimer) {
+          clearTimeout(runningCommand!.forceKillTimer);
+          runningCommand!.forceKillTimer = null;
+        }
+        runningCommand!.isComplete = true;
+
+        // Clean up after delay
+        setTimeout(() => {
+          runningCommands.delete(currentSessionId!);
+          if (runningCommand!.requestId) {
+            requestIdToSessionId.delete(runningCommand!.requestId);
+          }
+          log(`Cleaned up session: ${currentSessionId}`);
+        }, CLEANUP_DELAY);
+      });
+    }
+  }
+
+  // Ensure runningCommand was assigned
+  if (!runningCommand) {
+    res
+      .status(500)
+      .json({ error: "Internal error: command session not initialized" });
+    return;
   }
 
   // Send all buffered output

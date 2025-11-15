@@ -26,6 +26,12 @@ export interface RunTaskRequest {
    */
   description?: string;
   /**
+   * Unique client-provided identifier used to deduplicate task run requests.
+   * When provided, the server will reuse the original session if the same
+   * request is submitted multiple times.
+   */
+  requestId?: string;
+  /**
    * Session identifier used to resume an in-flight task run. Required when
    * `description` is omitted; clients should reuse the value returned by the
    * original `/tasks/run` response.

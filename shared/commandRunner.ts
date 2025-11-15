@@ -40,6 +40,12 @@ export interface RunCommandRequest {
    */
   text?: string;
   /**
+   * Unique client-provided identifier used to deduplicate command run requests.
+   * When provided, the server will reuse the original session if the same
+   * request is submitted multiple times.
+   */
+  requestId?: string;
+  /**
    * Existing session identifier returned by `/command/run`. Required when `text`
    * is omitted (client reconnection) and ignored when starting a new run.
    */
