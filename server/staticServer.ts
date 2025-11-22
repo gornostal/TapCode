@@ -28,7 +28,12 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(tapCodeClientDistPath));
 
-  app.use("*", (_req, res) => {
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+
     res.sendFile(tapCodeClientDistIndexHtmlPath);
   });
 }
