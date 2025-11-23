@@ -26,6 +26,12 @@ export function serveStatic(app: Express) {
     );
   }
 
+  if (!fs.existsSync(tapCodeClientDistIndexHtmlPath)) {
+    throw new Error(
+      `Static client index not found at ${tapCodeClientDistIndexHtmlPath}. Run "npm run build:client" before starting in production mode.`,
+    );
+  }
+
   app.use(express.static(tapCodeClientDistPath));
 
   app.use((req, res, next) => {
@@ -34,6 +40,10 @@ export function serveStatic(app: Express) {
       return;
     }
 
-    res.sendFile(tapCodeClientDistIndexHtmlPath);
+    res.sendFile(tapCodeClientDistIndexHtmlPath, (error) => {
+      if (error) {
+        next(error);
+      }
+    });
   });
 }
