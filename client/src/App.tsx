@@ -7,6 +7,7 @@ import type {
   FilesRequestQuery,
   FilesResponse,
 } from "@shared/files";
+import type { GitDiffScope } from "@shared/git";
 
 import FileBrowser from "@/components/FileBrowser";
 import FilePreview from "@/components/FilePreview";
@@ -42,6 +43,7 @@ type RouteState =
     }
   | {
       page: "git-diff";
+      scope: GitDiffScope;
     };
 
 const parseRoute = (): RouteState => {
@@ -69,7 +71,10 @@ const parseRoute = (): RouteState => {
   }
 
   if (pathname.startsWith("/git/diff")) {
-    return { page: "git-diff" };
+    const params = new URLSearchParams(search);
+    const scopeParam = params.get("scope");
+    const scope = scopeParam === "staged" ? "staged" : "working";
+    return { page: "git-diff", scope };
   }
 
   if (pathname.startsWith("/file")) {
@@ -321,10 +326,18 @@ function App() {
     setRoute({ page: "git-status" });
   }, [setRoute]);
 
-  const openGitDiffPage = useCallback(() => {
-    window.history.pushState({ page: "git-diff" }, "", "/git/diff");
-    setRoute({ page: "git-diff" });
-  }, [setRoute]);
+  const openGitDiffPage = useCallback(
+    (scope: GitDiffScope = "working") => {
+      const search = scope === "staged" ? "?scope=staged" : "";
+      window.history.pushState(
+        { page: "git-diff", scope },
+        "",
+        `/git/diff${search}`,
+      );
+      setRoute({ page: "git-diff", scope });
+    },
+    [setRoute],
+  );
 
   const handleBackToBrowser = useCallback(() => {
     const state = window.history.state as RouteState | null;
@@ -444,7 +457,7 @@ function App() {
             }}
           />
         ) : isGitDiffRoute ? (
-          <GitDiff onBackToBrowser={handleBackToBrowser} />
+          <GitDiff onBackToBrowser={handleBackToBrowser} scope={route.scope} />
         ) : (
           <FileBrowser
             currentDirectoryLabel={currentDirectoryLabel}

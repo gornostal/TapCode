@@ -14,6 +14,12 @@ export interface GitDiffResponse {
   diff: string;
 }
 
+export type GitDiffScope = "working" | "staged";
+
+export type GitDiffRequestQuery = Record<string, string | undefined> & {
+  scope?: GitDiffScope;
+};
+
 export type StageAllResponse = SuccessResponse;
 
 export type CommitRequest = TextRequest;

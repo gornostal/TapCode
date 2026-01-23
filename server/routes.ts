@@ -61,6 +61,7 @@ import type {
   CommitRequest,
   CommitResponse,
   GitDiffResponse,
+  GitDiffRequestQuery,
   GitStatusResponse,
   StageAllResponse,
 } from "../shared/git";
@@ -373,16 +374,32 @@ export function registerRoutes(app: Express) {
 
   router.get(
     "/git/diff",
-    asyncRoute<EmptyParams, GitDiffResponse | ErrorResponse>(
-      async (_req, res) => {
-        try {
-          const response = await getGitDiff();
-          res.json(response);
-        } catch (error) {
-          handleGitError(error, res);
-        }
-      },
-    ),
+    asyncRoute<
+      EmptyParams,
+      GitDiffResponse | ErrorResponse,
+      void,
+      GitDiffRequestQuery
+    >(async (req, res) => {
+      const scopeParam = normalizeQueryParam(req.query.scope).trim();
+      const scope =
+        scopeParam === "staged"
+          ? "staged"
+          : scopeParam === "working" || !scopeParam
+            ? "working"
+            : null;
+
+      if (!scope) {
+        res.status(400).json({ error: "Invalid diff scope" });
+        return;
+      }
+
+      try {
+        const response = await getGitDiff(scope);
+        res.json(response);
+      } catch (error) {
+        handleGitError(error, res);
+      }
+    }),
   );
 
   router.post(

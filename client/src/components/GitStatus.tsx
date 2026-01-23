@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type {
   CommitRequest,
   CommitResponse,
+  GitDiffScope,
   GitStatusResponse,
   StageAllResponse,
 } from "@shared/git";
@@ -11,7 +12,7 @@ import Toolbar from "@/components/Toolbar";
 
 type GitStatusProps = {
   onBackToBrowser: () => void;
-  onOpenGitDiff: () => void;
+  onOpenGitDiff: (scope: GitDiffScope) => void;
   onOpenFile: (path: string) => void;
   onNavigateToDirectory: (path: string) => void;
 };
@@ -201,6 +202,52 @@ const GitStatus = ({
     );
   };
 
+  const renderStagedList = (files: FileListItem[]) => {
+    if (files.length === 0) {
+      return null;
+    }
+
+    const handleItemClick = (item: FileListItem) => {
+      if (item.kind === "directory") {
+        onNavigateToDirectory(item.path);
+      } else {
+        onOpenFile(item.path);
+      }
+    };
+
+    return (
+      <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400">
+          Staged ({files.length})
+        </h3>
+        <ul className="space-y-1">
+          {files.map((item, index) => (
+            <li
+              key={`${item.path}-${index}`}
+              className="font-mono text-sm text-slate-300"
+            >
+              <button
+                onClick={() => handleItemClick(item)}
+                className="w-full cursor-pointer truncate text-left underline hover:text-sky-400 focus:text-sky-400 focus:outline-none"
+              >
+                {item.kind === "directory" ? `${item.path}` : item.path}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => onOpenGitDiff("staged")}
+            className="rounded border border-sky-700 bg-sky-900/40 px-4 py-2 font-mono text-sm text-sky-300 transition-colors hover:bg-sky-900/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+          >
+            View Staged Diff
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {error && (
@@ -244,7 +291,7 @@ const GitStatus = ({
               </div>
             </div>
 
-            {renderFileList(status.staged, "Staged", "text-emerald-400")}
+            {renderStagedList(status.staged)}
 
             {status.staged.length > 0 && (
               <div className="rounded border border-slate-800 bg-slate-900/60 p-4">
@@ -310,7 +357,7 @@ const GitStatus = ({
                   </button>
                   <button
                     type="button"
-                    onClick={onOpenGitDiff}
+                    onClick={() => onOpenGitDiff("working")}
                     className="rounded border border-sky-700 bg-sky-900/40 px-4 py-2 font-mono text-sm text-sky-300 transition-colors hover:bg-sky-900/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                   >
                     View Git Diff

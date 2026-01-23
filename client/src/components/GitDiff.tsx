@@ -5,7 +5,7 @@ import {
   useRef,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import type { GitDiffResponse } from "@shared/git";
+import type { GitDiffResponse, GitDiffScope } from "@shared/git";
 import type { AddTaskResponse, CreateTaskRequest } from "@shared/tasks";
 import type { ErrorResponse } from "@shared/http";
 import Toolbar from "@/components/Toolbar";
@@ -19,9 +19,10 @@ import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
 
 type GitDiffProps = {
   onBackToBrowser: () => void;
+  scope: GitDiffScope;
 };
 
-const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
+const GitDiff = ({ onBackToBrowser, scope }: GitDiffProps) => {
   const [diff, setDiff] = useState<GitDiffResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +164,10 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
   };
 
   const showAnnotateButton = Boolean(diff?.diff);
-  const annotationFilename = "git diff";
+  const annotationFilename =
+    scope === "staged" ? "git diff (staged)" : "git diff";
+
+  const headingText = scope === "staged" ? "Staged Changes" : "Git Changes";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -173,7 +177,8 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
       setError(null);
 
       try {
-        const response = await fetch("/api/git/diff", {
+        const params = scope === "staged" ? "?scope=staged" : "?scope=working";
+        const response = await fetch(`/api/git/diff${params}`, {
           signal: controller.signal,
         });
 
@@ -204,13 +209,13 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [scope]);
 
   return (
     <>
       <header>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">
-          Git Changes
+          {headingText}
         </p>
       </header>
 
@@ -263,7 +268,7 @@ const GitDiff = ({ onBackToBrowser }: GitDiffProps) => {
         filename={annotationFilename}
       />
       <Toolbar
-        statusText="Git Changes"
+        statusText={headingText}
         onBack={onBackToBrowser}
         onIncreaseFontSize={increaseFontSize}
         onDecreaseFontSize={decreaseFontSize}

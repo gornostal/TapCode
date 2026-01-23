@@ -1,4 +1,8 @@
-import type { GitStatusResponse, GitDiffResponse } from "../../shared/git";
+import type {
+  GitDiffResponse,
+  GitDiffScope,
+  GitStatusResponse,
+} from "../../shared/git";
 import type { FileListItem } from "../../shared/files";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -117,10 +121,22 @@ export const getGitStatus = async (): Promise<GitStatusResponse> => {
 /**
  * Gets the git diff showing only unstaged and new (untracked) files
  */
-export const getGitDiff = async (): Promise<GitDiffResponse> => {
+export const getGitDiff = async (
+  scope: GitDiffScope = "working",
+): Promise<GitDiffResponse> => {
   const projectRoot = resolveFromRoot("");
 
   try {
+    if (scope === "staged") {
+      const { stdout: stagedDiff } = await execAsync("git diff --cached -U15", {
+        cwd: projectRoot,
+      });
+
+      return {
+        diff: stagedDiff.trim() ? stagedDiff : "No changes",
+      };
+    }
+
     // Get diff for unstaged changes only (excludes staged files)
     const { stdout: unstagedDiff } = await execAsync("git diff -U15", {
       cwd: projectRoot,
