@@ -19,6 +19,11 @@ _Waste no time, code anytime_
 - [Contributing](#contributing)
 - [License](#license)
 
+## Articles
+
+- [Programming on a smartphone: my approach](https://olekgor.substack.com/p/programming-on-a-smartphone-my-approach)
+- [Claude Code Remote Control + TapCode: the best way to code from your phone](./articles/remote-control-tapcode-smartphone.md)
+
 ## What is TapCode
 
 ✔ A developer interface to a programming environment running on your laptop/Cloud server/RaspberryPI/etc. <br />
