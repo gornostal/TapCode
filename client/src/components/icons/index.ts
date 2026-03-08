@@ -11,6 +11,7 @@ export { default as GitBranchIcon } from "./GitBranchIcon";
 export { default as MinusIcon } from "./MinusIcon";
 export { default as PencilIcon } from "./PencilIcon";
 export { default as PlusIcon } from "./PlusIcon";
+export { default as RestartIcon } from "./RestartIcon";
 export { default as RunTaskIcon } from "./RunTaskIcon";
 export { default as SearchIcon } from "./SearchIcon";
 export { default as StopSquareFilledIcon } from "./StopSquareFilledIcon";

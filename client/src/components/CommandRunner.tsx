@@ -24,6 +24,7 @@ import Toolbar from "@/components/Toolbar";
 import {
   ArrowUpLeftIcon,
   ChevronRightIcon,
+  RestartIcon,
   StopSquareOutlineIcon,
 } from "@/components/icons";
 
@@ -184,6 +185,52 @@ const CommandRunner = ({
     };
   }, [fetchRunningCommands]);
 
+  const executeCommand = useCallback(
+    async (command: string): Promise<string> => {
+      const requestId = generateRequestId();
+      const requestBody: RunCommandRequest = {
+        text: command,
+        requestId,
+      };
+      const response = await fetch("/api/command/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        let message = "Failed to start command";
+        try {
+          const data = (await response.json()) as ErrorResponse;
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // Ignore JSON parsing errors.
+        }
+        throw new Error(message);
+      }
+
+      const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);
+
+      if (response.body) {
+        const reader = response.body.getReader();
+        await reader.cancel().catch(() => {
+          // Ignore cancellation errors; stream may already be closed.
+        });
+      }
+
+      if (!sessionIdFromHeader) {
+        throw new Error("Command session header was missing");
+      }
+
+      return sessionIdFromHeader;
+    },
+    [],
+  );
+
   const startCommand = useCallback(async () => {
     if (isStartingCommand) {
       return;
@@ -197,57 +244,9 @@ const CommandRunner = ({
     setIsStartingCommand(true);
 
     try {
-      // Start the command by making a POST request
-      const requestId = generateRequestId();
-      const requestBody: RunCommandRequest = {
-        text: commandToRun,
-        requestId,
-      };
-      const response = await fetch("/api/command/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        let message = "Failed to start command";
-
-        try {
-          const data = (await response.json()) as ErrorResponse;
-          if (data.error) {
-            message = data.error;
-          }
-        } catch {
-          // Ignore JSON parsing errors and fall back to default message.
-        }
-
-        throw new Error(message);
-      }
-
-      const sessionIdFromHeader = response.headers.get(COMMAND_SESSION_HEADER);
-
-      if (!sessionIdFromHeader) {
-        if (response.body) {
-          const reader = response.body.getReader();
-          await reader.cancel().catch(() => {
-            // Ignore cancellation errors; stream may already be closed.
-          });
-        }
-        throw new Error("Command session header was missing");
-      }
-
-      if (response.body) {
-        const reader = response.body.getReader();
-        await reader.cancel().catch(() => {
-          // Ignore cancellation errors; stream may already be closed.
-        });
-      }
-
+      const sessionId = await executeCommand(commandToRun);
       setQuery("");
-      onOpenCommandOutput(sessionIdFromHeader);
-      return;
+      onOpenCommandOutput(sessionId);
     } catch (err) {
       console.error("Error starting command:", err);
       void fetchRunningCommands();
@@ -259,6 +258,7 @@ const CommandRunner = ({
     isStartingCommand,
     trimmedQuery,
     results,
+    executeCommand,
     onOpenCommandOutput,
     fetchRunningCommands,
   ]);
@@ -269,6 +269,32 @@ const CommandRunner = ({
       void startCommand();
     },
     [startCommand],
+  );
+
+  const handleRestartCommand = useCallback(
+    async (command: string) => {
+      if (isStartingCommand) {
+        return;
+      }
+
+      setIsStartingCommand(true);
+
+      try {
+        const sessionId = await executeCommand(command);
+        onOpenCommandOutput(sessionId);
+      } catch (err) {
+        console.error("Error restarting command:", err);
+        void fetchRunningCommands();
+      } finally {
+        setIsStartingCommand(false);
+      }
+    },
+    [
+      isStartingCommand,
+      executeCommand,
+      onOpenCommandOutput,
+      fetchRunningCommands,
+    ],
   );
 
   const handleStopCommand = useCallback(
@@ -415,7 +441,7 @@ const CommandRunner = ({
                         <ChevronRightIcon className="h-4 w-4" />
                       </span>
                     </button>
-                    {!cmd.isComplete && (
+                    {!cmd.isComplete ? (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -429,6 +455,19 @@ const CommandRunner = ({
                         }
                       >
                         <StopSquareOutlineIcon className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleRestartCommand(cmd.command);
+                        }}
+                        disabled={isStartingCommand}
+                        className="rounded border border-slate-800 bg-slate-900/60 px-3 py-3 text-sm text-slate-400 transition hover:border-blue-700 hover:bg-blue-900/20 hover:text-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-800 disabled:hover:bg-slate-900/60 disabled:hover:text-slate-400"
+                        title="Restart command"
+                      >
+                        <RestartIcon className="h-4 w-4" />
                       </button>
                     )}
                   </div>
