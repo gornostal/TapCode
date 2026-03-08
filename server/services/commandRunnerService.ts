@@ -371,10 +371,16 @@ export function getCommandRuns(): CommandRunSummary[] {
     }),
   );
 
-  // Sort by start time, newest first
-  runs.sort((a, b) => b.startTime - a.startTime);
+  // Separate running and completed commands
+  const runningRuns = runs.filter((run) => !run.isComplete);
+  const completedRuns = runs.filter((run) => run.isComplete);
 
-  return runs;
+  // Sort each group by start time, newest first
+  runningRuns.sort((a, b) => b.startTime - a.startTime);
+  completedRuns.sort((a, b) => b.startTime - a.startTime);
+
+  // Return running commands first, then completed commands
+  return [...runningRuns, ...completedRuns];
 }
 
 export function stopCommand(sessionId: string): StopCommandResult {
