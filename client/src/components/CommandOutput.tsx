@@ -9,6 +9,7 @@ import {
 } from "@shared/commandRunner";
 import type { ErrorResponse } from "@shared/http";
 import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
+import { useWordWrap } from "../hooks/useWordWrap";
 
 type CommandOutputProps = {
   sessionId: string;
@@ -24,6 +25,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
   const [exitMessage, setExitMessage] = useState<string | null>(null);
   const { fontSize, increaseFontSize, decreaseFontSize } =
     usePersistentFontSize("tapcode:editorFontSize");
+  const { wordWrap, toggleWordWrap } = useWordWrap();
   const [command, setCommand] = useState<string>("");
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -246,7 +248,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         ) : (
           <>
             <div
-              className="overflow-x-auto"
+              className={wordWrap ? "overflow-x-hidden" : "overflow-x-auto"}
               style={{
                 width: "100vw",
                 position: "relative",
@@ -258,7 +260,7 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
             >
               <div ref={outputRef} className="max-h-[70vh] overflow-auto">
                 <pre
-                  className="min-w-full rounded-lg bg-slate-950/60 font-mono leading-relaxed"
+                  className={`min-w-full rounded-lg bg-slate-950/60 font-mono leading-relaxed${wordWrap ? " whitespace-pre-wrap break-all" : ""}`}
                   style={{ fontSize: `${fontSize}px` }}
                 >
                   <code
@@ -282,6 +284,8 @@ const CommandOutput = ({ sessionId, onBackToBrowser }: CommandOutputProps) => {
         onDecreaseFontSize={decreaseFontSize}
         onStop={handleStop}
         stopDisabled={isComplete || isStopping}
+        onToggleWordWrap={toggleWordWrap}
+        wordWrapEnabled={wordWrap}
       />
     </>
   );
