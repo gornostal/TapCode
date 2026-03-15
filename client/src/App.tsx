@@ -96,6 +96,7 @@ function App() {
   const [parentDirectory, setParentDirectory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fileListRefreshKey, setFileListRefreshKey] = useState(0);
   const [projectName, setProjectName] = useState("");
 
   const [selectedFile, setSelectedFile] = useState<FileContentResponse | null>(
@@ -188,7 +189,9 @@ function App() {
     return () => {
       controller.abort();
     };
-  }, [currentDirectory]);
+  // fileListRefreshKey forces a reload when navigating back to the root
+  // directory from another tab (where currentDirectory is already "").
+  }, [currentDirectory, fileListRefreshKey]);
 
   useEffect(
     () => () => {
@@ -363,8 +366,16 @@ function App() {
     window.history.pushState({ page: "list" }, "", "/");
     setRoute({ page: "list" });
     resetFileViewer();
-    setCurrentDirectory("");
-  }, [setRoute, resetFileViewer]);
+    if (currentDirectory === "") {
+      // Already at root, so setting currentDirectory to "" won't trigger
+      // the useEffect. Bump the refresh key to force a file list reload.
+      setFileListRefreshKey((k) => k + 1);
+    } else {
+      // Navigating from a subdirectory — changing currentDirectory to ""
+      // will trigger the useEffect naturally.
+      setCurrentDirectory("");
+    }
+  }, [setRoute, resetFileViewer, currentDirectory]);
 
   const currentDirectoryLabel = currentDirectory ? `/${currentDirectory}` : "/";
   const canNavigateUp = parentDirectory !== null;
