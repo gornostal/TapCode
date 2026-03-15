@@ -27,6 +27,8 @@ type ToolbarProps = {
   onRunLongPress?: () => void;
   onStop?: () => void;
   stopDisabled?: boolean;
+  onToggleWordWrap?: () => void;
+  wordWrapEnabled?: boolean;
 };
 
 const Toolbar = ({
@@ -45,6 +47,8 @@ const Toolbar = ({
   onRunLongPress,
   onStop,
   stopDisabled = false,
+  onToggleWordWrap,
+  wordWrapEnabled = false,
 }: ToolbarProps) => {
   const longPressTimerRef = useRef<number | null>(null);
   const isLongPressRef = useRef(false);
@@ -163,6 +167,22 @@ const Toolbar = ({
               title="Create annotation for selected lines"
             >
               <ChatBubbleIcon className="h-4 w-4" />
+            </button>
+          )}
+          {onToggleWordWrap && (
+            <button
+              type="button"
+              onClick={onToggleWordWrap}
+              className={`flex-shrink-0 cursor-pointer rounded p-2 font-mono text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 ${
+                wordWrapEnabled
+                  ? "bg-slate-700 text-slate-100"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+              }`}
+              aria-label="Toggle word wrap"
+              aria-pressed={wordWrapEnabled}
+              title="Toggle word wrap"
+            >
+              w
             </button>
           )}
           {onDecreaseFontSize && onIncreaseFontSize && (

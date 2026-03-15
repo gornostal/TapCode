@@ -16,6 +16,7 @@ import {
   type HighlightResult,
 } from "@/utils/syntaxHighlighting";
 import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
+import { useWordWrap } from "../hooks/useWordWrap";
 
 type GitDiffProps = {
   onBackToBrowser: () => void;
@@ -28,6 +29,7 @@ const GitDiff = ({ onBackToBrowser, scope }: GitDiffProps) => {
   const [error, setError] = useState<string | null>(null);
   const { fontSize, increaseFontSize, decreaseFontSize } =
     usePersistentFontSize("tapcode:editorFontSize");
+  const { wordWrap, toggleWordWrap } = useWordWrap();
   const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
   const [isAnnotationModalOpen, setIsAnnotationModalOpen] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
@@ -230,7 +232,7 @@ const GitDiff = ({ onBackToBrowser, scope }: GitDiffProps) => {
           </p>
         ) : diff ? (
           <div
-            className="overflow-x-auto"
+            className={wordWrap ? "overflow-x-hidden" : "overflow-x-auto"}
             style={{
               width: "100vw",
               position: "relative",
@@ -241,7 +243,7 @@ const GitDiff = ({ onBackToBrowser, scope }: GitDiffProps) => {
             }}
           >
             <pre
-              className="min-w-full rounded-lg bg-slate-950/60 leading-relaxed"
+              className={`min-w-full rounded-lg bg-slate-950/60 leading-relaxed${wordWrap ? " whitespace-pre-wrap break-all" : ""}`}
               style={{ fontSize: `${fontSize}px` }}
             >
               <code
@@ -273,6 +275,8 @@ const GitDiff = ({ onBackToBrowser, scope }: GitDiffProps) => {
         onIncreaseFontSize={increaseFontSize}
         onDecreaseFontSize={decreaseFontSize}
         onAnnotate={showAnnotateButton ? handleOpenAnnotationModal : undefined}
+        onToggleWordWrap={toggleWordWrap}
+        wordWrapEnabled={wordWrap}
       />
     </>
   );

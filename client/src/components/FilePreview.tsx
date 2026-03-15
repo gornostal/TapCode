@@ -17,6 +17,7 @@ import {
   type HighlightResult,
 } from "@/utils/syntaxHighlighting";
 import { usePersistentFontSize } from "@/hooks/usePersistentFontSize";
+import { useWordWrap } from "../hooks/useWordWrap";
 
 const PREVIEW_BYTE_LIMIT = 200_000;
 
@@ -55,6 +56,7 @@ const FilePreview = ({
 }: FilePreviewProps) => {
   const { fontSize, increaseFontSize, decreaseFontSize } =
     usePersistentFontSize("tapcode:editorFontSize");
+  const { wordWrap, toggleWordWrap } = useWordWrap();
   const [selectedLineNumbers, setSelectedLineNumbers] = useState<number[]>([]);
   const [isAnnotationModalOpen, setIsAnnotationModalOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -275,7 +277,7 @@ const FilePreview = ({
         ) : selectedFile.content ? (
           <div className="flex flex-col gap-3">
             <div
-              className="overflow-x-auto"
+              className={wordWrap ? "overflow-x-hidden" : "overflow-x-auto"}
               style={{
                 width: "100vw",
                 position: "relative",
@@ -286,7 +288,7 @@ const FilePreview = ({
               }}
             >
               <pre
-                className="min-w-full rounded-lg bg-slate-950/60 leading-relaxed"
+                className={`min-w-full rounded-lg bg-slate-950/60 leading-relaxed${wordWrap ? " whitespace-pre-wrap break-all" : ""}`}
                 style={{ fontSize: `${fontSize}px` }}
               >
                 <code
@@ -325,6 +327,8 @@ const FilePreview = ({
         onIncreaseFontSize={increaseFontSize}
         onDecreaseFontSize={decreaseFontSize}
         onAnnotate={showAnnotateButton ? handleOpenAnnotationModal : undefined}
+        onToggleWordWrap={toggleWordWrap}
+        wordWrapEnabled={wordWrap}
       />
     </>
   );
